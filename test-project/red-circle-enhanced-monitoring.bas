@@ -12,7 +12,7 @@ DIM ScreenshotCounter AS INTEGER
 DIM StartTime AS DOUBLE
 
 ' Initialize monitoring
-LogFile = "C:/Users/grymmjack/git/qb64pe-mcp-server/qb64pe-logs/execution_2025-08-21T09-57-11-597Z.log"
+LogFile = "C:/Users/grymmjack/git/qb64pe-mcp-server/qb64pe-logs/execution_2025-08-21T10-55-18-751Z.log"
 ScreenshotCounter = 0
 StartTime = TIMER
 
@@ -29,7 +29,7 @@ COLOR 15, 1 ' White on blue for headers
 PRINT STRING$(60, "=")
 PRINT "  QB64PE PROGRAM EXECUTION MONITOR"
 PRINT "  Started: " + DATE$ + " " + TIME$
-PRINT "  Log: execution_2025-08-21T09-57-11-597Z.log"
+PRINT "  Log: execution_2025-08-21T10-55-18-751Z.log"
 PRINT STRING$(60, "=")
 COLOR 7, 0 ' Reset to normal
 
@@ -51,7 +51,7 @@ SUB TakeScreenshot
     IF _DEST <> _CONSOLE THEN ' Only if graphics mode
         ScreenshotCounter = ScreenshotCounter + 1
         DIM filename AS STRING
-        filename = "C:/Users/grymmjack/git/qb64pe-mcp-server/qb64pe-screenshots/screenshot_2025-08-21T09-57-11-597Z_" + RIGHT$("000" + LTRIM$(STR$(ScreenshotCounter)), 3) + ".bmp"
+        filename = "C:/Users/grymmjack/git/qb64pe-mcp-server/qb64pe-screenshots/screenshot_2025-08-21T10-55-18-751Z_" + RIGHT$("000" + LTRIM$(STR$(ScreenshotCounter)), 3) + ".bmp"
         _SAVEIMAGE filename
         CALL LogMessage("Screenshot saved: " + filename)
     END IF
@@ -66,7 +66,7 @@ SUB MonitoringCleanup
     COLOR 10, 0 ' Green
     PRINT STRING$(60, "-")
     PRINT "EXECUTION COMPLETED - Runtime: " + STR$(ElapsedTime) + "s"
-    PRINT "Check log file: execution_2025-08-21T09-57-11-597Z.log"
+    PRINT "Check log file: execution_2025-08-21T10-55-18-751Z.log"
     IF ScreenshotCounter > 0 THEN
         PRINT "Screenshots taken: " + STR$(ScreenshotCounter)
     END IF

@@ -215,6 +215,207 @@
         }
       }
     },
+    "variable_scoping": {
+      "title": "Variable Scoping and SHARED Variables",
+      "description": "QB64PE variable scoping rules and how to properly share variables between procedures",
+      "scope_rules": {
+        "local_scope": {
+          "description": "Variables declared in SUB/FUNCTION are local by default",
+          "rules": [
+            "Variables declared with DIM inside SUB/FUNCTION are local to that procedure",
+            "Local variables cannot be accessed from other procedures",
+            "Local variables are automatically destroyed when procedure exits",
+            "Parameters passed to SUB/FUNCTION are local to that procedure"
+          ]
+        },
+        "global_scope": {
+          "description": "Variables declared in main program are global by default",
+          "rules": [
+            "Variables declared in main program (outside SUB/FUNCTION) are global",
+            "Global variables can be accessed from any procedure using SHARED",
+            "Global variables persist throughout program execution"
+          ]
+        },
+        "shared_variables": {
+          "description": "SHARED keyword allows procedures to access global variables",
+          "syntax": [
+            "DIM SHARED variableName AS dataType",
+            "DIM SHARED arrayName(size) AS dataType",
+            "SHARED variableName  ' Reference existing global variable"
+          ],
+          "rules": [
+            "DIM SHARED creates a new global variable accessible from all procedures",
+            "SHARED (without DIM) references an existing global variable",
+            "SHARED must be declared at the beginning of each procedure that needs access",
+            "Arrays declared with DIM SHARED are global and accessible from all procedures"
+          ]
+        }
+      },
+      "common_issues": {
+        "variable_not_in_scope": {
+          "problem": "Attempting to access variables from SUB/FUNCTION without proper scoping",
+          "symptoms": [
+            "Variable not found errors",
+            "Unexpected zero or empty values",
+            "Type mismatch errors"
+          ],
+          "solutions": [
+            "Use DIM SHARED for variables that need global access",
+            "Pass variables as parameters to SUB/FUNCTION",
+            "Declare SHARED within procedures to access global variables"
+          ]
+        },
+        "missing_shared_declaration": {
+          "problem": "Global variables not accessible in procedures",
+          "solution": "Add SHARED declaration at the beginning of SUB/FUNCTION",
+          "example": {
+            "incorrect": "SUB MyProc\\n    globalVar = 10  ' Error: globalVar not accessible",
+            "correct": "SUB MyProc\\n    SHARED globalVar\\n    globalVar = 10  ' Now accessible"
+          }
+        },
+        "array_scope_issues": {
+          "problem": "Arrays not properly shared between procedures",
+          "solution": "Use DIM SHARED for arrays that need global access",
+          "example": {
+            "incorrect": "DIM myArray(100) AS INTEGER  ' Local to main\\nCALL ProcessArray  ' Array not accessible in SUB",
+            "correct": "DIM SHARED myArray(100) AS INTEGER  ' Global access\\nCALL ProcessArray  ' Array accessible in SUB"
+          }
+        }
+      },
+      "dynamic_arrays": {
+        "title": "Dynamic Array Management",
+        "description": "QB64PE supports dynamic arrays with proper directives",
+        "directive": {
+          "syntax": "'$DYNAMIC",
+          "purpose": "Allows arrays to be resized at runtime using REDIM",
+          "placement": "Must be placed before any array declarations that will be resized"
+        },
+        "static_vs_dynamic": {
+          "static_arrays": {
+            "characteristics": [
+              "Size fixed at compile time",
+              "Faster access",
+              "Memory allocated at compile time",
+              "Default behavior in QB64PE"
+            ],
+            "syntax": "DIM arrayName(constantSize) AS dataType"
+          },
+          "dynamic_arrays": {
+            "characteristics": [
+              "Size can be changed at runtime",
+              "Slightly slower access",
+              "Memory allocated at runtime",
+              "Requires $DYNAMIC directive"
+            ],
+            "syntax": [
+              "'$DYNAMIC",
+              "DIM arrayName() AS dataType  ' Empty parentheses",
+              "REDIM arrayName(newSize) AS dataType  ' Resize as needed"
+            ]
+          }
+        },
+        "best_practices": [
+          "Use static arrays when size is known and fixed",
+          "Use dynamic arrays when size varies based on input or conditions",
+          "Place $DYNAMIC directive before first dynamic array declaration",
+          "Use REDIM PRESERVE to keep existing data when resizing",
+          "Be mindful of memory usage with large dynamic arrays"
+        ]
+      },
+      "examples": {
+        "proper_shared_usage": {
+          "description": "Correct way to share variables between procedures",
+          "code": [
+            "' Global variables declared in main program",
+            "DIM SHARED playerScore AS LONG",
+            "DIM SHARED gameBoard(8, 8) AS INTEGER",
+            "",
+            "' Main program",
+            "playerScore = 0",
+            "InitializeBoard",
+            "PlayGame",
+            "END",
+            "",
+            "SUB InitializeBoard",
+            "    ' No need to declare SHARED here since gameBoard was DIM SHARED",
+            "    FOR i = 0 TO 8",
+            "        FOR j = 0 TO 8",
+            "            gameBoard(i, j) = 0",
+            "        NEXT j",
+            "    NEXT i",
+            "END SUB",
+            "",
+            "SUB PlayGame",
+            "    ' No need to declare SHARED here since playerScore was DIM SHARED",
+            "    playerScore = playerScore + 100",
+            "    PRINT \"Score:\"; playerScore",
+            "END SUB"
+          ]
+        },
+        "local_shared_reference": {
+          "description": "Referencing existing global variables in procedures",
+          "code": [
+            "' Global variable in main program",
+            "DIM currentLevel AS INTEGER",
+            "currentLevel = 1",
+            "",
+            "CheckLevel",
+            "END",
+            "",
+            "SUB CheckLevel",
+            "    ' Reference the global variable",
+            "    SHARED currentLevel",
+            "    IF currentLevel > 10 THEN",
+            "        PRINT \"Max level reached!\"",
+            "    ELSE",
+            "        currentLevel = currentLevel + 1",
+            "    END IF",
+            "END SUB"
+          ]
+        },
+        "dynamic_array_example": {
+          "description": "Using dynamic arrays with proper directives",
+          "code": [
+            "'$DYNAMIC",
+            "DIM SHARED dataArray() AS DOUBLE",
+            "",
+            "' Main program",
+            "LoadData \"numbers.txt\"",
+            "ProcessData",
+            "END",
+            "",
+            "SUB LoadData(filename AS STRING)",
+            "    ' dataArray is already SHARED, so accessible here",
+            "    OPEN filename FOR INPUT AS #1",
+            "    ' Count lines first",
+            "    lineCount = 0",
+            "    WHILE NOT EOF(1)",
+            "        INPUT #1, temp",
+            "        lineCount = lineCount + 1",
+            "    WEND",
+            "    CLOSE #1",
+            "    ",
+            "    ' Resize array to fit data",
+            "    REDIM dataArray(lineCount - 1)",
+            "    ",
+            "    ' Load actual data",
+            "    OPEN filename FOR INPUT AS #1",
+            "    FOR i = 0 TO lineCount - 1",
+            "        INPUT #1, dataArray(i)",
+            "    NEXT i",
+            "    CLOSE #1",
+            "END SUB",
+            "",
+            "SUB ProcessData",
+            "    ' Process the shared dynamic array",
+            "    FOR i = 0 TO UBOUND(dataArray)",
+            "        PRINT dataArray(i)",
+            "    NEXT i",
+            "END SUB"
+          ]
+        }
+      }
+    },
     "best_practices": {
       "coding_guidelines": [
         "Keep it simple: Avoid complex multi-statement lines",
@@ -431,7 +632,13 @@
       "SHARED variables declared after main program code",
       "SUB/FUNCTION definitions appearing before main program code",
       "Missing $INCLUDEONCE directives in modular code",
-      "Improper include file organization (.BI/.BM pattern violations)"
+      "Improper include file organization (.BI/.BM pattern violations)",
+      "Variables accessed in SUB/FUNCTION without proper SHARED declaration",
+      "Dynamic arrays without $DYNAMIC directive",
+      "SHARED keyword used without DIM statement", 
+      "Local variables shadowing SHARED variables with same names",
+      "Arrays not properly shared between procedures",
+      "Missing SHARED declarations for global variable access in procedures"
     ],
     "debugging": {
       "error_handling": {
@@ -530,6 +737,30 @@
       "severity": "info",
       "message": "Consider using $INCLUDEONCE instead of $INCLUDE for .BI files",
       "suggestion": "Use $INCLUDEONCE to prevent duplicate inclusions"
+    },
+    "variable_scope_access": {
+      "regex": "(?:SUB|FUNCTION)\\s+\\w+[\\s\\S]*?\\w+\\s*=\\s*\\w+[\\s\\S]*?(?=END\\s+(?:SUB|FUNCTION))",
+      "severity": "warning",
+      "message": "Potential variable scope issue - accessing variables that may not be in scope",
+      "suggestion": "Use DIM SHARED for variables that need to be accessed across SUB/FUNCTION boundaries"
+    },
+    "missing_dynamic_directive": {
+      "regex": "DIM\\s+\\w+\\s*\\(\\s*[a-zA-Z]\\w*\\s*(?:TO\\s+[a-zA-Z]\\w*)?\\s*\\)\\s+AS",
+      "severity": "warning",
+      "message": "Dynamic array without $DYNAMIC directive may cause issues",
+      "suggestion": "Add '$DYNAMIC or use static array bounds with constants"
+    },
+    "shared_without_dim": {
+      "regex": "SHARED\\s+(?!.*DIM)\\w+",
+      "severity": "error",
+      "message": "SHARED keyword must be used with DIM statement",
+      "suggestion": "Use 'DIM SHARED variableName AS type' instead of 'SHARED variableName'"
+    },
+    "local_variable_shadow": {
+      "regex": "(?:SUB|FUNCTION)\\s+\\w+[\\s\\S]*?DIM\\s+(?!SHARED)\\w+[\\s\\S]*?(?=\\bEND\\s+(?:SUB|FUNCTION))",
+      "severity": "info",
+      "message": "Local variable may shadow a SHARED variable with the same name",
+      "suggestion": "Use unique variable names in local scope or explicitly reference SHARED variables"
     }
   }
 }

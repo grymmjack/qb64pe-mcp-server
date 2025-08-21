@@ -5,7 +5,7 @@ export interface CompatibilityIssue {
   column: number;
   pattern: string;
   message: string;
-  severity: 'error' | 'warning';
+  severity: 'error' | 'warning' | 'info';
   category: string;
   suggestion: string;
   examples?: {
@@ -16,7 +16,7 @@ export interface CompatibilityIssue {
 
 export interface CompatibilityRule {
   pattern: RegExp;
-  severity: 'error' | 'warning';
+  severity: 'error' | 'warning' | 'info';
   category: string;
   message: string;
   suggestion: string;
@@ -219,6 +219,50 @@ export class QB64PECompatibilityService {
           incorrect: 'CHAIN "otherprog.bas"',
           correct: 'SHELL "qb64pe otherprog.bas"'
         }
+      },
+      {
+        pattern: /(?:SUB|FUNCTION)\s+\w+[\s\S]*?\w+\s*=\s*\w+[\s\S]*?(?=END\s+(?:SUB|FUNCTION))/gi,
+        severity: 'warning',
+        category: 'variable_scope',
+        message: 'Potential variable scope issue - accessing variables that may not be in scope',
+        suggestion: 'Use DIM SHARED for variables that need to be accessed across SUB/FUNCTION boundaries',
+        examples: {
+          incorrect: 'SUB MyProc\n    globalVar = 10  \' Error: may not be in scope',
+          correct: 'DIM SHARED globalVar AS INTEGER\nSUB MyProc\n    globalVar = 10  \' Now accessible'
+        }
+      },
+      {
+        pattern: /DIM\s+\w+\s*\(\s*[a-zA-Z]\w*\s*(?:TO\s+[a-zA-Z]\w*)?\s*\)\s+AS/gi,
+        severity: 'warning',
+        category: 'dynamic_arrays',
+        message: 'Dynamic array without $DYNAMIC directive may cause issues',
+        suggestion: 'Add \'$DYNAMIC or use static array bounds with constants',
+        examples: {
+          incorrect: 'DIM arr(size) AS INTEGER  \' Without $DYNAMIC',
+          correct: '\'$DYNAMIC\nDIM arr() AS INTEGER\nREDIM arr(size)'
+        }
+      },
+      {
+        pattern: /SHARED\s+(?!.*DIM)\w+/gi,
+        severity: 'error',
+        category: 'shared_syntax',
+        message: 'SHARED keyword must be used with DIM statement',
+        suggestion: 'Use \'DIM SHARED variableName AS type\' instead of \'SHARED variableName\'',
+        examples: {
+          incorrect: 'SHARED myVar',
+          correct: 'DIM SHARED myVar AS INTEGER'
+        }
+      },
+      {
+        pattern: /(?:SUB|FUNCTION)\s+\w+[\s\S]*?DIM\s+(?!SHARED)\w+[\s\S]*?(?=\bEND\s+(?:SUB|FUNCTION))/gi,
+        severity: 'info',
+        category: 'variable_shadowing',
+        message: 'Local variable may shadow a SHARED variable with the same name',
+        suggestion: 'Use unique variable names in local scope or explicitly reference SHARED variables',
+        examples: {
+          incorrect: 'DIM SHARED count AS INTEGER\nSUB Process\n    DIM count AS INTEGER  \' Shadows global',
+          correct: 'DIM SHARED count AS INTEGER\nSUB Process\n    DIM localCount AS INTEGER  \' Unique name'
+        }
       }
     ];
   }
@@ -277,6 +321,30 @@ export class QB64PECompatibilityService {
             "ON PEN", "PEN", "ON PLAY(n)", "PLAY(n) ON/OFF/STOP",
             "ON UEVENT", "UEVENT", "SETMEM", "SIGNAL", "TRON", "TROFF"
           ]
+        },
+        variable_scoping: {
+          title: "Variable Scoping and SHARED Variables",
+          description: "QB64PE variable scoping rules and SHARED variable usage",
+          scopeRules: {
+            local: "Variables in SUB/FUNCTION are local by default",
+            global: "Variables in main program are global", 
+            shared: "Use DIM SHARED or SHARED to access global variables in procedures"
+          },
+          commonIssues: [
+            "Accessing variables without proper SHARED declaration",
+            "Missing $DYNAMIC directive for dynamic arrays",
+            "Using SHARED without DIM statement",
+            "Local variables shadowing SHARED variables"
+          ]
+        },
+        dynamic_arrays: {
+          title: "Dynamic Array Management",
+          description: "Proper usage of dynamic arrays in QB64PE",
+          directive: "$DYNAMIC must be used before dynamic array declarations",
+          syntax: {
+            static: "DIM arrayName(constantSize) AS type",
+            dynamic: "'$DYNAMIC\\nDIM arrayName() AS type\\nREDIM arrayName(variableSize)"
+          }
         },
         best_practices: [
           "Keep it simple: Avoid complex multi-statement lines",
@@ -455,6 +523,14 @@ _LOGTRACE "Function called with: " + STR$(value)
     
     if (issueLower.includes('syntax') || issueLower.includes('expected')) {
       return "- Check for unmatched quotes or parentheses\\n- Avoid multi-statement lines with control structures\\n- Separate variable declarations from assignments\\n- Use proper type sigils for functions";
+    }
+    
+    if (issueLower.includes('scope') || issueLower.includes('shared') || issueLower.includes('variable')) {
+      return "- Use DIM SHARED for variables accessed across procedures\\n- Add SHARED declaration in SUB/FUNCTION for global variables\\n- Check that variables are declared before use\\n- Avoid variable name conflicts between local and global scope";
+    }
+    
+    if (issueLower.includes('array') || issueLower.includes('dynamic')) {
+      return "- Use '$DYNAMIC directive before dynamic array declarations\\n- Ensure arrays are properly shared with DIM SHARED\\n- Check array bounds and initialization\\n- Use REDIM for dynamic array resizing";
     }
     
     return "- Add debug PRINT statements to trace program flow\\n- Use $CONSOLE for real-time debug output\\n- Check variable values at key points\\n- Test smaller code sections incrementally";

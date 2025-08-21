@@ -32,6 +32,18 @@ A comprehensive Model Context Protocol (MCP) server that provides advanced QB64P
 - Cross-platform compatibility checking
 - Legacy BASIC keyword detection
 - Platform-specific function warnings
+- **Variable scoping validation** (DIM SHARED, scope access issues)
+- **Dynamic array directive checking** ($DYNAMIC usage)
+- **SHARED keyword syntax validation**
+- **Variable shadowing detection**
+
+### 🔧 **Variable Scoping Assistant**
+- **DIM SHARED usage validation** - Ensures variables are properly shared across procedures
+- **$DYNAMIC directive checking** - Validates dynamic array declarations
+- **Scope access analysis** - Detects variables accessed without proper SHARED declaration
+- **Variable shadowing warnings** - Identifies local variables that may shadow global ones
+- **Best practices guidance** - Recommends proper variable scoping techniques
+- **Real-world examples** - Provides correct and incorrect usage patterns
 
 ### 🔍 **Compatibility Knowledge Base**
 - Extensive compatibility issue database
@@ -439,6 +451,7 @@ src/
 
 - [Compatibility Integration Guide](./docs/COMPATIBILITY_INTEGRATION.md) - Detailed documentation of the compatibility validation system
 - [Keywords Integration Guide](./docs/KEYWORDS_INTEGRATION.md) - Comprehensive guide to the keywords reference system
+- [Variable Scoping Rules](./docs/VARIABLE_SCOPING_RULES.md) - Complete guide to DIM SHARED, $DYNAMIC, and variable scoping
 - [QB64PE Official Wiki](https://qb64phoenix.com/qb64wiki/) - Official QB64PE documentation
 
 ## Examples
@@ -524,3 +537,8 @@ MIT License - see LICENSE file for details.
 - **NEW**: Platform-specific compatibility checking
 - **NEW**: Legacy BASIC keyword detection
 - **NEW**: Function return type validation
+- **NEW**: Variable scoping validation (DIM SHARED, SHARED syntax)
+- **NEW**: Dynamic array directive checking ($DYNAMIC)
+- **NEW**: Variable accessibility analysis
+- **NEW**: Variable shadowing detection
+- **NEW**: Scope-specific debugging guidance

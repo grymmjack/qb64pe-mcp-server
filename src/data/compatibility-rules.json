@@ -1,0 +1,326 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2024-12-24",
+  "categories": {
+    "syntax_issues": {
+      "function_return_types": {
+        "title": "Function Return Type Declaration",
+        "description": "QB64PE doesn't support AS TYPE syntax for function return types",
+        "invalid_patterns": [
+          "FUNCTION\\s+\\w+\\([^)]*\\)\\s+AS\\s+\\w+"
+        ],
+        "error_messages": [
+          "Expected )"
+        ],
+        "corrections": [
+          {
+            "problem": "FUNCTION name(params) AS TYPE",
+            "solution": "FUNCTION name%(params) for INTEGER, name&(params) for LONG, etc.",
+            "explanation": "Use type sigils instead of AS clauses"
+          }
+        ],
+        "type_sigils": {
+          "%": "INTEGER",
+          "&": "LONG",
+          "!": "SINGLE",
+          "#": "DOUBLE",
+          "$": "STRING"
+        },
+        "examples": [
+          {
+            "incorrect": "FUNCTION NearestPaletteIndex(r AS INTEGER, g AS INTEGER, b AS INTEGER) AS INTEGER",
+            "correct": "FUNCTION NearestPaletteIndex%(r AS INTEGER, g AS INTEGER, b AS INTEGER)"
+          }
+        ]
+      },
+      "console_directives": {
+        "title": "Console Mode Directives",
+        "description": "Invalid console directive syntax",
+        "invalid_patterns": [
+          "\\$CONSOLE:OFF"
+        ],
+        "error_messages": [
+          "Syntax error - Caused by (or after):$ CONSOLE"
+        ],
+        "valid_directives": {
+          "$CONSOLE": "Shows both console and graphics windows",
+          "$CONSOLE:ONLY": "Console mode only (no graphics)",
+          "no directive": "Graphics only"
+        },
+        "examples": [
+          {
+            "incorrect": "$CONSOLE:OFF",
+            "correct": "$CONSOLE",
+            "note": "$CONSOLE:OFF is not valid syntax"
+          }
+        ]
+      },
+      "multi_statement_lines": {
+        "title": "Multiple IF Statements on One Line",
+        "description": "Chained control structures cause parsing errors",
+        "invalid_patterns": [
+          "IF\\s+.+\\s+THEN\\s+.+:\\s*IF\\s+.+\\s+THEN"
+        ],
+        "error_messages": [
+          "THEN without IF"
+        ],
+        "rule": "Avoid complex multi-statement lines, especially with control structures",
+        "examples": [
+          {
+            "incorrect": "IF r < 0 THEN r = 0: IF r > 255 THEN r = 255",
+            "correct": "IF r < 0 THEN r = 0\\nIF r > 255 THEN r = 255"
+          }
+        ]
+      },
+      "array_declarations": {
+        "title": "Multiple Array Declarations on One Line",
+        "description": "Multiple arrays with dimensions cannot be declared on one line",
+        "invalid_patterns": [
+          "DIM\\s+\\w+\\([^)]+\\)\\s+AS\\s+\\w+,\\s*\\w+\\([^)]+\\)\\s+AS\\s+\\w+"
+        ],
+        "error_messages": [
+          "DIM: Expected ,"
+        ],
+        "examples": [
+          {
+            "incorrect": "DIM er#(0 TO w) AS DOUBLE, eg#(0 TO w) AS DOUBLE, eb#(0 TO w) AS DOUBLE",
+            "correct": "DIM er(0 TO w) AS DOUBLE\\nDIM eg(0 TO w) AS DOUBLE\\nDIM eb(0 TO w) AS DOUBLE"
+          }
+        ]
+      },
+      "variable_operations": {
+        "title": "Multiple Variable Operations on One Line",
+        "description": "Combining declarations and assignments causes parsing issues",
+        "invalid_patterns": [
+          "DIM\\s+\\w+\\s+AS\\s+\\w+:\\s*\\w+\\s*="
+        ],
+        "examples": [
+          {
+            "incorrect": "DIM oldS AS LONG: oldS = _SOURCE: _SOURCE img",
+            "correct": "DIM oldS AS LONG\\noldS = _SOURCE\\n_SOURCE img"
+          }
+        ]
+      },
+      "missing_functions": {
+        "title": "Missing String Functions",
+        "description": "Some expected BASIC string functions don't exist in QB64PE",
+        "missing_functions": [
+          "_WORD$",
+          "_TRIM$"
+        ],
+        "alternatives": {
+          "_WORD$": "Use INSTR, MID$, LEFT$, RIGHT$ for string parsing",
+          "_TRIM$": "Use LTRIM$ and RTRIM$ or implement custom trim function"
+        },
+        "examples": [
+          {
+            "incorrect": "r = VAL(_TRIM$(_WORD$(line$, 1, \" \")))",
+            "correct": "pos1 = INSTR(line$, \" \")\\nIF pos1 > 0 THEN r = VAL(LEFT$(line$, pos1 - 1))"
+          }
+        ]
+      }
+    },
+    "unsupported_keywords": {
+      "legacy_statements": {
+        "title": "Legacy BASIC Keywords Not Supported",
+        "keywords": [
+          "ALIAS",
+          "ANY", 
+          "BYVAL",
+          "CALLS",
+          "CDECL",
+          "DECLARE",
+          "DEF FN",
+          "EXIT DEF", 
+          "END DEF",
+          "ERDEV",
+          "ERDEV$",
+          "FILEATTR",
+          "FRE",
+          "IOCTL",
+          "IOCTL$"
+        ],
+        "notes": {
+          "ALIAS": "Only supported in DECLARE LIBRARY",
+          "BYVAL": "Only supported in DECLARE LIBRARY",
+          "DATE$": "Statement form not supported, reading current DATE$ is supported",
+          "DEF FN": "Must use actual FUNCTIONs instead",
+          "TIME$": "Statement form not supported, reading current TIME$ is supported"
+        }
+      },
+      "device_hardware": {
+        "title": "Device and Hardware Access Keywords",
+        "keywords": [
+          "ON PEN",
+          "PEN",
+          "ON PLAY(n)",
+          "PLAY(n) ON/OFF/STOP",
+          "ON UEVENT",
+          "UEVENT",
+          "SETMEM",
+          "SIGNAL",
+          "TRON",
+          "TROFF",
+          "WIDTH LPRINT"
+        ],
+        "device_opens": [
+          "LPT:",
+          "CON:",
+          "KBRD:"
+        ],
+        "notes": {
+          "OPEN devices": "LPRINT and OPEN COM are supported",
+          "PLAY": "PLAY music is supported, but not PLAY(n) ON/OFF/STOP"
+        }
+      },
+      "platform_specific": {
+        "title": "Platform-Specific Limitations",
+        "linux_macos_unsupported": {
+          "desktop_operations": [
+            "_ACCEPTFILEDROP",
+            "_TOTALDROPPEDFILES", 
+            "_DROPPEDFILE",
+            "_FINISHDROP",
+            "_SCREENPRINT",
+            "_SCREENCLICK",
+            "_WINDOWHANDLE",
+            "_CAPSLOCK",
+            "_NUMLOCK", 
+            "_SCROLLLOCK"
+          ],
+          "console_operations": [
+            "_CONSOLETITLE",
+            "_CONSOLECURSOR",
+            "_CONSOLEFONT",
+            "_CONSOLEINPUT",
+            "_CINP"
+          ],
+          "program_control": [
+            "CHAIN",
+            "RUN"
+          ],
+          "printing": [
+            "LPRINT",
+            "_PRINTIMAGE"
+          ],
+          "hardware_access": [
+            "OPEN COM",
+            "LOCK",
+            "UNLOCK"
+          ]
+        },
+        "partial_support": {
+          "_SCREENMOVE": "Available in macOS, not Linux",
+          "_WINDOWHASFOCUS": "Available in Linux, not macOS"
+        }
+      }
+    },
+    "best_practices": {
+      "coding_guidelines": [
+        "Keep it simple: Avoid complex multi-statement lines",
+        "One operation per line: Especially for declarations and assignments",
+        "Use type sigils: For function return types instead of AS clauses", 
+        "Initialize early: Set up arrays and variables before use",
+        "Test incrementally: Build up complexity gradually",
+        "Separate concerns: Split complex operations into multiple lines",
+        "Use standard functions: Stick to well-documented QB64PE functions"
+      ],
+      "syntax_rules": [
+        "Functions must use type sigils for return types, not AS clauses",
+        "Console directives: $CONSOLE, $CONSOLE:ONLY (not $CONSOLE:OFF)", 
+        "Avoid chaining multiple control structures on one line",
+        "Array declarations should be separate when using dimensions",
+        "Variable assignments should be on separate lines from declarations",
+        "Some BASIC string functions may not be available (implement custom versions)"
+      ]
+    },
+    "validation_checklist": [
+      "Function declarations using AS clauses instead of sigils",
+      "Invalid console directives ($CONSOLE:OFF)",
+      "Multiple IF statements on one line with colons",
+      "Multiple array declarations with dimensions on one line",
+      "Complex multi-statement lines with declarations", 
+      "Usage of non-existent string functions (_WORD$, etc.)",
+      "Uninitialized SHARED arrays in included modules",
+      "Legacy BASIC keywords (DEF FN, TRON, TROFF, etc.)",
+      "Device access statements (OPEN LPT:, PEN, etc.)",
+      "Platform-specific functions on wrong platforms", 
+      "Hardware access functions (SETMEM, SIGNAL, etc.)",
+      "Unsupported PRINT combinations (WIDTH LPRINT)"
+    ],
+    "debugging": {
+      "error_handling": {
+        "traditional": {
+          "keywords": ["ON ERROR GOTO", "ERR", "RESUME", "RESUME NEXT", "_ERRORLINE"],
+          "description": "Classic BASIC error handling with error codes and resume options"
+        },
+        "modern_assertions": {
+          "keywords": ["$ASSERTS:CONSOLE", "$ASSERTS:OFF", "_ASSERT"],
+          "description": "Modern assertion-based debugging for development testing"
+        },
+        "console_debugging": {
+          "keywords": ["$CONSOLE", "$CONSOLE:ONLY", "_DEST _CONSOLE", "_DEST 0"],
+          "description": "Console window alongside graphics for debugging output"
+        },
+        "logging_system": {
+          "keywords": ["_LOGERROR", "_LOGWARN", "_LOGINFO", "_LOGTRACE"],
+          "description": "Built-in logging system (QB64PE v4.0.0+) with timestamps and stack traces"
+        }
+      },
+      "common_error_codes": {
+        "52": "Bad file name or number",
+        "53": "File not found", 
+        "55": "File already open",
+        "62": "Input past end of file",
+        "64": "Bad file name",
+        "70": "Permission denied",
+        "75": "Path/File access error",
+        "76": "Path not found"
+      }
+    }
+  },
+  "patterns": {
+    "function_return_type_as_clause": {
+      "regex": "FUNCTION\\s+(\\w+)\\s*\\([^)]*\\)\\s+AS\\s+(\\w+)",
+      "severity": "error",
+      "message": "Function return types must use type sigils, not AS clauses",
+      "suggestion": "Use FUNCTION {name}{sigil}({params}) instead of FUNCTION {name}({params}) AS {type}"
+    },
+    "console_off_directive": {
+      "regex": "\\$CONSOLE\\s*:\\s*OFF",
+      "severity": "error", 
+      "message": "$CONSOLE:OFF is not valid syntax",
+      "suggestion": "Use $CONSOLE or $CONSOLE:ONLY instead"
+    },
+    "chained_if_statements": {
+      "regex": "IF\\s+[^\\n]+\\s+THEN\\s+[^\\n]+:\\s*IF\\s+[^\\n]+\\s+THEN",
+      "severity": "warning",
+      "message": "Chained IF statements on one line can cause parsing errors",
+      "suggestion": "Split IF statements onto separate lines"
+    },
+    "multi_array_declaration": {
+      "regex": "DIM\\s+\\w+\\s*\\([^)]+\\)\\s+AS\\s+\\w+\\s*,\\s*\\w+\\s*\\([^)]+\\)\\s+AS\\s+\\w+",
+      "severity": "error",
+      "message": "Multiple array declarations with dimensions on one line not supported", 
+      "suggestion": "Declare each array on a separate line"
+    },
+    "missing_string_functions": {
+      "regex": "\\b(_WORD\\$|_TRIM\\$)\\b",
+      "severity": "error",
+      "message": "Function does not exist in QB64PE",
+      "suggestion": "Use built-in string functions like INSTR, MID$, LEFT$, RIGHT$ instead"
+    },
+    "legacy_keywords": {
+      "regex": "\\b(DEF\\s+FN|TRON|TROFF|SETMEM|SIGNAL)\\b",
+      "severity": "error",
+      "message": "Legacy BASIC keyword not supported in QB64PE",
+      "suggestion": "Use modern QB64PE alternatives"
+    },
+    "device_access": {
+      "regex": "\\b(ON\\s+PEN|PEN\\s+ON|PEN\\s+OFF|ON\\s+UEVENT)\\b",
+      "severity": "error",
+      "message": "Device access keyword not supported in QB64PE",
+      "suggestion": "Use modern QB64PE input/output methods"
+    }
+  }
+}

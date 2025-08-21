@@ -1,0 +1,168 @@
+{
+  "categories": {
+    "statements": {
+      "description": "QB64PE statements that perform actions",
+      "keywords": []
+    },
+    "functions": {
+      "description": "QB64PE functions that return values",
+      "keywords": []
+    },
+    "operators": {
+      "description": "Mathematical and logical operators",
+      "keywords": []
+    },
+    "metacommands": {
+      "description": "Compiler directives starting with $",
+      "keywords": []
+    },
+    "opengl": {
+      "description": "OpenGL graphics functions and statements",
+      "keywords": []
+    },
+    "types": {
+      "description": "Data types and type suffixes",
+      "keywords": []
+    },
+    "constants": {
+      "description": "Built-in constants and literals",
+      "keywords": []
+    },
+    "legacy": {
+      "description": "Legacy QBasic keywords and compatibility items",
+      "keywords": []
+    }
+  },
+  "keywords": {
+    "_ACCEPTFILEDROP": {
+      "name": "_ACCEPTFILEDROP",
+      "type": "statement",
+      "category": "statements",
+      "description": "turns a program window into a valid drop destination for dragging files from Windows Explorer.",
+      "syntax": "_ACCEPTFILEDROP",
+      "parameters": [],
+      "returns": null,
+      "example": "_ACCEPTFILEDROP\nIF _TOTALDROPPEDFILES > 0 THEN\n    FOR i = 1 TO _TOTALDROPPEDFILES\n        PRINT _DROPPEDFILE(i)\n    NEXT\n    _FINISHDROP\nEND IF",
+      "related": ["_DROPPEDFILE", "_TOTALDROPPEDFILES", "_FINISHDROP"],
+      "version": "QB64PE",
+      "availability": "Windows"
+    },
+    "_ACOS": {
+      "name": "_ACOS",
+      "type": "function",
+      "category": "functions",
+      "description": "arccosine function returns the angle in radians based on an input COSine value range from -1 to 1.",
+      "syntax": "angle = _ACOS(cosine_value)",
+      "parameters": ["cosine_value: SINGLE or DOUBLE value between -1 and 1"],
+      "returns": "SINGLE or DOUBLE angle in radians",
+      "example": "angle = _ACOS(0.5) ' Returns π/3 (60 degrees)",
+      "related": ["_ASIN", "_ATAN2", "COS", "_D2R", "_R2D"],
+      "version": "QB64PE",
+      "availability": "All platforms"
+    },
+    "_ALPHA": {
+      "name": "_ALPHA",
+      "type": "function",
+      "category": "functions",
+      "description": "returns the alpha channel transparency level of a color value used on a screen page or image.",
+      "syntax": "alpha_level = _ALPHA(color_value[, image_handle])",
+      "parameters": ["color_value: LONG color value", "image_handle: LONG image handle (optional)"],
+      "returns": "INTEGER alpha level (0-255)",
+      "example": "alpha = _ALPHA(_RGB32(255, 0, 0, 128)) ' Returns 128",
+      "related": ["_ALPHA32", "_RGB32", "_RGBA32", "_SETALPHA"],
+      "version": "QB64PE",
+      "availability": "All platforms"
+    },
+    "_AUTODISPLAY": {
+      "name": "_AUTODISPLAY",
+      "type": "statement",
+      "category": "statements",
+      "description": "enables the automatic display of the screen image changes previously disabled by _DISPLAY.",
+      "syntax": "_AUTODISPLAY",
+      "parameters": [],
+      "returns": null,
+      "example": "_DISPLAY ' Turn off autodisplay\nCIRCLE (100, 100), 50\n_AUTODISPLAY ' Turn back on",
+      "related": ["_DISPLAY", "_DISPLAYORDER"],
+      "version": "QB64PE",
+      "availability": "All platforms"
+    },
+    "PRINT": {
+      "name": "PRINT",
+      "type": "statement",
+      "category": "statements",
+      "description": "prints text strings or numerical values to the SCREEN.",
+      "syntax": "PRINT [expression][;|,][expression]...",
+      "parameters": ["expression: Any valid QB64PE expression", "; or , : Output separator"],
+      "returns": null,
+      "example": "PRINT \"Hello, World!\"\nPRINT \"Number:\"; 42",
+      "related": ["PRINT USING", "_PRINTSTRING", "INPUT", "LOCATE"],
+      "version": "QBasic",
+      "availability": "All platforms"
+    },
+    "IF": {
+      "name": "IF",
+      "type": "statement",
+      "category": "statements", 
+      "description": "a conditional block statement used control program flow.",
+      "syntax": "IF condition THEN\n  statements\n[ELSEIF condition THEN\n  statements]\n[ELSE\n  statements]\nEND IF",
+      "parameters": ["condition: Boolean expression"],
+      "returns": null,
+      "example": "IF x > 10 THEN\n    PRINT \"x is greater than 10\"\nELSE\n    PRINT \"x is 10 or less\"\nEND IF",
+      "related": ["ELSEIF", "ELSE", "END IF", "SELECT CASE"],
+      "version": "QBasic",
+      "availability": "All platforms"
+    },
+    "$INCLUDE": {
+      "name": "$INCLUDE",
+      "type": "metacommand",
+      "category": "metacommands",
+      "description": "designates a text code library file to include with the program.",
+      "syntax": "'$INCLUDE: 'filename.bi'",
+      "parameters": ["filename: String containing path to include file"],
+      "returns": null,
+      "example": "'$INCLUDE: 'graphics.bi'\n'$INCLUDE: 'utilities.bi'",
+      "related": ["$INCLUDEONCE", "$DYNAMIC", "$STATIC"],
+      "version": "QBasic",
+      "availability": "All platforms"
+    },
+    "_glBegin": {
+      "name": "_glBegin",
+      "type": "statement",
+      "category": "opengl",
+      "description": "the _glBegin and _glEnd statements delimit the vertices of a primitive or a group of like primitives.",
+      "syntax": "_glBegin mode",
+      "parameters": ["mode: GLenum primitive type"],
+      "returns": null,
+      "example": "_glBegin _GL_TRIANGLES\n    _glVertex3f 0, 1, 0\n    _glVertex3f -1, -1, 0\n    _glVertex3f 1, -1, 0\n_glEnd",
+      "related": ["_glEnd", "_glVertex3f", "SUB _GL"],
+      "version": "QB64PE",
+      "availability": "All platforms"
+    },
+    "INTEGER": {
+      "name": "INTEGER",
+      "type": "type",
+      "category": "types",
+      "description": "2 byte whole values from -32768 to 32767.",
+      "syntax": "DIM variable AS INTEGER\nvariable%",
+      "parameters": [],
+      "returns": null,
+      "example": "DIM count AS INTEGER\ncount% = 42",
+      "related": ["LONG", "_INTEGER64", "SINGLE", "DOUBLE"],
+      "version": "QBasic",
+      "availability": "All platforms"
+    },
+    "+": {
+      "name": "+",
+      "type": "operator",
+      "category": "operators",
+      "description": "Addition operator or sign, also string concatenation operator",
+      "syntax": "result = value1 + value2\nstring_result = string1 + string2",
+      "parameters": ["value1, value2: Numeric values", "string1, string2: String values"],
+      "returns": "Numeric sum or concatenated string",
+      "example": "sum = 5 + 3 ' Returns 8\nname = \"Hello\" + \" World\" ' Returns \"Hello World\"",
+      "related": ["-", "*", "/", "MOD"],
+      "version": "QBasic",
+      "availability": "All platforms"
+    }
+  }
+}

@@ -23,12 +23,33 @@ A comprehensive Model Context Protocol (MCP) server that provides advanced QB64P
 - Error handling best practices
 - Step-by-step execution guidance
 
-### ✅ **Syntax Validation**
+### ✅ **Syntax Validation & Compatibility**
 - QB64PE-only syntax enforcement (excludes Visual Basic/QBasic constructs)
+- Comprehensive compatibility validation with detailed issue reporting
 - Multi-level validation (basic, strict, best-practices)
 - Real-time error detection and suggestions
 - Code quality scoring (0-100)
-- Best practices recommendations
+- Cross-platform compatibility checking
+- Legacy BASIC keyword detection
+- Platform-specific function warnings
+
+### 🔍 **Compatibility Knowledge Base**
+- Extensive compatibility issue database
+- Searchable solutions and workarounds
+- Pattern-based code analysis
+- Best practices guidance
+- Debugging techniques specific to QB64PE
+- Platform compatibility matrix (Windows/Linux/macOS)
+
+### 📖 **Keywords Reference System**
+- Complete QB64PE keywords database (800+ keywords)
+- Smart categorization (statements, functions, operators, metacommands, OpenGL, types, legacy)
+- Real-time keyword validation with intelligent suggestions
+- Autocomplete support for partial keywords
+- Full-text search across keyword definitions and examples
+- Version compatibility checking (QBasic vs QB64 vs QB64PE)
+- Platform availability information
+- Syntax examples and related keyword suggestions
 
 ### 📚 **Resources & Prompts**
 - Quick access to QB64PE compiler reference
@@ -160,13 +181,141 @@ Get help with debugging QB64PE programs.
 
 **Arguments:**
 - `issue` (string): Description of the debugging issue
-- `codeContext` (string, optional): Relevant code context
+- `platform` (string, optional): Target platform
 
 **Example:**
 ```json
 {
   "issue": "Program crashes when reading file",
-  "codeContext": "OPEN \"data.txt\" FOR INPUT AS #1"
+  "platform": "windows"
+}
+```
+
+### 6. `validate_qb64pe_compatibility`
+Check code for QB64PE compatibility issues with detailed solutions.
+
+**Arguments:**
+- `code` (string): QB64PE code to check for compatibility issues
+- `platform` (string, optional): Target platform (windows, macos, linux, all)
+
+**Example:**
+```json
+{
+  "code": "FUNCTION Test(x AS INTEGER) AS INTEGER\\n    Test = x * 2\\nEND FUNCTION",
+  "platform": "all"
+}
+```
+
+### 7. `search_qb64pe_compatibility`
+Search for compatibility issues, solutions, and best practices.
+
+**Arguments:**
+- `query` (string): Search query for compatibility knowledge
+- `category` (string, optional): Specific compatibility category
+
+**Categories:**
+- `function_return_types`: Function declaration issues
+- `console_directives`: Console mode problems
+- `multi_statement_lines`: Multi-statement syntax issues
+- `array_declarations`: Array declaration limitations
+- `missing_functions`: Non-existent functions
+- `legacy_keywords`: Unsupported legacy keywords
+- `device_access`: Hardware/device access issues
+- `platform_specific`: Platform compatibility
+- `best_practices`: Coding guidelines
+- `debugging`: Debugging techniques
+
+**Example:**
+```json
+{
+  "query": "function return type sigil",
+  "category": "function_return_types"
+}
+```
+
+### 8. `get_qb64pe_best_practices`
+Get best practices and coding guidelines for QB64PE development.
+
+**Arguments:**
+- `topic` (string, optional): Specific topic for best practices
+
+**Topics:**
+- `syntax`: Language syntax guidelines
+- `debugging`: Debugging best practices
+- `performance`: Performance optimization
+- `cross_platform`: Cross-platform development
+- `code_organization`: Code structure and organization
+
+**Example:**
+```json
+{
+  "topic": "debugging"
+}
+```
+
+### 9. `lookup_qb64pe_keyword`
+Get detailed information about a specific QB64PE keyword.
+
+**Arguments:**
+- `keyword` (string): The QB64PE keyword to look up
+
+**Example:**
+```json
+{
+  "keyword": "PRINT"
+}
+```
+
+### 10. `autocomplete_qb64pe_keywords`
+Get autocomplete suggestions for QB64PE keywords.
+
+**Arguments:**
+- `prefix` (string): The partial keyword to autocomplete
+- `maxResults` (number, optional): Maximum number of suggestions (default: 10)
+
+**Example:**
+```json
+{
+  "prefix": "_MOU",
+  "maxResults": 5
+}
+```
+
+### 11. `get_qb64pe_keywords_by_category`
+Get all keywords in a specific category.
+
+**Arguments:**
+- `category` (string): The keyword category to retrieve
+
+**Categories:**
+- `statements`: QB64PE statements that perform actions
+- `functions`: QB64PE functions that return values
+- `operators`: Mathematical and logical operators
+- `metacommands`: Compiler directives starting with $
+- `opengl`: OpenGL graphics functions and statements
+- `types`: Data types and type suffixes
+- `constants`: Built-in constants and literals
+- `legacy`: Legacy QBasic keywords and compatibility items
+
+**Example:**
+```json
+{
+  "category": "functions"
+}
+```
+
+### 12. `search_qb64pe_keywords`
+Search for QB64PE keywords by name, description, or functionality.
+
+**Arguments:**
+- `query` (string): Search query for keywords
+- `maxResults` (number, optional): Maximum number of results (default: 20)
+
+**Example:**
+```json
+{
+  "query": "mouse position",
+  "maxResults": 10
 }
 ```
 
@@ -177,6 +326,18 @@ URI-based access to wiki search functionality.
 
 ### 2. `qb64pe://compiler/reference`
 Quick reference for all QB64PE compiler options and flags.
+
+### 3. `qb64pe://compatibility/`
+Comprehensive compatibility documentation and issue solutions.
+
+### 4. `qb64pe://keywords/`
+Complete QB64PE keywords reference with categorization and search.
+
+### 5. `qb64pe://keywords/category/{category}`
+Keywords filtered by specific category (statements, functions, operators, etc.).
+
+### 6. `qb64pe://keywords/detail/{keyword}`
+Detailed information about a specific QB64PE keyword.
 
 ## Available Prompts
 
@@ -202,6 +363,8 @@ Template for comprehensive QB64PE code review.
 - **Wiki Service**: QB64PE wiki integration with caching
 - **Compiler Service**: Compiler options and platform guidance  
 - **Syntax Service**: QB64PE syntax validation and analysis
+- **Compatibility Service**: Compatibility knowledge and validation
+- **Search Service**: Semantic search across compatibility content
 
 ### Service Details
 
@@ -222,6 +385,21 @@ Template for comprehensive QB64PE code review.
 - QB64PE-only syntax enforcement
 - Error detection and correction suggestions
 - Code quality scoring system
+- Compatibility issue detection
+
+#### Compatibility Service (`QB64PECompatibilityService`)
+- Comprehensive compatibility validation
+- Knowledge base search and retrieval
+- Best practices guidance
+- Platform compatibility checking
+- Legacy keyword detection
+- Function return type validation
+
+#### Search Service (`CompatibilitySearchService`)
+- Full-text search indexing
+- Term-based relevance scoring
+- Category and tag filtering
+- Semantic search capabilities
 
 ## Development
 
@@ -245,11 +423,23 @@ npm run dev
 src/
 ├── index.ts              # Main MCP server
 ├── services/
-│   ├── wiki-service.ts   # QB64PE wiki integration
-│   ├── compiler-service.ts # Compiler assistance
-│   └── syntax-service.ts # Syntax validation
-└── types/               # TypeScript type definitions
+│   ├── wiki-service.ts      # QB64PE wiki integration
+│   ├── compiler-service.ts  # Compiler assistance
+│   ├── syntax-service.ts    # Syntax validation
+│   ├── compatibility-service.ts # Compatibility validation
+│   ├── keywords-service.ts  # Keywords reference and validation
+│   └── search-service.ts    # Search indexing
+├── data/
+│   ├── compatibility-rules.json # Structured compatibility rules
+│   └── keywords-data.json   # Enhanced keywords database
+└── types/                   # TypeScript type definitions
 ```
+
+## Documentation
+
+- [Compatibility Integration Guide](./docs/COMPATIBILITY_INTEGRATION.md) - Detailed documentation of the compatibility validation system
+- [Keywords Integration Guide](./docs/KEYWORDS_INTEGRATION.md) - Comprehensive guide to the keywords reference system
+- [QB64PE Official Wiki](https://qb64phoenix.com/qb64wiki/) - Official QB64PE documentation
 
 ## Examples
 
@@ -279,11 +469,25 @@ NEXT x`,
 // Using the get_debugging_help tool
 {
   "issue": "Variables showing wrong values in loop",
-  "codeContext": `DIM i AS INTEGER
-FOR i = 1 TO 10
-    PRINT i
-    i = i + 1
-NEXT i`
+  "platform": "windows"
+}
+```
+
+### Example 4: Check Compatibility Issues
+```javascript
+// Using the validate_qb64pe_compatibility tool
+{
+  "code": "FUNCTION Test(x AS INTEGER) AS INTEGER\\n    Test = x * 2\\nEND FUNCTION",
+  "platform": "all"
+}
+```
+
+### Example 5: Search Compatibility Knowledge
+```javascript
+// Using the search_qb64pe_compatibility tool
+{
+  "query": "console directive",
+  "category": "console_directives"
 }
 ```
 
@@ -314,3 +518,9 @@ MIT License - see LICENSE file for details.
 - Syntax validation system
 - Debugging assistance tools
 - Cross-platform support guidance
+- **NEW**: Comprehensive compatibility validation
+- **NEW**: Compatibility knowledge base with search
+- **NEW**: Best practices guidance system
+- **NEW**: Platform-specific compatibility checking
+- **NEW**: Legacy BASIC keyword detection
+- **NEW**: Function return type validation

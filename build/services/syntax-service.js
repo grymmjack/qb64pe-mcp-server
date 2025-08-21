@@ -1,10 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.QB64PESyntaxService = void 0;
+const keywords_service_1 = require("./keywords-service");
 /**
  * Service for QB64PE syntax validation and analysis
  */
 class QB64PESyntaxService {
+    keywordsService;
+    constructor() {
+        this.keywordsService = new keywords_service_1.KeywordsService();
+    }
     qb64Keywords = new Set([
         // Core statements
         'PRINT', 'INPUT', 'DIM', 'FOR', 'NEXT', 'IF', 'THEN', 'ELSE', 'END', 'SUB', 'FUNCTION',
@@ -73,6 +78,8 @@ class QB64PESyntaxService {
         const errors = [];
         const warnings = [];
         const suggestions = [];
+        const compatibilityIssues = [];
+        const keywordIssues = [];
         // Perform different levels of checking
         switch (checkLevel) {
             case "strict":
@@ -87,14 +94,20 @@ class QB64PESyntaxService {
         }
         // Check for non-QB64PE syntax
         this.checkNonQB64Syntax(lines, errors, warnings);
+        // Check compatibility issues using built-in patterns
+        this.checkCompatibilityIssues(lines, compatibilityIssues);
+        // Validate keywords
+        this.validateKeywords(lines, keywordIssues);
         // Calculate syntax quality score
         const score = this.calculateSyntaxScore(lines, errors, warnings);
         return {
-            isValid: errors.filter(e => e.severity === 'error').length === 0,
+            isValid: errors.filter(e => e.severity === 'error').length === 0 && keywordIssues.filter(k => k.severity === 'error').length === 0,
             errors,
             warnings,
             suggestions,
-            score
+            score,
+            compatibilityIssues,
+            keywordIssues
         };
     }
     /**
@@ -147,6 +160,110 @@ class QB64PESyntaxService {
         this.performStrictValidation(lines, errors, warnings, suggestions);
         // Best practices checks
         this.checkBestPractices(lines, warnings, suggestions);
+    }
+    /**
+     * Check for compatibility issues using known patterns
+     */
+    checkCompatibilityIssues(lines, compatibilityIssues) {
+        // Define compatibility patterns based on the JSON rules
+        const patterns = [
+            {
+                pattern: /FUNCTION\s+(\w+)\s*\([^)]*\)\s+AS\s+(\w+)/gi,
+                severity: 'error',
+                category: 'function_return_types',
+                message: 'Function return types must use type sigils, not AS clauses',
+                suggestion: 'Use FUNCTION {name}{sigil}({params}) instead of FUNCTION {name}({params}) AS {type}',
+                examples: {
+                    incorrect: 'FUNCTION name(params) AS INTEGER',
+                    correct: 'FUNCTION name%(params)'
+                }
+            },
+            {
+                pattern: /\$CONSOLE\s*:\s*OFF/gi,
+                severity: 'error',
+                category: 'console_directives',
+                message: '$CONSOLE:OFF is not valid syntax',
+                suggestion: 'Use $CONSOLE or $CONSOLE:ONLY instead',
+                examples: {
+                    incorrect: '$CONSOLE:OFF',
+                    correct: '$CONSOLE'
+                }
+            },
+            {
+                pattern: /IF\s+[^\n]+\s+THEN\s+[^\n]+:\s*IF\s+[^\n]+\s+THEN/gi,
+                severity: 'warning',
+                category: 'multi_statement_lines',
+                message: 'Chained IF statements on one line can cause parsing errors',
+                suggestion: 'Split IF statements onto separate lines',
+                examples: {
+                    incorrect: 'IF r < 0 THEN r = 0: IF r > 255 THEN r = 255',
+                    correct: 'IF r < 0 THEN r = 0\nIF r > 255 THEN r = 255'
+                }
+            },
+            {
+                pattern: /DIM\s+\w+\s*\([^)]+\)\s+AS\s+\w+\s*,\s*\w+\s*\([^)]+\)\s+AS\s+\w+/gi,
+                severity: 'error',
+                category: 'array_declarations',
+                message: 'Multiple array declarations with dimensions on one line not supported',
+                suggestion: 'Declare each array on a separate line',
+                examples: {
+                    incorrect: 'DIM arr1(10) AS INTEGER, arr2(20) AS INTEGER',
+                    correct: 'DIM arr1(10) AS INTEGER\nDIM arr2(20) AS INTEGER'
+                }
+            },
+            {
+                pattern: /\b(_WORD\$|_TRIM\$)\b/gi,
+                severity: 'error',
+                category: 'missing_functions',
+                message: 'Function does not exist in QB64PE',
+                suggestion: 'Use built-in string functions like INSTR, MID$, LEFT$, RIGHT$ instead',
+                examples: {
+                    incorrect: '_WORD$(line$, 1, " ")',
+                    correct: 'Use INSTR and MID$ for string parsing'
+                }
+            },
+            {
+                pattern: /\b(DEF\s+FN|TRON|TROFF|SETMEM|SIGNAL)\b/gi,
+                severity: 'error',
+                category: 'legacy_keywords',
+                message: 'Legacy BASIC keyword not supported in QB64PE',
+                suggestion: 'Use modern QB64PE alternatives',
+                examples: {
+                    incorrect: 'DEF FN name(x) = x * 2',
+                    correct: 'FUNCTION name%(x AS INTEGER)\n    name% = x * 2\nEND FUNCTION'
+                }
+            },
+            {
+                pattern: /\b(ON\s+PEN|PEN\s+ON|PEN\s+OFF|ON\s+UEVENT)\b/gi,
+                severity: 'error',
+                category: 'device_access',
+                message: 'Device access keyword not supported in QB64PE',
+                suggestion: 'Use modern QB64PE input/output methods',
+                examples: {
+                    incorrect: 'ON PEN GOSUB handler',
+                    correct: 'Use _MOUSEINPUT and _MOUSEBUTTON for mouse input'
+                }
+            }
+        ];
+        lines.forEach((line, index) => {
+            const lineNum = index + 1;
+            patterns.forEach(patternDef => {
+                patternDef.pattern.lastIndex = 0; // Reset regex state
+                const match = patternDef.pattern.exec(line);
+                if (match) {
+                    compatibilityIssues.push({
+                        line: lineNum,
+                        column: match.index + 1,
+                        pattern: match[0],
+                        message: patternDef.message,
+                        severity: patternDef.severity,
+                        category: patternDef.category,
+                        suggestion: patternDef.suggestion,
+                        examples: patternDef.examples
+                    });
+                }
+            });
+        });
     }
     /**
      * Check for non-QB64PE syntax (VB, QBasic, etc.)
@@ -475,6 +592,140 @@ class QB64PESyntaxService {
         if (!hasErrorHandling && lines.length > 20) {
             suggestions.push("Consider adding error handling for larger programs");
         }
+    }
+    /**
+     * Validate keywords in code lines
+     */
+    validateKeywords(lines, keywordIssues) {
+        lines.forEach((line, lineIndex) => {
+            const trimmedLine = line.trim();
+            // Skip comments and empty lines
+            if (trimmedLine === '' || trimmedLine.startsWith("'") || trimmedLine.startsWith("REM")) {
+                return;
+            }
+            // Extract potential keywords (simplified tokenization)
+            const tokens = this.extractTokens(trimmedLine);
+            tokens.forEach((token, columnIndex) => {
+                // Skip strings, numbers, and operators
+                if (this.isStringLiteral(token) || this.isNumericLiteral(token) || this.isOperator(token)) {
+                    return;
+                }
+                // Check if token might be a keyword
+                const cleanToken = token.replace(/[(),$]/g, '').toUpperCase();
+                if (cleanToken.length > 1 && /^[A-Z_][A-Z0-9_]*$/.test(cleanToken)) {
+                    const validation = this.keywordsService.validateKeyword(cleanToken);
+                    if (!validation.isValid && validation.suggestions && validation.suggestions.length > 0) {
+                        // Only flag potential keywords, not all unknown words
+                        const isLikelyKeyword = this.isLikelyKeyword(cleanToken);
+                        if (isLikelyKeyword) {
+                            keywordIssues.push({
+                                line: lineIndex + 1,
+                                column: columnIndex + 1,
+                                keyword: cleanToken,
+                                message: `Unknown keyword "${cleanToken}". Did you mean one of: ${validation.suggestions.slice(0, 3).join(', ')}?`,
+                                severity: 'warning',
+                                suggestions: validation.suggestions.slice(0, 5)
+                            });
+                        }
+                    }
+                    else if (validation.isValid && validation.keyword) {
+                        // Check for deprecated keywords
+                        if (validation.keyword.deprecated) {
+                            keywordIssues.push({
+                                line: lineIndex + 1,
+                                column: columnIndex + 1,
+                                keyword: cleanToken,
+                                message: `Keyword "${cleanToken}" is deprecated.`,
+                                severity: 'warning',
+                                suggestions: validation.keyword.related || [],
+                                keywordInfo: validation.keyword
+                            });
+                        }
+                        // Check for version compatibility
+                        if (validation.keyword.version === 'QB64PE' && !cleanToken.startsWith('_')) {
+                            keywordIssues.push({
+                                line: lineIndex + 1,
+                                column: columnIndex + 1,
+                                keyword: cleanToken,
+                                message: `Keyword "${cleanToken}" is QB64PE specific and may not work in older BASIC versions.`,
+                                severity: 'info',
+                                suggestions: [],
+                                keywordInfo: validation.keyword
+                            });
+                        }
+                    }
+                }
+            });
+        });
+    }
+    /**
+     * Extract tokens from a line of code
+     */
+    extractTokens(line) {
+        // Simple tokenization - split by common delimiters but preserve strings
+        const tokens = [];
+        let current = '';
+        let inString = false;
+        let stringChar = '';
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            if (!inString && (char === '"' || char === "'")) {
+                if (current.trim())
+                    tokens.push(current.trim());
+                current = char;
+                inString = true;
+                stringChar = char;
+            }
+            else if (inString && char === stringChar) {
+                current += char;
+                tokens.push(current);
+                current = '';
+                inString = false;
+                stringChar = '';
+            }
+            else if (!inString && /[\s,();:=<>+\-*/\\^]/.test(char)) {
+                if (current.trim())
+                    tokens.push(current.trim());
+                if (char.trim())
+                    tokens.push(char);
+                current = '';
+            }
+            else {
+                current += char;
+            }
+        }
+        if (current.trim())
+            tokens.push(current.trim());
+        return tokens.filter(token => token.length > 0);
+    }
+    /**
+     * Check if a token is a string literal
+     */
+    isStringLiteral(token) {
+        return (token.startsWith('"') && token.endsWith('"')) ||
+            (token.startsWith("'") && token.endsWith("'"));
+    }
+    /**
+     * Check if a token is a numeric literal
+     */
+    isNumericLiteral(token) {
+        return /^[0-9.]+$/.test(token) || /^&[HOB][0-9A-F]+$/i.test(token);
+    }
+    /**
+     * Check if a token is an operator
+     */
+    isOperator(token) {
+        return /^[+\-*/\\^=<>(),:;]$/.test(token);
+    }
+    /**
+     * Check if a token is likely a keyword (heuristic)
+     */
+    isLikelyKeyword(token) {
+        // Keywords are typically all caps or start with underscore
+        return token === token.toUpperCase() &&
+            (token.startsWith('_') ||
+                token.length >= 3 ||
+                ['IF', 'DO', 'TO', 'AS', 'OR'].includes(token));
     }
     /**
      * Calculate syntax quality score

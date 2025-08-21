@@ -50,13 +50,32 @@ export class KeywordsService {
       const originalData = JSON.parse(fs.readFileSync(originalPath, 'utf-8'));
       this.originalKeywords = originalData.keywords;
 
-      // Try to load the enhanced keywords data, generate if not exists
+      // Try to load the enhanced keywords data, generate if not exists or incomplete
       const enhancedPath = path.join(__dirname, '../data/keywords-data.json');
+      let shouldRegenerate = false;
+      
       if (fs.existsSync(enhancedPath)) {
         this.keywordsData = JSON.parse(fs.readFileSync(enhancedPath, 'utf-8'));
+        // Check if we have all keywords from the original file
+        const originalKeywordCount = Object.keys(this.originalKeywords).length;
+        const enhancedKeywordCount = Object.keys(this.keywordsData.keywords).length;
+        
+        console.log(`Original keywords: ${originalKeywordCount}, Enhanced keywords: ${enhancedKeywordCount}`);
+        
+        // Regenerate if we're missing keywords or have significantly fewer
+        if (enhancedKeywordCount < originalKeywordCount * 0.9) {
+          console.log('Enhanced keywords data is incomplete, regenerating...');
+          shouldRegenerate = true;
+        }
       } else {
+        shouldRegenerate = true;
+      }
+      
+      if (shouldRegenerate) {
+        console.log('Generating enhanced keywords data...');
         this.keywordsData = this.generateEnhancedKeywordsData();
         this.saveEnhancedKeywordsData();
+        console.log(`Generated ${Object.keys(this.keywordsData.keywords).length} enhanced keywords`);
       }
     } catch (error) {
       console.error('Error loading keywords data:', error);
@@ -75,29 +94,52 @@ export class KeywordsService {
     // OpenGL functions start with _gl
     if (name.startsWith('_gl')) return 'opengl';
     
-    // Check for operators
-    if (['+', '-', '*', '/', '\\', '^', '=', '<', '>', '&', '|', '~', 'MOD', 'AND', 'OR', 'XOR', 'NOT', 'EQV', 'IMP'].includes(name)) {
+    // Check for operators - expanded list
+    const operators = ['+', '-', '*', '/', '\\', '^', '=', '<', '>', '&', '|', '~', 'MOD', 'AND', 'OR', 'XOR', 'NOT', 'EQV', 'IMP', 
+                      '_ANDALSO', '_ORELSE', '_NEGATE', 'AND (boolean)', 'OR (boolean)', 'XOR (boolean)'];
+    if (operators.includes(name) || operators.includes(name.replace(' (boolean)', ''))) {
       return 'operator';
     }
     
-    // Check for data types
-    if (['INTEGER', 'LONG', 'SINGLE', 'DOUBLE', 'STRING', '_BIT', '_BYTE', '_INTEGER64', '_FLOAT', '_UNSIGNED', '_OFFSET'].includes(name)) {
+    // Check for data types - expanded list
+    const types = ['INTEGER', 'LONG', 'SINGLE', 'DOUBLE', 'STRING', '_BIT', '_BYTE', '_INTEGER64', '_FLOAT', '_UNSIGNED', '_OFFSET', 
+                  '_MEM', 'ABSOLUTE', '_MEM (function)', 'OPTION _EXPLICIT', 'OPTION _EXPLICITARRAY'];
+    if (types.includes(name) || name.includes('numerical type') || name.includes('variable type')) {
       return 'type';
     }
     
-    // Check if it's a function (returns a value)
-    if (lowerDesc.includes('function') || lowerDesc.includes('returns') || name.endsWith('$') || name.endsWith('(function)')) {
+    // Constants and predefined values
+    if (name.includes('_PI') || name.includes('_MIDDLE') || name.includes('BASE') || 
+        lowerDesc.includes('constant') || lowerDesc.includes('predefined')) {
+      return 'constant';
+    }
+    
+    // Check if it's explicitly marked as a function
+    if (name.endsWith('(function)') || name.endsWith(' (function)') || 
+        lowerDesc.startsWith('(function)') || 
+        (lowerDesc.includes('function') && lowerDesc.includes('returns')) ||
+        name.endsWith('$') && !name.startsWith('$')) {
       return 'function';
     }
     
-    // Check if it's a statement
-    if (lowerDesc.includes('statement') || lowerDesc.includes('(statement)')) {
+    // Check if it's explicitly marked as a statement  
+    if (name.endsWith('(statement)') || name.endsWith(' (statement)') || 
+        lowerDesc.startsWith('(statement)') ||
+        (lowerDesc.includes('statement') && !lowerDesc.includes('function'))) {
       return 'statement';
     }
     
     // Legacy or compatibility items
-    if (lowerDesc.includes('legacy') || lowerDesc.includes('compatibility') || lowerDesc.includes('qbasic')) {
+    if (lowerDesc.includes('legacy') || lowerDesc.includes('compatibility') || 
+        lowerDesc.includes('deprecated') || lowerDesc.includes('qbasic only')) {
       return 'legacy';
+    }
+    
+    // Function indicators - broader detection
+    if (lowerDesc.includes('returns') && !lowerDesc.includes('statement') ||
+        name.endsWith('$') ||
+        lowerDesc.match(/returns?\s+(-?\d+|true|false|the|a|an)/i)) {
+      return 'function';
     }
     
     // Default to statement for most QB64PE keywords
@@ -125,7 +167,27 @@ export class KeywordsService {
   }
 
   private generateSyntax(name: string, description: string, type: KeywordInfo['type']): string {
-    const cleanName = name.replace(' (function)', '').replace(' (statement)', '');
+    const cleanName = name.replace(' (function)', '').replace(' (statement)', '').replace(' (boolean)', '');
+    
+    // Special cases for specific keywords
+    const syntaxMap: Record<string, string> = {
+      'IF...THEN': 'IF condition THEN\n  statements\n[ELSEIF condition THEN\n  statements]\n[ELSE\n  statements]\nEND IF',
+      'FOR...NEXT': 'FOR variable = start TO end [STEP increment]\n  statements\nNEXT [variable]',
+      'DO...LOOP': 'DO [WHILE|UNTIL condition]\n  statements\nLOOP [WHILE|UNTIL condition]',
+      'SELECT CASE': 'SELECT CASE expression\n  CASE value\n    statements\n  CASE ELSE\n    statements\nEND SELECT',
+      'WHILE...WEND': 'WHILE condition\n  statements\nWEND',
+      'SUB': 'SUB name[(parameters)]\n  statements\nEND SUB',
+      'FUNCTION': 'FUNCTION name[(parameters)] [AS type]\n  statements\n  name = return_value\nEND FUNCTION',
+      'TYPE': 'TYPE type_name\n  element AS type\nEND TYPE',
+      'DECLARE LIBRARY (QB64 statement block)': 'DECLARE LIBRARY ["library_file"]\n  FUNCTION|SUB name ALIAS "actual_name" (parameters)\nEND DECLARE',
+      '_MEM': 'DIM mem_var AS _MEM',
+      'OPTION _EXPLICIT': 'OPTION _EXPLICIT',
+      'OPTION _EXPLICITARRAY': 'OPTION _EXPLICITARRAY'
+    };
+
+    if (syntaxMap[name]) {
+      return syntaxMap[name];
+    }
     
     if (type === 'function') {
       if (cleanName.endsWith('$')) {
@@ -139,33 +201,106 @@ export class KeywordsService {
     }
     
     if (type === 'operator') {
+      if (['AND (boolean)', 'OR (boolean)', 'XOR (boolean)'].includes(name)) {
+        return `IF condition1 ${cleanName.replace(' (boolean)', '')} condition2 THEN`;
+      }
       return `result = operand1 ${cleanName} operand2`;
     }
     
     if (type === 'type') {
+      if (cleanName.includes('%') || cleanName.includes('&') || cleanName.includes('#') || cleanName.includes('!') || cleanName.includes('$')) {
+        return `DIM variable${cleanName.slice(-1)}`;
+      }
       return `DIM variable AS ${cleanName}`;
+    }
+    
+    if (type === 'constant') {
+      return cleanName;
     }
     
     return `${cleanName} [parameters]`;
   }
 
-  private generateExample(name: string, type: KeywordInfo['type']): string {
-    const cleanName = name.replace(' (function)', '').replace(' (statement)', '');
+  private generateExample(name: string, type: KeywordInfo['type'], description: string): string {
+    const cleanName = name.replace(' (function)', '').replace(' (statement)', '').replace(' (boolean)', '');
+    
+    // Special examples for complex keywords
+    const exampleMap: Record<string, string> = {
+      'IF...THEN': 'IF x > 10 THEN\n    PRINT "Greater than 10"\nELSE\n    PRINT "10 or less"\nEND IF',
+      'FOR...NEXT': 'FOR i = 1 TO 10\n    PRINT i\nNEXT i',
+      'DO...LOOP': 'DO\n    x = x + 1\nLOOP WHILE x < 10',
+      'SELECT CASE': 'SELECT CASE day\n    CASE 1\n        PRINT "Monday"\n    CASE 2\n        PRINT "Tuesday"\n    CASE ELSE\n        PRINT "Other day"\nEND SELECT',
+      'WHILE...WEND': 'WHILE x < 10\n    x = x + 1\nWEND',
+      'PRINT': 'PRINT "Hello, World!"\nPRINT "Number:"; 42',
+      '_ACCEPTFILEDROP': '_ACCEPTFILEDROP\nIF _TOTALDROPPEDFILES > 0 THEN\n    FOR i = 1 TO _TOTALDROPPEDFILES\n        PRINT _DROPPEDFILE(i)\n    NEXT\n    _FINISHDROP\nEND IF',
+      'SCREEN': 'SCREEN _NEWIMAGE(800, 600, 32)\nSCREEN 13 \' Legacy 320x200 mode',
+      'COLOR': 'COLOR 15, 1 \' White text on blue background\nCOLOR _RGB32(255, 0, 0) \' Red text',
+      'CIRCLE': 'CIRCLE (100, 100), 50 \' Circle at (100,100) with radius 50\nCIRCLE (200, 200), 30, _RGB32(255, 0, 0) \' Red circle',
+      'LINE': 'LINE (0, 0)-(100, 100) \' Diagonal line\nLINE (50, 50)-(150, 100), _RGB32(0, 255, 0), BF \' Green filled box'
+    };
+
+    if (exampleMap[name]) {
+      return exampleMap[name];
+    }
     
     switch (type) {
       case 'function':
         if (cleanName.endsWith('$')) {
+          if (cleanName.includes('INPUT')) {
+            return `text$ = ${cleanName}(10) \' Read 10 characters`;
+          }
+          if (cleanName.includes('CHR')) {
+            return `char$ = ${cleanName}(65) \' Returns "A"`;
+          }
+          if (cleanName.includes('HEX')) {
+            return `hex$ = ${cleanName}(255) \' Returns "FF"`;
+          }
           return `text$ = ${cleanName}()`;
+        }
+        if (cleanName.includes('_RGB')) {
+          return `color& = ${cleanName}(255, 0, 0) \' Red color`;
+        }
+        if (cleanName.includes('TIMER')) {
+          return `seconds! = ${cleanName} \' Current time in seconds`;
+        }
+        if (cleanName.includes('RND')) {
+          return `random_num = ${cleanName} \' Random number 0 to 1`;
         }
         return `value = ${cleanName}()`;
       case 'statement':
+        if (cleanName.includes('PRINT')) {
+          return `${cleanName} "Hello, World!"`;
+        }
+        if (cleanName.includes('INPUT')) {
+          return `${cleanName} "Enter value: ", userValue`;
+        }
+        if (cleanName.includes('DIM')) {
+          return `${cleanName} myArray(10) AS INTEGER`;
+        }
         return `${cleanName}`;
       case 'metacommand':
+        if (cleanName.includes('INCLUDE')) {
+          return `'${cleanName}: 'mylib.bi'`;
+        }
+        if (cleanName.includes('CONSOLE')) {
+          return `'${cleanName}:ONLY`;
+        }
         return `'${cleanName}:`;
       case 'operator':
+        if (['AND', 'OR', 'XOR'].some(op => cleanName.includes(op))) {
+          return `IF condition1 ${cleanName.replace(' (boolean)', '')} condition2 THEN`;
+        }
         return `result = a ${cleanName} b`;
       case 'type':
+        if (cleanName === '_MEM') {
+          return `DIM buffer AS ${cleanName}`;
+        }
         return `DIM myVar AS ${cleanName}`;
+      case 'opengl':
+        if (cleanName === '_glBegin') {
+          return `${cleanName} _GL_TRIANGLES\n_glVertex3f 0, 1, 0\n_glVertex3f -1, -1, 0\n_glVertex3f 1, -1, 0\n_glEnd`;
+        }
+        return `${cleanName}`;
       default:
         return `${cleanName}`;
     }
@@ -179,26 +314,99 @@ export class KeywordsService {
     const descWords = description.toLowerCase().split(/[\s,._()]+/);
     
     for (const keyword of keywords) {
-      const cleanKeyword = keyword.replace(' (function)', '').replace(' (statement)', '');
+      const cleanKeyword = keyword.replace(' (function)', '').replace(' (statement)', '').replace(' (boolean)', '');
       if (cleanKeyword !== name && descWords.includes(cleanKeyword.toLowerCase())) {
         related.push(cleanKeyword);
       }
     }
     
-    // Add some common relationships
-    if (name.startsWith('_gl') && name !== '_glBegin') {
-      related.push('_glBegin', '_glEnd', 'SUB _GL');
+    // Add specific relationships based on keyword patterns and categories
+    const cleanName = name.replace(' (function)', '').replace(' (statement)', '').replace(' (boolean)', '');
+    
+    // OpenGL relationships
+    if (cleanName.startsWith('_gl') && cleanName !== '_glBegin') {
+      if (!related.includes('_glBegin')) related.push('_glBegin');
+      if (!related.includes('_glEnd')) related.push('_glEnd');
+      if (!related.includes('SUB _GL')) related.push('SUB _GL');
     }
     
-    if (name.includes('COLOR')) {
-      related.push('_RGB32', '_RGBA32', 'COLOR');
+    // Color relationships
+    if (cleanName.includes('COLOR') || cleanName.includes('_RGB') || cleanName.includes('_RED') || 
+        cleanName.includes('_GREEN') || cleanName.includes('_BLUE') || cleanName.includes('_ALPHA')) {
+      ['_RGB32', '_RGBA32', 'COLOR', '_RED32', '_GREEN32', '_BLUE32', '_ALPHA32'].forEach(rel => {
+        if (rel !== cleanName && !related.includes(rel)) related.push(rel);
+      });
     }
     
-    if (name.includes('SCREEN')) {
-      related.push('SCREEN', '_NEWIMAGE', '_LOADIMAGE');
+    // Screen and image relationships
+    if (cleanName.includes('SCREEN') || cleanName.includes('_NEWIMAGE') || cleanName.includes('_LOADIMAGE') ||
+        cleanName.includes('_DISPLAY') || cleanName.includes('_PUTIMAGE')) {
+      ['SCREEN', '_NEWIMAGE', '_LOADIMAGE', '_DISPLAY', '_PUTIMAGE', '_FREEIMAGE'].forEach(rel => {
+        if (rel !== cleanName && !related.includes(rel)) related.push(rel);
+      });
     }
     
-    return related.slice(0, 5); // Limit to 5 related keywords
+    // File operations relationships
+    if (cleanName.includes('FILE') || cleanName.includes('OPEN') || cleanName.includes('CLOSE') ||
+        cleanName.includes('INPUT') || cleanName.includes('OUTPUT') || cleanName.includes('PRINT')) {
+      ['OPEN', 'CLOSE', 'INPUT', 'OUTPUT', 'PRINT', 'GET', 'PUT', 'EOF', 'LOF'].forEach(rel => {
+        if (rel !== cleanName && !related.includes(rel)) related.push(rel);
+      });
+    }
+    
+    // Math function relationships
+    if (cleanName.includes('SIN') || cleanName.includes('COS') || cleanName.includes('TAN') ||
+        cleanName.includes('_ASIN') || cleanName.includes('_ACOS') || cleanName.includes('ATN')) {
+      ['SIN', 'COS', 'TAN', 'ATN', '_ASIN', '_ACOS', '_ATAN2', '_D2R', '_R2D'].forEach(rel => {
+        if (rel !== cleanName && !related.includes(rel)) related.push(rel);
+      });
+    }
+    
+    // String function relationships
+    if (cleanName.includes('LEFT$') || cleanName.includes('RIGHT$') || cleanName.includes('MID$') ||
+        cleanName.includes('LEN') || cleanName.includes('INSTR') || cleanName.includes('CHR$')) {
+      ['LEFT$', 'RIGHT$', 'MID$', 'LEN', 'INSTR', 'CHR$', 'ASC', 'VAL', 'STR$'].forEach(rel => {
+        if (rel !== cleanName && !related.includes(rel)) related.push(rel);
+      });
+    }
+    
+    // Sound relationships
+    if (cleanName.includes('_SND') || cleanName.includes('SOUND') || cleanName.includes('PLAY')) {
+      ['_SNDOPEN', '_SNDPLAY', '_SNDSTOP', '_SNDCLOSE', 'SOUND', 'PLAY'].forEach(rel => {
+        if (rel !== cleanName && !related.includes(rel)) related.push(rel);
+      });
+    }
+    
+    // Memory relationships
+    if (cleanName.includes('_MEM') || cleanName.includes('PEEK') || cleanName.includes('POKE')) {
+      ['_MEM', '_MEMGET', '_MEMPUT', '_MEMFREE', '_MEMNEW', 'PEEK', 'POKE'].forEach(rel => {
+        if (rel !== cleanName && !related.includes(rel)) related.push(rel);
+      });
+    }
+    
+    // Timer relationships
+    if (cleanName.includes('TIMER') || cleanName.includes('_DELAY') || cleanName.includes('SLEEP')) {
+      ['TIMER', '_DELAY', 'SLEEP', '_LIMIT', 'ON TIMER'].forEach(rel => {
+        if (rel !== cleanName && !related.includes(rel)) related.push(rel);
+      });
+    }
+    
+    // Control flow relationships
+    if (cleanName.includes('IF') || cleanName.includes('FOR') || cleanName.includes('DO') ||
+        cleanName.includes('WHILE') || cleanName.includes('SELECT')) {
+      ['IF...THEN', 'FOR...NEXT', 'DO...LOOP', 'WHILE...WEND', 'SELECT CASE'].forEach(rel => {
+        if (rel !== cleanName && !related.includes(rel)) related.push(rel);
+      });
+    }
+    
+    // Mouse and keyboard relationships
+    if (cleanName.includes('_MOUSE') || cleanName.includes('_KEY') || cleanName.includes('INKEY')) {
+      ['_MOUSEINPUT', '_MOUSEX', '_MOUSEY', '_MOUSEBUTTON', '_KEYHIT', '_KEYDOWN', 'INKEY$'].forEach(rel => {
+        if (rel !== cleanName && !related.includes(rel)) related.push(rel);
+      });
+    }
+    
+    return related.slice(0, 8); // Limit to 8 related keywords
   }
 
   private generateEnhancedKeywordsData(): KeywordsData {
@@ -217,13 +425,14 @@ export class KeywordsService {
     };
 
     for (const [name, description] of Object.entries(this.originalKeywords)) {
-      const cleanName = name.replace(' (function)', '').replace(' (statement)', '');
-      const type = this.categorizeKeyword(cleanName, description);
+      const cleanName = name.replace(' (function)', '').replace(' (statement)', '').replace(' (boolean)', '');
+      const type = this.categorizeKeyword(name, description); // Pass original name for better categorization
       const category = type === 'opengl' ? 'opengl' : 
                      type === 'metacommand' ? 'metacommands' :
                      type === 'operator' ? 'operators' :
                      type === 'type' ? 'types' :
                      type === 'function' ? 'functions' :
+                     type === 'constant' ? 'constants' :
                      type === 'legacy' ? 'legacy' : 'statements';
 
       const keywordInfo: KeywordInfo = {
@@ -231,18 +440,24 @@ export class KeywordsService {
         type,
         category,
         description: description.replace(/^\([^)]+\)\s*/, ''), // Remove type prefix
-        syntax: this.generateSyntax(cleanName, description, type),
+        syntax: this.generateSyntax(name, description, type), // Pass original name for better syntax
         parameters: [], // Will be enhanced later
         returns: type === 'function' ? 'VALUE' : null,
-        example: this.generateExample(cleanName, type),
+        example: this.generateExample(name, type, description), // Pass original name for better examples
         related: this.findRelatedKeywords(cleanName, description),
         version: this.extractVersion(cleanName, description),
         availability: this.extractAvailability(cleanName, description),
         tags: [type, category]
       };
 
-      data.keywords[cleanName] = keywordInfo;
-      data.categories[category].keywords.push(cleanName);
+      // Handle special cases where we want to keep the full name
+      if (name.includes('(boolean)')) {
+        keywordInfo.name = name; // Keep the full name for boolean operators
+        keywordInfo.aliases = [cleanName]; // Add clean name as alias
+      }
+
+      data.keywords[keywordInfo.name] = keywordInfo;
+      data.categories[category].keywords.push(keywordInfo.name);
     }
 
     return data;
@@ -250,8 +465,23 @@ export class KeywordsService {
 
   private saveEnhancedKeywordsData(): void {
     try {
-      const enhancedPath = path.join(__dirname, '../data/keywords-data.json');
-      fs.writeFileSync(enhancedPath, JSON.stringify(this.keywordsData, null, 2));
+      // Save to both src and build directories
+      const srcPath = path.join(__dirname, '../data/keywords-data.json');
+      const buildPath = path.join(__dirname, '../../build/data/keywords-data.json');
+      
+      const dataStr = JSON.stringify(this.keywordsData, null, 2);
+      
+      // Ensure directories exist
+      const srcDir = path.dirname(srcPath);
+      const buildDir = path.dirname(buildPath);
+      if (!fs.existsSync(srcDir)) fs.mkdirSync(srcDir, { recursive: true });
+      if (!fs.existsSync(buildDir)) fs.mkdirSync(buildDir, { recursive: true });
+      
+      // Save to both locations
+      fs.writeFileSync(srcPath, dataStr);
+      fs.writeFileSync(buildPath, dataStr);
+      
+      console.log(`Enhanced keywords data saved to both src and build directories`);
     } catch (error) {
       console.error('Error saving enhanced keywords data:', error);
     }
@@ -376,5 +606,43 @@ export class KeywordsService {
   public getDeprecatedKeywords(): KeywordInfo[] {
     return Object.values(this.keywordsData.keywords)
       .filter(keyword => keyword.deprecated === true);
+  }
+
+  public regenerateKeywordsData(): void {
+    console.log('Force regenerating keywords data...');
+    this.keywordsData = this.generateEnhancedKeywordsData();
+    this.saveEnhancedKeywordsData();
+    console.log(`Regenerated ${Object.keys(this.keywordsData.keywords).length} keywords`);
+  }
+
+  public getKeywordCount(): number {
+    return Object.keys(this.keywordsData.keywords).length;
+  }
+
+  public getOriginalKeywordCount(): number {
+    return Object.keys(this.originalKeywords).length;
+  }
+
+  public getCategoryStats(): Record<string, number> {
+    const stats: Record<string, number> = {};
+    for (const [category, categoryData] of Object.entries(this.keywordsData.categories)) {
+      stats[category] = categoryData.keywords.length;
+    }
+    return stats;
+  }
+
+  public getKeywordsByTag(tag: string): KeywordInfo[] {
+    return Object.values(this.keywordsData.keywords)
+      .filter(keyword => keyword.tags?.includes(tag));
+  }
+
+  public getQB64PESpecificKeywords(): KeywordInfo[] {
+    return Object.values(this.keywordsData.keywords)
+      .filter(keyword => keyword.version === 'QB64PE' || keyword.version === 'QB64');
+  }
+
+  public getLegacyKeywords(): KeywordInfo[] {
+    return Object.values(this.keywordsData.keywords)
+      .filter(keyword => keyword.version === 'QBasic' || keyword.type === 'legacy');
   }
 }

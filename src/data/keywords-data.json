@@ -22164,6 +22164,183 @@
         "statement",
         "statements"
       ]
+    },
+    "VARIABLE_TYPES_COMPREHENSIVE": {
+      "name": "VARIABLE_TYPES_COMPREHENSIVE",
+      "type": "reference",
+      "category": "types",
+      "description": "Comprehensive reference for all QB64PE variable types, sigils, memory sizes, and patterns",
+      "syntax": "DIM variable AS type | DIM variableSigil",
+      "parameters": [],
+      "returns": null,
+      "example": "DIM name$ AS STRING, DIM count% AS INTEGER, DIM AS LONG value1, value2",
+      "related": [
+        "DIM",
+        "_UNSIGNED",
+        "_DEFINE",
+        "DEFINT",
+        "DEFSNG",
+        "DEFDBL",
+        "DEFSTR",
+        "DEFLNG"
+      ],
+      "version": "QB64PE",
+      "availability": "All platforms",
+      "tags": [
+        "types",
+        "variables",
+        "memory",
+        "sigils"
+      ],
+      "extended_info": {
+        "type_sigils": {
+          "$": {
+            "type": "STRING",
+            "size_bytes": "variable",
+            "range": "ASCII 0-255 characters",
+            "example": "name$",
+            "memory_usage": "length + string overhead"
+          },
+          "%": {
+            "type": "INTEGER", 
+            "size_bytes": 2,
+            "range": "-32,768 to 32,767",
+            "unsigned_range": "0 to 65,535",
+            "example": "count%",
+            "unsigned_example": "uCount~%"
+          },
+          "&": {
+            "type": "LONG",
+            "size_bytes": 4,
+            "range": "-2,147,483,648 to 2,147,483,647",
+            "unsigned_range": "0 to 4,294,967,295",
+            "example": "bigNum&",
+            "unsigned_example": "uBig~&"
+          },
+          "!": {
+            "type": "SINGLE",
+            "size_bytes": 4,
+            "range": "±3.4E±38 (7 digits precision)",
+            "example": "price!",
+            "note": "Floating-point type"
+          },
+          "#": {
+            "type": "DOUBLE",
+            "size_bytes": 8,
+            "range": "±1.7E±308 (15 digits precision)",
+            "example": "precise#",
+            "note": "Double precision floating-point"
+          },
+          "##": {
+            "type": "_FLOAT",
+            "size_bytes": 32,
+            "range": "Maximum floating-point precision",
+            "example": "maxFloat##",
+            "note": "QB64PE maximum precision type"
+          },
+          "&&": {
+            "type": "_INTEGER64",
+            "size_bytes": 8,
+            "range": "-9,223,372,036,854,775,808 to 9,223,372,036,854,775,807",
+            "unsigned_range": "0 to 18,446,744,073,709,551,615",
+            "example": "huge&&",
+            "unsigned_example": "uHuge~&&"
+          },
+          "%%": {
+            "type": "_BYTE",
+            "size_bytes": 1,
+            "range": "-128 to 127",
+            "unsigned_range": "0 to 255",
+            "example": "small%%",
+            "unsigned_example": "uSmall~%%"
+          },
+          "`": {
+            "type": "_BIT",
+            "size_bytes": 0.125,
+            "range": "0 or -1 (signed)",
+            "unsigned_range": "0 or 1",
+            "example": "flag`",
+            "unsigned_example": "uFlag~`",
+            "note": "Backtick character (CHR$(96))"
+          },
+          "%&": {
+            "type": "_OFFSET",
+            "size_bytes": "platform-dependent (4 or 8)",
+            "range": "Memory address pointer",
+            "example": "address%&",
+            "unsigned_example": "uAddress~%&",
+            "note": "Used for memory operations"
+          }
+        },
+        "dim_patterns": {
+          "single_variable": "DIM variable AS type",
+          "multiple_same_type": "DIM AS type var1, var2, var3",
+          "multiple_mixed_types": "DIM AS type1 var1, AS type2 var2, AS type3 var3",
+          "arrays_static": "DIM array(size) AS type",
+          "arrays_dynamic": "DIM array() AS type",
+          "arrays_multi_dim": "DIM array(x, y, z) AS type",
+          "arrays_with_bounds": "DIM array(0 TO 10, 1 TO 20) AS type",
+          "fixed_length_strings": "DIM variable AS STRING * length",
+          "examples": [
+            "DIM AS INTEGER foo, bar, baz",
+            "DIM AS LONG count, total, sum",
+            "DIM AS DOUBLE x, y, z",
+            "DIM AS STRING name, address, city",
+            "DIM AS _UNSIGNED INTEGER width, height",
+            "DIM AS _UNSIGNED LONG largeNumber",
+            "DIM numbers(10) AS INTEGER",
+            "DIM names(100) AS STRING * 50",
+            "DIM AS _UNSIGNED _BYTE red, green, blue",
+            "DIM AS _FLOAT preciseValue"
+          ]
+        },
+        "unsigned_convention": {
+          "sigil_method": "Use ~ before type sigil (e.g., ~%, ~&, ~&&)",
+          "keyword_method": "Use _UNSIGNED AS keyword (e.g., AS _UNSIGNED INTEGER)",
+          "benefits": "Doubles positive range, useful for counters and indices",
+          "examples": {
+            "sigil_form": [
+              "DIM positiveCount~%",
+              "DIM largeValue~&",
+              "DIM hugeNumber~&&",
+              "DIM byteValue~%%",
+              "DIM bitFlag~`"
+            ],
+            "keyword_form": [
+              "DIM AS _UNSIGNED INTEGER positiveCount",
+              "DIM AS _UNSIGNED LONG largeValue",
+              "DIM AS _UNSIGNED _INTEGER64 hugeNumber",
+              "DIM AS _UNSIGNED _BYTE byteValue",
+              "DIM AS _UNSIGNED _BIT bitFlag"
+            ]
+          }
+        },
+        "memory_calculations": {
+          "formula": "Array memory = elements × type_size_bytes",
+          "examples": {
+            "_BYTE array(1000)": "1,000 bytes",
+            "INTEGER array(1000)": "2,000 bytes",
+            "LONG array(1000)": "4,000 bytes",
+            "DOUBLE array(1000)": "8,000 bytes",
+            "_INTEGER64 array(1000)": "8,000 bytes",
+            "_FLOAT array(1000)": "32,000 bytes"
+          },
+          "optimization_tips": [
+            "Use smaller types when range permits",
+            "Consider unsigned types for positive-only values",
+            "_BYTE arrays use 8x less memory than _INTEGER64 arrays",
+            "STRING * fixed length can be more efficient than variable strings"
+          ]
+        },
+        "performance_characteristics": {
+          "fastest": ["_BYTE", "_UNSIGNED _BYTE", "INTEGER", "_UNSIGNED INTEGER"],
+          "standard": ["LONG", "_UNSIGNED LONG", "SINGLE"],
+          "precision": ["DOUBLE", "_INTEGER64", "_UNSIGNED _INTEGER64"], 
+          "slowest": ["_FLOAT"],
+          "memory_efficient": ["_BIT", "_BYTE", "INTEGER"],
+          "notes": "Smaller types improve cache performance but may have conversion overhead"
+        }
+      }
     }
   }
 }

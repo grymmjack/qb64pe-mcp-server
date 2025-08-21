@@ -1509,5 +1509,228 @@
       "message": "REDIM SHARED used within procedure affects global array",
       "suggestion": "Consider if global array modification is intended or use local array instead"
     }
+  },
+  "variable_types": {
+    "description": "Comprehensive information about QB64PE variable types, sigils, memory sizes, and conventions",
+    "type_definitions": {
+      "basic_types": {
+        "STRING": {
+          "sigil": "$",
+          "size": "variable",
+          "memory_bytes": "length + overhead",
+          "range": "ASCII 0-255 characters",
+          "example": "name$",
+          "usage": "Text and character data"
+        },
+        "INTEGER": {
+          "sigil": "%",
+          "size": "2 bytes",
+          "memory_bytes": 2,
+          "range": "-32,768 to 32,767",
+          "example": "count%",
+          "usage": "Small whole numbers"
+        },
+        "LONG": {
+          "sigil": "&",
+          "size": "4 bytes", 
+          "memory_bytes": 4,
+          "range": "-2,147,483,648 to 2,147,483,647",
+          "example": "bigNum&",
+          "usage": "Standard integer calculations"
+        },
+        "SINGLE": {
+          "sigil": "!",
+          "size": "4 bytes",
+          "memory_bytes": 4,
+          "range": "±3.4E±38 (7 digits precision)",
+          "example": "price!",
+          "usage": "Floating-point calculations"
+        },
+        "DOUBLE": {
+          "sigil": "#",
+          "size": "8 bytes",
+          "memory_bytes": 8,
+          "range": "±1.7E±308 (15 digits precision)",
+          "example": "precise#",
+          "usage": "High-precision calculations"
+        }
+      },
+      "qb64_types": {
+        "_FLOAT": {
+          "sigil": "##",
+          "size": "32 bytes",
+          "memory_bytes": 32,
+          "range": "Maximum floating-point precision",
+          "example": "maxFloat##",
+          "usage": "Extreme precision calculations"
+        },
+        "_INTEGER64": {
+          "sigil": "&&",
+          "size": "8 bytes",
+          "memory_bytes": 8,
+          "range": "-9,223,372,036,854,775,808 to 9,223,372,036,854,775,807",
+          "example": "huge&&",
+          "usage": "Very large integer values"
+        },
+        "_BYTE": {
+          "sigil": "%%",
+          "size": "1 byte",
+          "memory_bytes": 1,
+          "range": "-128 to 127",
+          "example": "small%%",
+          "usage": "Small values, memory optimization"
+        },
+        "_BIT": {
+          "sigil": "`",
+          "size": "1 bit",
+          "memory_bytes": 0.125,
+          "range": "0 or -1 (signed), 0 or 1 (unsigned)",
+          "example": "flag`",
+          "usage": "Boolean flags and bit operations"
+        },
+        "_OFFSET": {
+          "sigil": "%&",
+          "size": "platform-dependent",
+          "memory_bytes": "4 or 8",
+          "range": "Memory address pointer",
+          "example": "address%&",
+          "usage": "Memory operations and pointers"
+        },
+        "_MEM": {
+          "sigil": "none",
+          "size": "structure",
+          "memory_bytes": "fixed structure size",
+          "range": "Contains OFFSET, SIZE, TYPE, ELEMENTSIZE",
+          "example": "memBlock AS _MEM",
+          "usage": "Memory block operations"
+        }
+      },
+      "unsigned_types": {
+        "description": "All numeric types can be made unsigned using ~ prefix or _UNSIGNED keyword",
+        "convention": "~ before sigil or _UNSIGNED AS keyword",
+        "examples": {
+          "_UNSIGNED INTEGER": {
+            "sigil_form": "~%",
+            "keyword_form": "AS _UNSIGNED INTEGER",
+            "range": "0 to 65,535",
+            "memory_bytes": 2
+          },
+          "_UNSIGNED LONG": {
+            "sigil_form": "~&",
+            "keyword_form": "AS _UNSIGNED LONG",
+            "range": "0 to 4,294,967,295",
+            "memory_bytes": 4
+          },
+          "_UNSIGNED _BYTE": {
+            "sigil_form": "~%%",
+            "keyword_form": "AS _UNSIGNED _BYTE",
+            "range": "0 to 255",
+            "memory_bytes": 1
+          },
+          "_UNSIGNED _BIT": {
+            "sigil_form": "~`",
+            "keyword_form": "AS _UNSIGNED _BIT",
+            "range": "0 or 1",
+            "memory_bytes": 0.125
+          },
+          "_UNSIGNED _INTEGER64": {
+            "sigil_form": "~&&",
+            "keyword_form": "AS _UNSIGNED _INTEGER64",
+            "range": "0 to 18,446,744,073,709,551,615",
+            "memory_bytes": 8
+          },
+          "_UNSIGNED _OFFSET": {
+            "sigil_form": "~%&",
+            "keyword_form": "AS _UNSIGNED _OFFSET",
+            "range": "Positive memory addresses only",
+            "memory_bytes": "4 or 8"
+          }
+        }
+      }
+    },
+    "dim_patterns": {
+      "basic_syntax": "DIM variable AS type",
+      "multi_variable": "DIM AS type var1, var2, var3",
+      "mixed_types": "DIM AS type1 var1, AS type2 var2",
+      "arrays": {
+        "static": "DIM array(size) AS type",
+        "dynamic": "DIM array() AS type",
+        "multi_dimensional": "DIM array(x, y, z) AS type",
+        "with_bounds": "DIM array(0 TO 10) AS type"
+      },
+      "fixed_length_strings": "DIM variable AS STRING * length",
+      "examples": [
+        "DIM AS INTEGER foo, bar, baz",
+        "DIM AS LONG count, total, sum",
+        "DIM AS DOUBLE x, y, z",
+        "DIM AS STRING name, address, city",
+        "DIM AS _UNSIGNED INTEGER width, height",
+        "DIM AS _UNSIGNED LONG largeNumber",
+        "DIM numbers(10) AS INTEGER",
+        "DIM names(100) AS STRING * 50"
+      ]
+    },
+    "memory_optimization": {
+      "type_selection_guidelines": {
+        "counters_indices": "Use _UNSIGNED INTEGER or _UNSIGNED LONG",
+        "small_values": "Use _BYTE or _UNSIGNED _BYTE",
+        "flags_boolean": "Use _BIT or _UNSIGNED _BIT",
+        "standard_math": "Use LONG or SINGLE",
+        "precision_math": "Use DOUBLE or _FLOAT",
+        "large_integers": "Use _INTEGER64 or _UNSIGNED _INTEGER64",
+        "memory_addresses": "Use _OFFSET or _UNSIGNED _OFFSET"
+      },
+      "array_considerations": {
+        "element_size_impact": "Smaller types reduce memory usage significantly",
+        "cache_performance": "Smaller types improve cache locality",
+        "examples": {
+          "_BYTE array(1000)": "1,000 bytes",
+          "INTEGER array(1000)": "2,000 bytes",
+          "LONG array(1000)": "4,000 bytes",
+          "DOUBLE array(1000)": "8,000 bytes",
+          "_FLOAT array(1000)": "32,000 bytes"
+        }
+      }
+    },
+    "default_type_commands": {
+      "legacy_qbasic": {
+        "DEFINT": "Set default type to INTEGER for variable name ranges",
+        "DEFSNG": "Set default type to SINGLE for variable name ranges", 
+        "DEFDBL": "Set default type to DOUBLE for variable name ranges",
+        "DEFSTR": "Set default type to STRING for variable name ranges",
+        "DEFLNG": "Set default type to LONG for variable name ranges"
+      },
+      "qb64pe_modern": {
+        "_DEFINE": "Modern command supporting all QB64PE types including unsigned",
+        "examples": [
+          "_DEFINE A-M AS INTEGER",
+          "_DEFINE N-Z AS DOUBLE",
+          "_DEFINE U AS _UNSIGNED LONG",
+          "_DEFINE S AS STRING"
+        ]
+      }
+    },
+    "type_compatibility": {
+      "automatic_promotion": "Smaller types automatically promote to larger types",
+      "casting_functions": [
+        "CINT() - Convert to INTEGER",
+        "CLNG() - Convert to LONG", 
+        "CSNG() - Convert to SINGLE",
+        "CDBL() - Convert to DOUBLE"
+      ],
+      "special_rules": {
+        "_MEM_OFFSET_no_casting": "_MEM and _OFFSET types cannot be cast to other types",
+        "unsigned_overflow": "Unsigned types require careful handling to avoid overflow",
+        "precision_loss": "Converting floating-point to integer loses fractional part"
+      }
+    },
+    "performance_characteristics": {
+      "fastest_types": ["_BYTE", "_UNSIGNED _BYTE", "INTEGER", "_UNSIGNED INTEGER"],
+      "standard_types": ["LONG", "_UNSIGNED LONG", "SINGLE"],
+      "precision_types": ["DOUBLE", "_INTEGER64", "_UNSIGNED _INTEGER64"],
+      "slowest_types": ["_FLOAT"],
+      "memory_efficient": ["_BIT", "_BYTE", "INTEGER"],
+      "space_vs_speed": "Smaller types save memory but may be slower on some operations"
+    }
   }
 }

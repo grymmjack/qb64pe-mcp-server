@@ -2,6 +2,56 @@
 
 A comprehensive Model Context Protocol (MCP) server that provides advanced QB64PE (QBasic 64 Phoenix Edition) programming assistance. This server enables AI assistants to search the QB64PE wiki, understand compiler options, provide debugging help, validate QB64PE-only syntax, and handle cross-platform differences.
 
+## 🔧 Available Tools & Prompts
+
+This MCP server provides **26 tools** and **3 prompts** for comprehensive QB64PE development support:
+
+### 📖 Wiki & Documentation (3 tools)
+- **`search_qb64pe_wiki`** - Search the QB64PE wiki for documentation, tutorials, and reference materials
+- **`get_qb64pe_page`** - Retrieve detailed content from a specific QB64PE wiki page
+- **`get_qb64pe_wiki_categories`** - Get all available QB64PE wiki keyword categories with keyword counts
+
+### 🛠️ Compiler & Debugging (3 tools)
+- **`get_compiler_options`** - Get information about QB64PE compiler command-line options and flags
+- **`get_debugging_help`** - Get help with debugging QB64PE programs using PRINT statements, $CONSOLE, etc.
+- **`get_qb64pe_best_practices`** - Get best practices and coding guidelines for QB64PE development
+
+### ✅ Syntax & Compatibility (3 tools)
+- **`validate_qb64pe_syntax`** - Validate QB64PE code syntax and suggest corrections
+- **`validate_qb64pe_compatibility`** - Check code for QB64PE compatibility issues and get solutions
+- **`search_qb64pe_compatibility`** - Search for compatibility issues, solutions, and best practices
+
+### 🔍 Keywords Reference (6 tools)
+- **`lookup_qb64pe_keyword`** - Get detailed information about a specific QB64PE keyword
+- **`autocomplete_qb64pe_keywords`** - Get autocomplete suggestions for QB64PE keywords
+- **`get_qb64pe_keywords_by_category`** - Get all keywords in a specific category (statements, functions, operators, etc.)
+- **`search_qb64pe_keywords`** - Search for QB64PE keywords by name, description, or functionality
+- **`search_qb64pe_keywords_by_wiki_category`** - Search keywords within specific functional categories from the QB64PE wiki
+- **`get_qb64pe_wiki_categories`** - Get all available QB64PE wiki keyword categories with counts
+
+### ⚡ Execution Monitoring (6 tools)
+- **`analyze_qb64pe_execution_mode`** - Analyze QB64PE source code to determine execution characteristics and monitoring requirements
+- **`get_process_monitoring_commands`** - Get cross-platform commands for monitoring QB64PE processes
+- **`generate_monitoring_template`** - Generate QB64PE code template with built-in logging, screenshots, and execution monitoring
+- **`generate_console_formatting_template`** - Generate QB64PE template with enhanced console output formatting
+- **`get_execution_monitoring_guidance`** - Get comprehensive guidance for monitoring QB64PE program execution
+- **`parse_console_output`** - Parse QB64PE console output to detect completion signals and execution state
+- **`get_file_monitoring_commands`** - Get cross-platform commands for monitoring QB64PE log files and output
+
+### 🔧 Installation & Setup (5 tools)
+- **`detect_qb64pe_installation`** - Detect QB64PE installation and check if it's properly configured in PATH
+- **`get_qb64pe_path_configuration`** - Get platform-specific instructions for adding QB64PE to system PATH
+- **`validate_qb64pe_path`** - Check if a specific path contains a valid QB64PE installation
+- **`generate_qb64pe_installation_report`** - Generate a comprehensive report about QB64PE installation status
+- **`get_qb64pe_installation_guidance`** - Get user-friendly guidance for QB64PE installation and PATH configuration
+
+### 💡 Prompts (3 prompts)
+- **`review-qb64pe-code`** - Review QB64PE code for best practices, syntax issues, and optimizations
+- **`debug-qb64pe-issue`** - Help debug QB64PE programs with step-by-step guidance
+- **`monitor-qb64pe-execution`** - Provide guidance for monitoring QB64PE program execution with timeout strategies
+
+---
+
 ### 🔍 **Keywords Reference System**
 - Complete QB64PE keywords database (800+ keywords)
 - Smart categorization (statements, functions, operators, metacommands, OpenGL, types, legacy)

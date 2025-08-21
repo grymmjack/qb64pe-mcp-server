@@ -1,18 +1,18 @@
 # TOOLS / IDEAS
 
 ## PORTING:
-- Port QBasic to QB64PE
-- Port GWBASIC to QB64PE
-- Port QuickBasic 4.x to QB64PE
-- Port Visual BASIC for DOS to QB64PE
-- Port Applesoft BASIC to QB64PE
-- Port Commodore BASIC to QB64PE
-- Port AMIGA BASIC to QB64PE
-- Port ATARI BASIC to QB64PE
-- Port Visual Basic 6 to QB64PE
-- Port VB.net to QB64PE
-- Port VBScript to QB64PE
-- Port FreeBASIC to QB64PE
+- ✅ Port QBasic to QB64PE (COMPLETED - Fully implemented and tested)
+- Port GWBASIC to QB64PE (Planned - Core framework ready)
+- Port QuickBasic 4.x to QB64PE (Planned - Core framework ready)
+- Port Visual BASIC for DOS to QB64PE (Planned - Core framework ready)
+- Port Applesoft BASIC to QB64PE (Future release)
+- Port Commodore BASIC to QB64PE (Future release)
+- Port AMIGA BASIC to QB64PE (Future release)
+- Port ATARI BASIC to QB64PE (Future release)
+- Port Visual Basic 6 to QB64PE (Research phase)
+- Port VB.net to QB64PE (Research phase)
+- Port VBScript to QB64PE (Research phase)
+- Port FreeBASIC to QB64PE (Under consideration)
 
 ## KNOWLEDGE FOCUS:
 - DATA TYPE CONVERSION

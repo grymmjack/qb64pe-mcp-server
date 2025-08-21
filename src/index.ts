@@ -8,6 +8,7 @@ import { QB64PECompatibilityService } from "./services/compatibility-service.js"
 import { KeywordsService } from "./services/keywords-service.js";
 import { QB64PEExecutionService } from "./services/execution-service.js";
 import { QB64PEInstallationService } from "./services/installation-service.js";
+import { QB64PEPortingService } from "./services/porting-service.js";
 
 /**
  * Main MCP Server for QB64PE Development
@@ -21,6 +22,7 @@ class QB64PEMCPServer {
   private keywordsService: KeywordsService;
   private executionService: QB64PEExecutionService;
   private installationService: QB64PEInstallationService;
+  private portingService: QB64PEPortingService;
 
   constructor() {
     this.server = new McpServer({
@@ -36,6 +38,7 @@ class QB64PEMCPServer {
     this.keywordsService = new KeywordsService();
     this.executionService = new QB64PEExecutionService();
     this.installationService = new QB64PEInstallationService();
+    this.portingService = new QB64PEPortingService();
   }
 
   /**
@@ -1145,6 +1148,223 @@ Remember: QB64PE installation and PATH configuration is often the first hurdle f
         }
       }
     );
+
+    // QBasic to QB64PE Porting Tools
+    this.server.registerTool(
+      "port_qbasic_to_qb64pe",
+      {
+        title: "Port QBasic Program to QB64PE",
+        description: "Convert QBasic source code to QB64PE with systematic transformations and compatibility improvements",
+        inputSchema: {
+          sourceCode: z.string().describe("QBasic source code to convert to QB64PE"),
+          sourceDialect: z.enum([
+            "qbasic", 
+            "gwbasic", 
+            "quickbasic", 
+            "vb-dos", 
+            "applesoft", 
+            "commodore", 
+            "amiga", 
+            "atari", 
+            "vb6", 
+            "vbnet", 
+            "vbscript", 
+            "freebasic"
+          ]).optional().describe("Source BASIC dialect (default: qbasic)"),
+          addModernFeatures: z.boolean().optional().describe("Add modern QB64PE features like $NoPrefix, $Resize:Smooth (default: true)"),
+          preserveComments: z.boolean().optional().describe("Preserve original comments (default: true)"),
+          convertGraphics: z.boolean().optional().describe("Convert and enhance graphics operations (default: true)"),
+          optimizePerformance: z.boolean().optional().describe("Apply performance optimizations (default: true)")
+        }
+      },
+      async ({ sourceCode, sourceDialect = "qbasic", addModernFeatures = true, preserveComments = true, convertGraphics = true, optimizePerformance = true }) => {
+        try {
+          const result = await this.portingService.portQBasicToQB64PE(sourceCode, {
+            sourceDialect,
+            addModernFeatures,
+            preserveComments,
+            convertGraphics,
+            optimizePerformance
+          });
+
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                porting: result,
+                usage: {
+                  originalLines: result.originalCode.split('\n').length,
+                  portedLines: result.portedCode.split('\n').length,
+                  transformationsApplied: result.transformations.length,
+                  compatibilityLevel: result.compatibility,
+                  recommendedNextSteps: this.getPortingNextSteps(result)
+                }
+              }, null, 2)
+            }]
+          };
+        } catch (error) {
+          return {
+            content: [{
+              type: "text",
+              text: `Error porting code: ${error instanceof Error ? error.message : 'Unknown error'}`
+            }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    this.server.registerTool(
+      "get_porting_dialect_info",
+      {
+        title: "Get BASIC Dialect Porting Information",
+        description: "Get information about supported BASIC dialects and their specific conversion rules for porting to QB64PE",
+        inputSchema: {
+          dialect: z.enum([
+            "qbasic", 
+            "gwbasic", 
+            "quickbasic", 
+            "vb-dos", 
+            "applesoft", 
+            "commodore", 
+            "amiga", 
+            "atari", 
+            "vb6", 
+            "vbnet", 
+            "vbscript", 
+            "freebasic",
+            "all"
+          ]).optional().describe("Specific dialect to get information about (default: all)")
+        }
+      },
+      async ({ dialect = "all" }) => {
+        try {
+          const supportedDialects = this.portingService.getSupportedDialects();
+          
+          if (dialect === "all") {
+            const allDialectInfo = supportedDialects.map(d => ({
+              dialect: d,
+              rules: this.portingService.getDialectRules(d),
+              status: this.getDialectStatus(d)
+            }));
+
+            return {
+              content: [{
+                type: "text",
+                text: JSON.stringify({
+                  supportedDialects: supportedDialects.length,
+                  dialects: allDialectInfo,
+                  currentlyImplemented: ["qbasic"],
+                  plannedImplementation: supportedDialects.filter(d => d !== "qbasic"),
+                  notes: [
+                    "QBasic is fully implemented and tested",
+                    "Other dialects will be implemented in future versions",
+                    "All dialects will share common QB64PE transformation patterns",
+                    "Each dialect has specific conversion rules for unique syntax"
+                  ]
+                }, null, 2)
+              }]
+            };
+          } else {
+            const rules = this.portingService.getDialectRules(dialect);
+            return {
+              content: [{
+                type: "text",
+                text: JSON.stringify({
+                  dialect,
+                  implementationStatus: this.getDialectStatus(dialect),
+                  conversionRules: rules,
+                  compatibilityNotes: this.getDialectCompatibilityNotes(dialect)
+                }, null, 2)
+              }]
+            };
+          }
+        } catch (error) {
+          return {
+            content: [{
+              type: "text",
+              text: `Error getting dialect information: ${error instanceof Error ? error.message : 'Unknown error'}`
+            }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    this.server.registerTool(
+      "analyze_qbasic_compatibility",
+      {
+        title: "Analyze QBasic Code for QB64PE Compatibility",
+        description: "Analyze QBasic source code to identify potential compatibility issues before porting to QB64PE",
+        inputSchema: {
+          sourceCode: z.string().describe("QBasic source code to analyze"),
+          sourceDialect: z.enum([
+            "qbasic", 
+            "gwbasic", 
+            "quickbasic", 
+            "vb-dos", 
+            "applesoft", 
+            "commodore", 
+            "amiga", 
+            "atari", 
+            "vb6", 
+            "vbnet", 
+            "vbscript", 
+            "freebasic"
+          ]).optional().describe("Source BASIC dialect (default: qbasic)")
+        }
+      },
+      async ({ sourceCode, sourceDialect = "qbasic" }) => {
+        try {
+          // Perform a dry-run porting to identify issues without making changes
+          const dryRunResult = await this.portingService.portQBasicToQB64PE(sourceCode, {
+            sourceDialect,
+            addModernFeatures: false,
+            preserveComments: true,
+            convertGraphics: false,
+            optimizePerformance: false
+          });
+
+          const analysis = {
+            sourceDialect,
+            codeAnalysis: {
+              totalLines: sourceCode.split('\n').length,
+              hasGraphics: /\b(SCREEN|CIRCLE|LINE|PSET|POINT|PAINT|PUT|GET|PALETTE)\b/i.test(sourceCode),
+              hasSound: /\b(PLAY|BEEP|SOUND)\b/i.test(sourceCode),
+              hasFileIO: /\b(OPEN|CLOSE|PRINT #|INPUT #|LINE INPUT #)\b/i.test(sourceCode),
+              hasDefFn: /\bDEF\s+\w+\s*\(/i.test(sourceCode),
+              hasGosub: /\bGOSUB\b/i.test(sourceCode),
+              hasMultiStatement: /:\s*(IF|FOR|WHILE|DO)\b/i.test(sourceCode),
+              hasDeclareStatements: /\bDECLARE\s+(SUB|FUNCTION)\b/i.test(sourceCode)
+            },
+            compatibility: {
+              level: dryRunResult.compatibility,
+              issuesFound: dryRunResult.warnings.length + dryRunResult.errors.length,
+              transformationsNeeded: dryRunResult.transformations.length,
+              potentialProblems: dryRunResult.warnings,
+              criticalIssues: dryRunResult.errors
+            },
+            recommendations: this.getCompatibilityRecommendations(dryRunResult, sourceDialect),
+            estimatedPortingEffort: this.estimatePortingEffort(dryRunResult, sourceCode)
+          };
+
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify(analysis, null, 2)
+            }]
+          };
+        } catch (error) {
+          return {
+            content: [{
+              type: "text",
+              text: `Error analyzing compatibility: ${error instanceof Error ? error.message : 'Unknown error'}`
+            }],
+            isError: true
+          };
+        }
+      }
+    );
   }
 
   /**
@@ -1490,6 +1710,167 @@ Use the MCP tools for automated detection and configuration assistance.`;
         }
       }
     );
+
+    // QB64PE porting documentation resource
+    this.server.registerResource(
+      "qb64pe-porting",
+      "qb64pe://porting/guide",
+      {
+        title: "QB64PE Porting Guide",
+        description: "Comprehensive guide for porting BASIC programs to QB64PE with transformation examples",
+        mimeType: "text/markdown"
+      },
+      async (uri) => {
+        try {
+          const supportedDialects = this.portingService.getSupportedDialects();
+          const dialectInfo = supportedDialects.map(d => ({
+            dialect: d,
+            status: this.getDialectStatus(d),
+            rules: this.portingService.getDialectRules(d)
+          }));
+
+          const portingGuide = `# QB64PE Porting Guide
+
+This guide provides comprehensive information for porting BASIC programs from various dialects to QB64PE.
+
+## Supported BASIC Dialects
+
+${dialectInfo.map(d => `### ${d.dialect.toUpperCase()}
+**Status:** ${d.status}
+
+**Conversion Rules:**
+${d.rules.map(rule => `- ${rule}`).join('\n')}
+`).join('\n')}
+
+## Key Transformation Patterns
+
+### 1. Keyword Case Conversion
+- **QBasic:** \`DEFINT A-Z\`
+- **QB64PE:** \`DefInt A-Z\`
+
+### 2. Function Declaration Changes
+- **QBasic:** \`DECLARE FUNCTION MyFunc AS INTEGER\`
+- **QB64PE:** Remove DECLARE statements, use type sigils
+
+### 3. DEF FN to Function Conversion
+- **QBasic:** \`DEF FnRan(x) = INT(RND(1) * x) + 1\`
+- **QB64PE:** Convert to proper Function...End Function
+
+### 4. GOSUB/RETURN Elimination
+- **QBasic:** \`GOSUB InitVars\` ... \`InitVars: ... RETURN\`
+- **QB64PE:** Convert to Sub/Function calls
+
+### 5. Array Syntax Updates
+- **QBasic:** \`PUT (x, y), array&, PSET\`
+- **QB64PE:** \`Put (x, y), array&(), PSet\`
+
+### 6. Modern QB64PE Features
+- Add \`$NoPrefix\` for modern syntax
+- Add \`$Resize:Smooth\` for graphics programs
+- Use \`Title\` for window titles
+- Replace \`END\` with \`System 0\`
+
+## Example: QBasic to QB64PE Conversion
+
+### Original QBasic Code:
+\`\`\`basic
+DEFINT A-Z
+DECLARE FUNCTION MyFunc AS INTEGER
+
+DEF FnRan(x) = INT(RND(1) * x) + 1
+
+GOSUB InitVars
+PRINT "Random number:", FnRan(10)
+END
+
+InitVars:
+  PRINT "Initializing..."
+RETURN
+\`\`\`
+
+### Converted QB64PE Code:
+\`\`\`basic
+$NoPrefix
+
+DefInt A-Z
+
+Function FnRan(x)
+    FnRan = Int(Rnd(1) * x) + 1
+End Function
+
+Sub InitVars
+    Print "Initializing..."
+End Sub
+
+InitVars
+Print "Random number:", FnRan(10)
+System 0
+\`\`\`
+
+## Compatibility Considerations
+
+### High Compatibility
+- Basic arithmetic and logic operations
+- String manipulation functions
+- File I/O operations
+- Graphics commands (SCREEN, CIRCLE, LINE)
+
+### Medium Compatibility
+- Complex multi-statement lines
+- Specific BASIC dialect features
+- Hardware-specific operations
+
+### Low Compatibility
+- Assembly language integration
+- Platform-specific system calls
+- Unsupported legacy keywords
+
+## Best Practices for Porting
+
+1. **Start with compatibility analysis** - Use \`analyze_qbasic_compatibility\`
+2. **Port incrementally** - Convert small sections at a time
+3. **Test frequently** - Compile and test after each major change
+4. **Use QB64PE debugging** - Add \`$CONSOLE\` for debugging
+5. **Modernize gradually** - Add QB64PE enhancements after basic porting
+
+## Available MCP Tools
+
+- \`port_qbasic_to_qb64pe\` - Automated conversion with transformation tracking
+- \`analyze_qbasic_compatibility\` - Pre-porting compatibility analysis
+- \`get_porting_dialect_info\` - Dialect-specific conversion information
+
+## Troubleshooting Common Issues
+
+### Multi-Statement Lines
+**Problem:** \`IF x > 0 THEN x = 0: IF x < 0 THEN x = 1\`
+**Solution:** Split into separate lines
+
+### Array Declarations
+**Problem:** \`DIM arr1(10), arr2(20)\`
+**Solution:** Declare arrays separately
+
+### Function Return Types
+**Problem:** \`FUNCTION MyFunc AS INTEGER\`
+**Solution:** Use type sigils: \`Function MyFunc%\`
+
+Use the MCP porting tools for automated assistance with these transformations.`;
+
+          return {
+            contents: [{
+              uri: uri.href,
+              text: portingGuide
+            }]
+          };
+        } catch (error) {
+          return {
+            contents: [{
+              uri: uri.href,
+              text: `Error loading porting guide: ${error instanceof Error ? error.message : 'Unknown error'}`
+            }]
+          };
+        }
+      }
+    );
   }
 
   /**
@@ -1610,6 +1991,50 @@ Please provide:
         }]
       })
     );
+
+    // QBasic to QB64PE porting prompt
+    this.server.registerPrompt(
+      "port-qbasic-to-qb64pe",
+      {
+        title: "Port QBasic Program to QB64PE",
+        description: "Provide guidance for porting QBasic programs to QB64PE with transformation analysis",
+        argsSchema: {
+          sourceCode: z.string().describe("QBasic source code to port"),
+          sourceDialect: z.enum(["qbasic", "gwbasic", "quickbasic", "vb-dos"]).optional().describe("Source BASIC dialect"),
+          preserveOriginal: z.string().optional().describe("Whether to preserve original formatting and comments (true/false)")
+        }
+      },
+      ({ sourceCode, sourceDialect = "qbasic", preserveOriginal = "true" }) => ({
+        messages: [{
+          role: "user",
+          content: {
+            type: "text",
+            text: `Help me port this ${sourceDialect.toUpperCase()} program to QB64PE:
+
+Source Code:
+\`\`\`basic
+${sourceCode}
+\`\`\`
+
+Please provide:
+1. Automated porting analysis using MCP tools
+2. Step-by-step conversion guidance
+3. Compatibility assessment and warnings
+4. Modern QB64PE enhancements to consider
+5. Testing recommendations
+6. Common pitfalls to avoid
+
+${preserveOriginal === "true" ? 'Please preserve original comments and structure where possible.' : 'Feel free to modernize the code structure.'}
+
+**Instructions:**
+- Use the available MCP porting tools for analysis
+- Provide both automated conversion results and manual review guidance
+- Focus on QB64PE-specific compatibility issues
+- Suggest modern QB64PE features that could enhance the program`
+          }
+        }]
+      })
+    );
   }
 
   /**
@@ -1654,6 +2079,151 @@ Please provide:
     };
     
     return descriptions[categoryName] || "QB64PE keyword category";
+  }
+
+  /**
+   * Helper methods for porting functionality
+   */
+
+  /**
+   * Get recommended next steps after porting
+   */
+  private getPortingNextSteps(result: any): string[] {
+    const steps: string[] = [];
+    
+    if (result.compatibility === 'low') {
+      steps.push('Review all errors and warnings before testing');
+      steps.push('Test each function/subroutine individually');
+    }
+    
+    if (result.warnings.length > 0) {
+      steps.push('Address compatibility warnings');
+    }
+    
+    if (result.transformations.some((t: string) => t.includes('GOSUB'))) {
+      steps.push('Verify GOSUB to function call conversions work correctly');
+    }
+    
+    if (result.transformations.some((t: string) => t.includes('DEF FN'))) {
+      steps.push('Test converted DEF FN functions');
+    }
+    
+    steps.push('Compile with QB64PE and fix any syntax errors');
+    steps.push('Test program functionality thoroughly');
+    steps.push('Consider adding QB64PE-specific enhancements');
+    
+    return steps;
+  }
+
+  /**
+   * Get implementation status for a BASIC dialect
+   */
+  private getDialectStatus(dialect: string): string {
+    const statusMap: Record<string, string> = {
+      'qbasic': 'Fully Implemented',
+      'gwbasic': 'Planned',
+      'quickbasic': 'Planned', 
+      'vb-dos': 'Planned',
+      'applesoft': 'Future Release',
+      'commodore': 'Future Release',
+      'amiga': 'Future Release',
+      'atari': 'Future Release',
+      'vb6': 'Research Phase',
+      'vbnet': 'Research Phase',
+      'vbscript': 'Research Phase',
+      'freebasic': 'Under Consideration'
+    };
+    
+    return statusMap[dialect] || 'Unknown';
+  }
+
+  /**
+   * Get compatibility notes for a specific dialect
+   */
+  private getDialectCompatibilityNotes(dialect: string): string[] {
+    const notesMap: Record<string, string[]> = {
+      'qbasic': [
+        'Excellent compatibility with QB64PE',
+        'Most programs port with minimal changes',
+        'Modern QB64PE features enhance functionality'
+      ],
+      'gwbasic': [
+        'Line numbers need conversion to labels',
+        'Some graphics functions differ',
+        'File I/O syntax modernization needed'
+      ],
+      'quickbasic': [
+        'Very high compatibility',
+        'Module system updates required',
+        'Most advanced features supported'
+      ],
+      'vb-dos': [
+        'Good compatibility for basic programs',
+        'Form-based applications need significant changes',
+        'Control structures mostly compatible'
+      ]
+    };
+    
+    return notesMap[dialect] || ['Compatibility assessment pending implementation'];
+  }
+
+  /**
+   * Get compatibility recommendations based on porting results
+   */
+  private getCompatibilityRecommendations(result: any, dialect: string): string[] {
+    const recommendations: string[] = [];
+    
+    if (result.errors.length > 0) {
+      recommendations.push('Critical errors found - manual review required before testing');
+    }
+    
+    if (result.warnings.some((w: string) => w.includes('multi-statement'))) {
+      recommendations.push('Split multi-statement lines for better QB64PE compatibility');
+    }
+    
+    if (result.warnings.some((w: string) => w.includes('array'))) {
+      recommendations.push('Review array declarations and separate multi-array statements');
+    }
+    
+    if (result.transformations.some((t: string) => t.includes('GOSUB'))) {
+      recommendations.push('Manually verify GOSUB to function conversions');
+    }
+    
+    if (dialect !== 'qbasic') {
+      recommendations.push(`Consider ${dialect}-specific compatibility issues during testing`);
+    }
+    
+    recommendations.push('Test program incrementally - start with basic functionality');
+    recommendations.push('Use QB64PE debugging features ($CONSOLE, PRINT statements)');
+    
+    return recommendations;
+  }
+
+  /**
+   * Estimate porting effort based on code analysis
+   */
+  private estimatePortingEffort(result: any, sourceCode: string): string {
+    const lines = sourceCode.split('\n').length;
+    const transformations = result.transformations.length;
+    const warnings = result.warnings.length;
+    const errors = result.errors.length;
+    
+    let effort = 'Low';
+    
+    if (lines > 500 || transformations > 10 || warnings > 5 || errors > 0) {
+      effort = 'Medium';
+    }
+    
+    if (lines > 1000 || transformations > 20 || warnings > 10 || errors > 3) {
+      effort = 'High';
+    }
+    
+    if (result.transformations.some((t: string) => t.includes('GOSUB')) || 
+        result.transformations.some((t: string) => t.includes('DEF FN'))) {
+      effort = effort === 'Low' ? 'Medium' : 'High';
+    }
+    
+    return effort;
   }
 
   /**

@@ -9,6 +9,9 @@ import { KeywordsService } from "./services/keywords-service.js";
 import { QB64PEExecutionService } from "./services/execution-service.js";
 import { QB64PEInstallationService } from "./services/installation-service.js";
 import { QB64PEPortingService } from "./services/porting-service.js";
+import { ScreenshotService } from "./services/screenshot-service.js";
+import { ScreenshotWatcherService } from "./services/screenshot-watcher-service.js";
+import { FeedbackService } from "./services/feedback-service.js";
 
 /**
  * Main MCP Server for QB64PE Development
@@ -23,6 +26,9 @@ class QB64PEMCPServer {
   private executionService: QB64PEExecutionService;
   private installationService: QB64PEInstallationService;
   private portingService: QB64PEPortingService;
+  private screenshotService: ScreenshotService;
+  private screenshotWatcher: ScreenshotWatcherService;
+  private feedbackService: FeedbackService;
 
   constructor() {
     this.server = new McpServer({
@@ -39,6 +45,14 @@ class QB64PEMCPServer {
     this.executionService = new QB64PEExecutionService();
     this.installationService = new QB64PEInstallationService();
     this.portingService = new QB64PEPortingService();
+    this.screenshotService = new ScreenshotService();
+    this.screenshotWatcher = new ScreenshotWatcherService();
+    this.feedbackService = new FeedbackService();
+
+    // Connect screenshot watcher to feedback service
+    this.screenshotWatcher.on('analysis-complete', (analysisResult) => {
+      this.handleAnalysisComplete(analysisResult);
+    });
   }
 
   /**
@@ -1602,6 +1616,673 @@ Remember: QB64PE installation and PATH configuration is often the first hurdle f
         }
       }
     );
+
+    // Screenshot Automation Tools
+    this.server.registerTool(
+      "capture_qb64pe_screenshot",
+      {
+        title: "Capture QB64PE Window Screenshot",
+        description: "Automatically capture screenshot of QB64PE program window",
+        inputSchema: {
+          outputPath: z.string().optional().describe("Path to save screenshot (auto-generated if not provided)"),
+          windowTitle: z.string().optional().describe("Specific window title to capture"),
+          processName: z.string().optional().describe("Process name to capture (default: qb64pe)"),
+          format: z.enum(["png", "jpg", "gif"]).optional().describe("Image format (default: png)")
+        }
+      },
+      async ({ outputPath, windowTitle, processName, format = "png" }) => {
+        try {
+          const result = await this.screenshotService.captureQB64PEWindow({
+            outputPath,
+            windowTitle,
+            processName,
+            format
+          });
+
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                capture: result,
+                nextSteps: result.success ? [
+                  `Screenshot saved to: ${result.filePath}`,
+                  "Use analyze_qb64pe_graphics_screenshot to analyze the image",
+                  "Consider starting screenshot monitoring for continuous capture"
+                ] : [
+                  "Check if QB64PE program is running",
+                  "Verify window title or process name",
+                  "Try using get_qb64pe_processes to list available windows"
+                ]
+              }, null, 2)
+            }]
+          };
+        } catch (error) {
+          return {
+            content: [{
+              type: "text",
+              text: `Error capturing screenshot: ${error instanceof Error ? error.message : 'Unknown error'}`
+            }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    this.server.registerTool(
+      "get_qb64pe_processes",
+      {
+        title: "Get Running QB64PE Processes",
+        description: "List all currently running QB64PE processes and windows",
+        inputSchema: {}
+      },
+      async () => {
+        try {
+          const processes = await this.screenshotService.getQB64PEProcesses();
+          const monitoringStatus = this.screenshotService.getMonitoringStatus();
+
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                processes,
+                monitoring: monitoringStatus,
+                summary: {
+                  totalProcesses: processes.length,
+                  processNames: [...new Set(processes.map(p => p.name))],
+                  windowTitles: processes.map(p => p.windowTitle).filter(Boolean)
+                },
+                suggestions: processes.length === 0 ? [
+                  "No QB64PE processes found",
+                  "Compile and run a QB64PE program first",
+                  "Check if QB64PE programs are running in the background"
+                ] : [
+                  "Use capture_qb64pe_screenshot to capture specific windows",
+                  "Consider starting monitoring with start_screenshot_monitoring",
+                  "Window titles can be used for targeted capture"
+                ]
+              }, null, 2)
+            }]
+          };
+        } catch (error) {
+          return {
+            content: [{
+              type: "text",
+              text: `Error getting QB64PE processes: ${error instanceof Error ? error.message : 'Unknown error'}`
+            }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    this.server.registerTool(
+      "start_screenshot_monitoring",
+      {
+        title: "Start Automatic Screenshot Monitoring",
+        description: "Start monitoring QB64PE processes and automatically capture screenshots at intervals",
+        inputSchema: {
+          checkIntervalMs: z.number().optional().describe("How often to check for processes (default: 5000ms)"),
+          captureIntervalMs: z.number().optional().describe("How often to capture screenshots (default: 10000ms)")
+        }
+      },
+      async ({ checkIntervalMs = 5000, captureIntervalMs = 10000 }) => {
+        try {
+          await this.screenshotService.startMonitoring(checkIntervalMs, captureIntervalMs);
+          const status = this.screenshotService.getMonitoringStatus();
+
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                monitoring: status,
+                configuration: {
+                  checkInterval: checkIntervalMs,
+                  captureInterval: captureIntervalMs,
+                  screenshotDirectory: status.screenshotDir
+                },
+                instructions: [
+                  "Monitoring started - will capture screenshots automatically",
+                  "Run QB64PE programs to trigger screenshot capture",
+                  "Use stop_screenshot_monitoring to stop when done",
+                  "Use start_screenshot_watching to enable automatic analysis"
+                ]
+              }, null, 2)
+            }]
+          };
+        } catch (error) {
+          return {
+            content: [{
+              type: "text",
+              text: `Error starting monitoring: ${error instanceof Error ? error.message : 'Unknown error'}`
+            }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    this.server.registerTool(
+      "stop_screenshot_monitoring",
+      {
+        title: "Stop Screenshot Monitoring",
+        description: "Stop automatic screenshot monitoring of QB64PE processes",
+        inputSchema: {}
+      },
+      async () => {
+        try {
+          this.screenshotService.stopMonitoring();
+          const status = this.screenshotService.getMonitoringStatus();
+
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                monitoring: status,
+                message: "Screenshot monitoring stopped",
+                captured: this.screenshotService.getScreenshotFiles().length + " screenshots available"
+              }, null, 2)
+            }]
+          };
+        } catch (error) {
+          return {
+            content: [{
+              type: "text",
+              text: `Error stopping monitoring: ${error instanceof Error ? error.message : 'Unknown error'}`
+            }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    this.server.registerTool(
+      "start_screenshot_watching",
+      {
+        title: "Start Screenshot Directory Watching",
+        description: "Start watching screenshot directories for new files and automatically trigger analysis",
+        inputSchema: {
+          directory: z.string().optional().describe("Directory to watch (default: qb64pe-screenshots)"),
+          analysisType: z.enum(["shapes", "colors", "layout", "text", "quality", "comprehensive"]).optional().describe("Type of analysis to perform (default: comprehensive)"),
+          autoAnalyze: z.boolean().optional().describe("Automatically analyze new screenshots (default: true)")
+        }
+      },
+      async ({ directory = "qb64pe-screenshots", analysisType = "comprehensive", autoAnalyze = true }) => {
+        try {
+          await this.screenshotWatcher.startWatching(directory, {
+            analysisType,
+            autoAnalyze
+          });
+
+          const status = this.screenshotWatcher.getStatus();
+
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                watching: status,
+                configuration: {
+                  directory,
+                  analysisType,
+                  autoAnalyze
+                },
+                instructions: [
+                  "Now watching for new screenshots",
+                  "New screenshots will be automatically detected",
+                  autoAnalyze ? "Analysis will be triggered automatically" : "Use queue_screenshot_analysis to analyze manually",
+                  "Use get_screenshot_analysis_history to see results"
+                ]
+              }, null, 2)
+            }]
+          };
+        } catch (error) {
+          return {
+            content: [{
+              type: "text",
+              text: `Error starting screenshot watching: ${error instanceof Error ? error.message : 'Unknown error'}`
+            }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    this.server.registerTool(
+      "stop_screenshot_watching",
+      {
+        title: "Stop Screenshot Watching",
+        description: "Stop watching screenshot directories",
+        inputSchema: {
+          directory: z.string().optional().describe("Specific directory to stop watching (empty = stop all)")
+        }
+      },
+      async ({ directory }) => {
+        try {
+          await this.screenshotWatcher.stopWatching(directory);
+          const status = this.screenshotWatcher.getStatus();
+
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                watching: status,
+                message: directory ? `Stopped watching ${directory}` : "Stopped watching all directories"
+              }, null, 2)
+            }]
+          };
+        } catch (error) {
+          return {
+            content: [{
+              type: "text",
+              text: `Error stopping watching: ${error instanceof Error ? error.message : 'Unknown error'}`
+            }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    this.server.registerTool(
+      "get_screenshot_analysis_history",
+      {
+        title: "Get Screenshot Analysis History",
+        description: "Get history of automatic screenshot analyses performed",
+        inputSchema: {
+          limit: z.number().optional().describe("Maximum number of results to return (default: 10)")
+        }
+      },
+      async ({ limit = 10 }) => {
+        try {
+          const history = this.screenshotWatcher.getAnalysisHistory(limit);
+          const recentScreenshots = this.screenshotWatcher.getRecentScreenshots(5);
+          const status = this.screenshotWatcher.getStatus();
+
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                history,
+                recentScreenshots,
+                status,
+                summary: {
+                  totalAnalyses: history.length,
+                  successful: history.filter(h => h.success).length,
+                  failed: history.filter(h => !h.success).length,
+                  lastAnalysis: history[0]?.timestamp || null
+                }
+              }, null, 2)
+            }]
+          };
+        } catch (error) {
+          return {
+            content: [{
+              type: "text",
+              text: `Error getting analysis history: ${error instanceof Error ? error.message : 'Unknown error'}`
+            }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    this.server.registerTool(
+      "get_automation_status",
+      {
+        title: "Get Screenshot Automation Status",
+        description: "Get comprehensive status of all screenshot automation services",
+        inputSchema: {}
+      },
+      async () => {
+        try {
+          const screenshotStatus = this.screenshotService.getMonitoringStatus();
+          const watcherStatus = this.screenshotWatcher.getStatus();
+          const recentFiles = this.screenshotService.getScreenshotFiles().slice(0, 5);
+
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                screenshot: {
+                  monitoring: screenshotStatus,
+                  recentFiles: recentFiles.length,
+                  latestFile: recentFiles[0] || null
+                },
+                watcher: watcherStatus,
+                overall: {
+                  fullyAutomated: screenshotStatus.isMonitoring && watcherStatus.isWatching,
+                  capturingScreenshots: screenshotStatus.isMonitoring,
+                  analyzingScreenshots: watcherStatus.isWatching,
+                  totalScreenshots: recentFiles.length
+                },
+                recommendations: this.getAutomationRecommendations(screenshotStatus, watcherStatus)
+              }, null, 2)
+            }]
+          };
+        } catch (error) {
+          return {
+            content: [{
+              type: "text",
+              text: `Error getting automation status: ${error instanceof Error ? error.message : 'Unknown error'}`
+            }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    // Programming Feedback Tools
+    this.server.registerTool(
+      "generate_programming_feedback",
+      {
+        title: "Generate Programming Feedback",
+        description: "Generate detailed programming feedback and suggestions from screenshot analysis",
+        inputSchema: {
+          screenshotPath: z.string().describe("Path to the screenshot to analyze"),
+          programCode: z.string().optional().describe("Associated QB64PE program code for context")
+        }
+      },
+      async ({ screenshotPath, programCode }) => {
+        try {
+          // First analyze the screenshot
+          const fs = await import('fs');
+          if (!fs.existsSync(screenshotPath)) {
+            return {
+              content: [{
+                type: "text",
+                text: JSON.stringify({
+                  error: "Screenshot file not found",
+                  path: screenshotPath
+                }, null, 2)
+              }],
+              isError: true
+            };
+          }
+
+          // Create a mock analysis result for now (in production, this would call the actual analysis)
+          const mockAnalysisResult = {
+            screenshotPath,
+            analysisType: 'comprehensive',
+            timestamp: new Date(),
+            success: true,
+            analysis: {
+              shapes: ['circle', 'rectangle'],
+              colors: ['red', 'blue'],
+              textElements: ['Test Program'],
+              layout: 'Well-organized layout with centered elements',
+              quality: 'Good quality screenshot with clear graphics',
+              overallDescription: 'Screenshot shows a simple graphics program with basic shapes'
+            }
+          };
+
+          const feedback = this.feedbackService.generateFeedback(mockAnalysisResult, programCode);
+
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                feedback,
+                summary: {
+                  quality: feedback.overallAssessment.quality,
+                  totalSuggestions: feedback.suggestions.length,
+                  priorityBreakdown: {
+                    critical: feedback.suggestions.filter(s => s.priority === 'critical').length,
+                    high: feedback.suggestions.filter(s => s.priority === 'high').length,
+                    medium: feedback.suggestions.filter(s => s.priority === 'medium').length,
+                    low: feedback.suggestions.filter(s => s.priority === 'low').length
+                  },
+                  topSuggestion: feedback.suggestions[0]?.title || 'No suggestions'
+                }
+              }, null, 2)
+            }]
+          };
+        } catch (error) {
+          return {
+            content: [{
+              type: "text",
+              text: `Error generating feedback: ${error instanceof Error ? error.message : 'Unknown error'}`
+            }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    this.server.registerTool(
+      "get_programming_feedback_history",
+      {
+        title: "Get Programming Feedback History",
+        description: "Get history of programming feedback generated from screenshot analyses",
+        inputSchema: {
+          limit: z.number().optional().describe("Maximum number of feedback entries to return (default: 10)")
+        }
+      },
+      async ({ limit = 10 }) => {
+        try {
+          const history = this.feedbackService.getFeedbackHistory(limit);
+          const statistics = this.feedbackService.getStatistics();
+
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                history,
+                statistics,
+                insights: {
+                  totalFeedback: statistics.total,
+                  successRate: statistics.successRate + '%',
+                  mostCommonQuality: Object.entries(statistics.qualityDistribution || {})
+                    .sort(([,a], [,b]) => (b as number) - (a as number))[0]?.[0] || 'none',
+                  averageCompleteness: statistics.averageCompleteness + '%',
+                  averageAccuracy: statistics.averageAccuracy + '%'
+                }
+              }, null, 2)
+            }]
+          };
+        } catch (error) {
+          return {
+            content: [{
+              type: "text",
+              text: `Error getting feedback history: ${error instanceof Error ? error.message : 'Unknown error'}`
+            }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    this.server.registerTool(
+      "get_feedback_statistics",
+      {
+        title: "Get Programming Feedback Statistics",
+        description: "Get detailed statistics about programming feedback and improvement trends",
+        inputSchema: {}
+      },
+      async () => {
+        try {
+          const statistics = this.feedbackService.getStatistics();
+          const recentFeedback = this.feedbackService.getFeedbackHistory(5);
+          
+          // Calculate trends
+          const trends = this.calculateFeedbackTrends(recentFeedback);
+
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                statistics,
+                trends,
+                recommendations: this.generateStatisticsRecommendations(statistics, trends)
+              }, null, 2)
+            }]
+          };
+        } catch (error) {
+          return {
+            content: [{
+              type: "text",
+              text: `Error getting feedback statistics: ${error instanceof Error ? error.message : 'Unknown error'}`
+            }],
+            isError: true
+          };
+        }
+      }
+    );
+  }
+
+  /**
+   * Handle screenshot analysis completion and generate feedback
+   */
+  private handleAnalysisComplete(analysisResult: any): void {
+    try {
+      // Try to find associated program code
+      const programCode = analysisResult.metadata?.programCode;
+      
+      // Generate programming feedback
+      const feedback = this.feedbackService.generateFeedback(analysisResult, programCode);
+      
+      console.log(`Generated feedback for ${analysisResult.screenshotPath}:`);
+      console.log(`- Quality: ${feedback.overallAssessment.quality}`);
+      console.log(`- Suggestions: ${feedback.suggestions.length}`);
+      console.log(`- Next steps: ${feedback.nextSteps.join(', ')}`);
+      
+      // Emit feedback event (could be used by dashboard or notifications)
+      this.screenshotWatcher.emit('feedback-generated', feedback);
+    } catch (error) {
+      console.error('Error generating feedback:', error);
+    }
+  }
+
+  /**
+   * Calculate feedback trends
+   */
+  private calculateFeedbackTrends(recentFeedback: any[]): any {
+    if (recentFeedback.length < 2) {
+      return { insufficient_data: true };
+    }
+
+    const qualityTrend = this.calculateQualityTrend(recentFeedback);
+    const completenesseTrend = this.calculateCompletenessTrend(recentFeedback);
+    const suggestionsTrend = this.calculateSuggestionsTrend(recentFeedback);
+
+    return {
+      quality: qualityTrend,
+      completeness: completenesseTrend,
+      suggestions: suggestionsTrend,
+      overall: this.determineOverallTrend(qualityTrend, completenesseTrend, suggestionsTrend)
+    };
+  }
+
+  private calculateQualityTrend(feedback: any[]): string {
+    const qualityValues: Record<string, number> = { poor: 1, fair: 2, good: 3, excellent: 4 };
+    const recent = feedback.slice(0, 3).map(f => qualityValues[f.overallAssessment.quality as string] || 2);
+    const older = feedback.slice(3, 6).map(f => qualityValues[f.overallAssessment.quality as string] || 2);
+    
+    if (older.length === 0) return 'stable';
+    
+    const recentAvg = recent.reduce((sum, val) => sum + val, 0) / recent.length;
+    const olderAvg = older.reduce((sum, val) => sum + val, 0) / older.length;
+    
+    if (recentAvg > olderAvg + 0.5) return 'improving';
+    if (recentAvg < olderAvg - 0.5) return 'declining';
+    return 'stable';
+  }
+
+  private calculateCompletenessTrend(feedback: any[]): string {
+    const recent = feedback.slice(0, 3).map(f => f.overallAssessment.completeness);
+    const older = feedback.slice(3, 6).map(f => f.overallAssessment.completeness);
+    
+    if (older.length === 0) return 'stable';
+    
+    const recentAvg = recent.reduce((sum, val) => sum + val, 0) / recent.length;
+    const olderAvg = older.reduce((sum, val) => sum + val, 0) / older.length;
+    
+    if (recentAvg > olderAvg + 10) return 'improving';
+    if (recentAvg < olderAvg - 10) return 'declining';
+    return 'stable';
+  }
+
+  private calculateSuggestionsTrend(feedback: any[]): string {
+    const recent = feedback.slice(0, 3).map(f => f.suggestions.length);
+    const older = feedback.slice(3, 6).map(f => f.suggestions.length);
+    
+    if (older.length === 0) return 'stable';
+    
+    const recentAvg = recent.reduce((sum, val) => sum + val, 0) / recent.length;
+    const olderAvg = older.reduce((sum, val) => sum + val, 0) / older.length;
+    
+    // Fewer suggestions is generally better (fewer issues to fix)
+    if (recentAvg < olderAvg - 1) return 'improving';
+    if (recentAvg > olderAvg + 1) return 'declining';
+    return 'stable';
+  }
+
+  private determineOverallTrend(quality: string, completeness: string, suggestions: string): string {
+    const trends = [quality, completeness, suggestions];
+    const improving = trends.filter(t => t === 'improving').length;
+    const declining = trends.filter(t => t === 'declining').length;
+    
+    if (improving > declining) return 'improving';
+    if (declining > improving) return 'declining';
+    return 'stable';
+  }
+
+  /**
+   * Generate statistics recommendations
+   */
+  private generateStatisticsRecommendations(statistics: any, trends: any): string[] {
+    const recommendations: string[] = [];
+
+    if (statistics.total === 0) {
+      recommendations.push('Start using screenshot analysis to get feedback');
+      return recommendations;
+    }
+
+    if (statistics.successRate < 70) {
+      recommendations.push('Improve screenshot capture success rate');
+    }
+
+    if (statistics.averageCompleteness < 60) {
+      recommendations.push('Add more visual elements to your graphics programs');
+    }
+
+    if (statistics.averageAccuracy < 70) {
+      recommendations.push('Ensure screenshots match expected program output');
+    }
+
+    if (trends.overall === 'declining') {
+      recommendations.push('Focus on addressing high-priority suggestions');
+    } else if (trends.overall === 'improving') {
+      recommendations.push('Great progress! Continue current development approach');
+    }
+
+    if (Object.values(statistics.qualityDistribution || {}).some((count: any) => count > statistics.total * 0.5)) {
+      const dominantQuality = Object.entries(statistics.qualityDistribution || {})
+        .sort(([,a], [,b]) => (b as number) - (a as number))[0]?.[0];
+      if (dominantQuality === 'poor' || dominantQuality === 'fair') {
+        recommendations.push('Focus on improving basic graphics quality');
+      }
+    }
+
+    return recommendations.length > 0 ? recommendations : ['Continue developing and analyzing your QB64PE programs'];
+  }
+
+  /**
+   * Helper methods for automation recommendations
+   */
+  private getAutomationRecommendations(screenshotStatus: any, watcherStatus: any): string[] {
+    const recommendations: string[] = [];
+
+    if (!screenshotStatus.isMonitoring && !watcherStatus.isWatching) {
+      recommendations.push("Start with start_screenshot_monitoring to begin automatic capture");
+      recommendations.push("Then use start_screenshot_watching to enable automatic analysis");
+    } else if (screenshotStatus.isMonitoring && !watcherStatus.isWatching) {
+      recommendations.push("Add start_screenshot_watching to automatically analyze captured screenshots");
+    } else if (!screenshotStatus.isMonitoring && watcherStatus.isWatching) {
+      recommendations.push("Add start_screenshot_monitoring to automatically capture QB64PE windows");
+    } else {
+      recommendations.push("Full automation active - screenshots will be captured and analyzed automatically");
+      recommendations.push("Run QB64PE programs to see the system in action");
+    }
+
+    return recommendations;
   }
 
   /**

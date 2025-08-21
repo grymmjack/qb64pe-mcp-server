@@ -234,6 +234,185 @@
         "Some BASIC string functions may not be available (implement custom versions)"
       ]
     },
+    "source_organization": {
+      "title": "QB64PE Source Code Organization Requirements",
+      "description": "QB64PE enforces strict ordering requirements for source code elements that cannot be violated",
+      "mandatory_order": {
+        "sequence": [
+          "1. Types, Constants, and SHARED Variables",
+          "2. Main Program Code", 
+          "3. SUB and FUNCTION Definitions"
+        ],
+        "rules": {
+          "types_first": "All TYPE definitions must appear before main program code",
+          "constants_first": "All CONST declarations must appear before main program code",
+          "shared_first": "All SHARED variable declarations must appear before main program code",
+          "main_middle": "Main program execution code must come after declarations but before procedures",
+          "procedures_last": "All SUB and FUNCTION definitions must appear after main program code"
+        }
+      },
+      "violation_consequences": {
+        "compile_errors": [
+          "Duplicate definition",
+          "Identifier expected",
+          "SUB/FUNCTION must be defined after main module"
+        ],
+        "runtime_issues": [
+          "Undefined variables in SHARED context",
+          "Type mismatch errors",
+          "Scope resolution failures"
+        ]
+      },
+      "modular_solutions": {
+        "include_system": {
+          "description": "Use $INCLUDE and $INCLUDEONCE to organize code in separate files",
+          "file_conventions": {
+            ".BI": "BASIC Include files - contains TYPE definitions, CONST declarations, SHARED variables, and SUB/FUNCTION declarations",
+            ".BM": "BASIC Module files - contains SUB and FUNCTION implementations"
+          },
+          "include_directives": {
+            "$INCLUDE": "Include file contents at compile time (can include multiple times)",
+            "$INCLUDEONCE": "Include file contents only once, even if referenced multiple times"
+          }
+        },
+        "library_pattern": {
+          "master_include": {
+            "purpose": "Single include file that brings in entire library",
+            "example": "_GJ_LIB.BI includes all library components with $INCLUDEONCE",
+            "benefits": ["Unified testing", "Simplified usage", "Dependency management"]
+          },
+          "modular_includes": {
+            "purpose": "Individual library components can be included separately",
+            "pattern": "LibraryName.BI + LibraryName.BM file pairs",
+            "example": "ANSI.BI (declarations) + ANSI.BM (implementations)"
+          },
+          "common_definitions": {
+            "purpose": "Shared constants and cross-platform compatibility",
+            "example": "_GJ_LIB_COMMON.BI with conditional compilation for different platforms",
+            "usage": "Included by other .BI files to ensure consistent definitions"
+          }
+        }
+      },
+      "real_world_example": {
+        "repository": "QB64_GJ_LIB",
+        "structure": {
+          "master_file": "_GJ_LIB.BI - Uses $INCLUDEONCE to include all library components",
+          "common_file": "_GJ_LIB_COMMON.BI - Cross-platform constants and compatibility definitions",
+          "library_pairs": [
+            "ANSI/ANSI.BI + ANSI/ANSI.BM - ANSI terminal support",
+            "Each library follows .BI (declarations) + .BM (implementations) pattern"
+          ]
+        },
+        "organization_example": {
+          "ansi_bi_structure": [
+            "' Documentation and usage notes",
+            "$INCLUDEONCE '_GJ_LIB_COMMON.BI' - Common definitions first",
+            "TYPE definitions for ANSI structures",
+            "CONST declarations for ANSI codes and colors", 
+            "SHARED variable declarations",
+            "SUB and FUNCTION declarations (headers only)"
+          ],
+          "ansi_bm_structure": [
+            "' Documentation and implementation notes",
+            "' Full SUB and FUNCTION implementations",
+            "' All procedures defined after main program space"
+          ]
+        }
+      },
+      "best_practices": {
+        "file_organization": [
+          "Use descriptive comments at the top explaining the library's purpose",
+          "Group related TYPE definitions together",
+          "Group related CONST definitions together",
+          "Declare SHARED variables that will be used across modules",
+          "Include proper $INCLUDEONCE directives to prevent duplicate inclusions"
+        ],
+        "include_strategies": [
+          "Create master include files for complete libraries",
+          "Use individual include files for modular functionality",
+          "Establish clear dependencies between include files",
+          "Document the proper inclusion order in comments"
+        ],
+        "cross_platform": [
+          "Use conditional compilation for platform-specific code",
+          "Define platform constants in common include files",
+          "Test on all target platforms to ensure compatibility",
+          "Document platform limitations in comments"
+        ]
+      },
+      "examples": {
+        "wrong_organization": {
+          "description": "This will cause compile errors in QB64PE",
+          "code": [
+            "' This violates QB64PE ordering rules",
+            "PRINT \"Hello World\"  ' Main program code",
+            "",
+            "TYPE Point             ' ERROR: TYPE after main code",
+            "    x AS INTEGER",
+            "    y AS INTEGER", 
+            "END TYPE",
+            "",
+            "SUB ShowPoint(p AS Point)  ' SUB definition",
+            "    PRINT p.x, p.y",
+            "END SUB"
+          ]
+        },
+        "correct_organization": {
+          "description": "Proper QB64PE source organization",
+          "code": [
+            "' Types and constants first",
+            "TYPE Point",
+            "    x AS INTEGER",
+            "    y AS INTEGER",
+            "END TYPE",
+            "",
+            "' Main program code", 
+            "DIM p AS Point",
+            "p.x = 10: p.y = 20",
+            "ShowPoint p",
+            "END",
+            "",
+            "' SUB and FUNCTION definitions last",
+            "SUB ShowPoint(pt AS Point)",
+            "    PRINT pt.x, pt.y",
+            "END SUB"
+          ]
+        },
+        "modular_solution": {
+          "description": "Using include files to overcome ordering restrictions",
+          "files": {
+            "main.bas": [
+              "$INCLUDEONCE 'types.bi'    ' Include types and constants",
+              "$INCLUDEONCE 'procedures.bi' ' Include procedure declarations",
+              "",
+              "' Main program code",
+              "DIM p AS Point",
+              "p.x = 10: p.y = 20", 
+              "ShowPoint p",
+              "",
+              "$INCLUDE 'procedures.bm'    ' Include procedure implementations"
+            ],
+            "types.bi": [
+              "' Type and constant definitions",
+              "TYPE Point",
+              "    x AS INTEGER",
+              "    y AS INTEGER",
+              "END TYPE"
+            ],
+            "procedures.bi": [
+              "' Procedure declarations only", 
+              "DECLARE SUB ShowPoint(pt AS Point)"
+            ],
+            "procedures.bm": [
+              "' Procedure implementations",
+              "SUB ShowPoint(pt AS Point)",
+              "    PRINT pt.x, pt.y",
+              "END SUB"
+            ]
+          }
+        }
+      }
+    },
     "validation_checklist": [
       "Function declarations using AS clauses instead of sigils",
       "Invalid console directives ($CONSOLE:OFF)",
@@ -246,7 +425,13 @@
       "Device access statements (OPEN LPT:, PEN, etc.)",
       "Platform-specific functions on wrong platforms", 
       "Hardware access functions (SETMEM, SIGNAL, etc.)",
-      "Unsupported PRINT combinations (WIDTH LPRINT)"
+      "Unsupported PRINT combinations (WIDTH LPRINT)",
+      "TYPE definitions appearing after main program code",
+      "CONST declarations appearing after main program code",
+      "SHARED variables declared after main program code",
+      "SUB/FUNCTION definitions appearing before main program code",
+      "Missing $INCLUDEONCE directives in modular code",
+      "Improper include file organization (.BI/.BM pattern violations)"
     ],
     "debugging": {
       "error_handling": {
@@ -321,6 +506,30 @@
       "severity": "error",
       "message": "Device access keyword not supported in QB64PE",
       "suggestion": "Use modern QB64PE input/output methods"
+    },
+    "type_after_main": {
+      "regex": "(?:PRINT|INPUT|FOR|WHILE|IF|DO|_|SCREEN|PSET|LINE|CIRCLE)[\\s\\S]*?TYPE\\s+\\w+",
+      "severity": "error",
+      "message": "TYPE definition found after main program code",
+      "suggestion": "Move all TYPE definitions to the beginning of the file or use $INCLUDE files"
+    },
+    "const_after_main": {
+      "regex": "(?:PRINT|INPUT|FOR|WHILE|IF|DO|_|SCREEN|PSET|LINE|CIRCLE)[\\s\\S]*?CONST\\s+\\w+",
+      "severity": "error", 
+      "message": "CONST declaration found after main program code",
+      "suggestion": "Move all CONST declarations to the beginning of the file or use $INCLUDE files"
+    },
+    "sub_function_before_main": {
+      "regex": "^\\s*(?:SUB|FUNCTION)\\s+\\w+[\\s\\S]*?(?:PRINT|INPUT|FOR|WHILE|IF|DO|_|SCREEN|PSET|LINE|CIRCLE)",
+      "severity": "warning",
+      "message": "SUB/FUNCTION definition found before main program code",
+      "suggestion": "Move SUB/FUNCTION definitions after main program code or use modular includes"
+    },
+    "missing_includeonce": {
+      "regex": "\\$INCLUDE\\s+['\"].*\\.bi['\"]",
+      "severity": "info",
+      "message": "Consider using $INCLUDEONCE instead of $INCLUDE for .BI files",
+      "suggestion": "Use $INCLUDEONCE to prevent duplicate inclusions"
     }
   }
 }

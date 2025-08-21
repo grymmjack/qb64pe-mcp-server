@@ -59,7 +59,35 @@ export class QB64PECompatibilityService {
    * Initialize compatibility validation rules
    */
   private initializeRules(): CompatibilityRule[] {
+    // Load patterns from JSON file
+    const jsonPatterns = this.loadPatternsFromJson();
+    
+    // Convert JSON patterns to CompatibilityRule objects
+    const rules: CompatibilityRule[] = [];
+    
+    if (jsonPatterns && jsonPatterns.patterns) {
+      for (const [key, patternObj] of Object.entries(jsonPatterns.patterns)) {
+        if (patternObj && typeof patternObj === 'object' && 
+            'regex' in patternObj && 'message' in patternObj) {
+          const pattern = patternObj as any;
+          rules.push({
+            pattern: new RegExp(pattern.regex, 'gi'),
+            severity: (pattern.severity as 'error' | 'warning') || 'error',
+            category: key,
+            message: pattern.message,
+            suggestion: pattern.suggestion || '',
+            examples: pattern.examples ? {
+              incorrect: pattern.examples.incorrect || '',
+              correct: pattern.examples.correct || ''
+            } : undefined
+          });
+        }
+      }
+    }
+    
+    // Also include hardcoded rules for backwards compatibility
     return [
+      ...rules,
       {
         pattern: /FUNCTION\s+(\w+)\s*\([^)]*\)\s+AS\s+(\w+)/gi,
         severity: 'error',
@@ -193,6 +221,22 @@ export class QB64PECompatibilityService {
         }
       }
     ];
+  }
+
+  /**
+   * Load patterns from JSON file
+   */
+  private loadPatternsFromJson(): any {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const jsonPath = path.join(__dirname, '../data/compatibility-rules.json');
+      const content = fs.readFileSync(jsonPath, 'utf8');
+      return JSON.parse(content);
+    } catch (error) {
+      console.error('Error loading compatibility patterns from JSON:', error);
+      return null;
+    }
   }
 
   /**

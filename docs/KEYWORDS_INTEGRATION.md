@@ -16,7 +16,7 @@ The QB64PE Keywords Integration provides:
 ## Data Sources
 
 ### Original Keywords File
-- **Location**: `docs/resources/QB64PE_Keywordes.json`
+- **Location**: `docs/resources/QB64PE_Keywords.json`
 - **Content**: Complete QB64PE keyword definitions from official documentation
 - **Format**: JSON with keyword names and descriptions
 

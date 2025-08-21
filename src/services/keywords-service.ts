@@ -46,7 +46,7 @@ export class KeywordsService {
   private loadKeywordsData(): void {
     try {
       // Load the original keywords JSON
-      const originalPath = path.join(__dirname, '../../docs/resources/QB64PE_Keywordes.json');
+      const originalPath = path.join(__dirname, '../../docs/resources/QB64PE_Keywords.json');
       const originalData = JSON.parse(fs.readFileSync(originalPath, 'utf-8'));
       this.originalKeywords = originalData.keywords;
 

@@ -10,7 +10,7 @@ A comprehensive Model Context Pr### 🔍 **Keywords Reference System**
 - Platform availability information
 - Syntax examples and related keyword suggestions
 
-### ⚡ **Execution Monitoring & Process Management**
+### ⚡**Execution Monitoring & Process Management**
 - **Program execution type detection** - Identifies graphics vs console vs mixed programs
 - **LLM timeout strategies** - Prevents infinite waiting for graphics programs that require user interaction
 - **Cross-platform process monitoring** - Commands for Windows, Linux, and macOS process management

@@ -322,6 +322,233 @@
           "Be mindful of memory usage with large dynamic arrays"
         ]
       },
+      "array_resizing": {
+        "title": "Array Resizing and Boundary Management",
+        "description": "Comprehensive guide to resizing arrays and managing array boundaries safely",
+        "redim_statements": {
+          "REDIM": {
+            "purpose": "Resize dynamic arrays at runtime",
+            "syntax": "REDIM arrayName(newSize) AS dataType",
+            "behavior": [
+              "Destroys existing array contents",
+              "Allocates new memory with specified size",
+              "Can only be used with arrays declared with empty dimensions DIM arrayName()",
+              "Requires $DYNAMIC directive to be in effect",
+              "Can resize multiple dimensions: REDIM array(x, y, z)"
+            ],
+            "limitations": [
+              "Cannot change the number of dimensions",
+              "Cannot change the data type",
+              "All existing data is lost unless using PRESERVE"
+            ]
+          },
+          "REDIM_PRESERVE": {
+            "purpose": "Resize arrays while preserving existing data",
+            "syntax": "REDIM PRESERVE arrayName(newSize) AS dataType",
+            "behavior": [
+              "Keeps existing data that fits in new size",
+              "Only allows changing the last dimension in multi-dimensional arrays",
+              "Data beyond new boundaries is lost if shrinking",
+              "New elements are initialized to zero/empty string"
+            ],
+            "limitations": [
+              "Slower than regular REDIM due to data copying",
+              "Multi-dimensional arrays can only resize the last dimension",
+              "Memory usage may be higher during resize operation"
+            ]
+          },
+          "REDIM_SHARED": {
+            "purpose": "Resize shared arrays that are accessible across procedures",
+            "syntax": "REDIM SHARED arrayName(newSize) AS dataType",
+            "behavior": [
+              "Creates or resizes a global array accessible from all procedures",
+              "Combines REDIM functionality with SHARED scoping",
+              "Can be called from within SUB/FUNCTION procedures",
+              "Affects the global array, not a local copy"
+            ],
+            "use_cases": [
+              "Resizing global arrays from within procedures",
+              "Creating dynamic global arrays at runtime",
+              "Managing shared data structures that change size"
+            ]
+          }
+        },
+        "boundary_functions": {
+          "UBOUND": {
+            "purpose": "Returns the upper boundary (maximum index) of an array dimension",
+            "syntax": [
+              "UBOUND(arrayName) ' For single dimension",
+              "UBOUND(arrayName, dimension) ' For specific dimension"
+            ],
+            "behavior": [
+              "Returns highest valid index for the dimension",
+              "Works with both static and dynamic arrays",
+              "First dimension is 1, second is 2, etc.",
+              "Essential for safe array iteration"
+            ],
+            "examples": [
+              "FOR i = 0 TO UBOUND(myArray): PRINT myArray(i): NEXT",
+              "maxRows = UBOUND(grid, 1): maxCols = UBOUND(grid, 2)"
+            ]
+          },
+          "LBOUND": {
+            "purpose": "Returns the lower boundary (minimum index) of an array dimension",
+            "syntax": [
+              "LBOUND(arrayName) ' For single dimension",
+              "LBOUND(arrayName, dimension) ' For specific dimension"
+            ],
+            "behavior": [
+              "Returns lowest valid index for the dimension",
+              "Usually 0 for QB64PE arrays (unless using TO keyword)",
+              "Works with both static and dynamic arrays",
+              "Important for arrays with custom lower bounds"
+            ],
+            "examples": [
+              "FOR i = LBOUND(myArray) TO UBOUND(myArray): PRINT myArray(i): NEXT",
+              "DIM customArray(5 TO 15): ' LBOUND = 5, UBOUND = 15"
+            ]
+          }
+        },
+        "safe_array_practices": {
+          "boundary_checking": [
+            "Always use UBOUND and LBOUND for loop boundaries",
+            "Check array bounds before accessing elements",
+            "Use boundary functions instead of hardcoded values",
+            "Validate input indices before array access"
+          ],
+          "resizing_strategies": [
+            "Use REDIM PRESERVE when existing data must be kept",
+            "Plan for growth patterns to minimize resize operations",
+            "Consider memory constraints with large arrays",
+            "Test resize operations with edge cases (empty arrays, single elements)"
+          ],
+          "error_prevention": [
+            "Check if array is allocated before resizing",
+            "Validate new size parameters before REDIM",
+            "Use error handling around resize operations",
+            "Document array size expectations in comments"
+          ]
+        },
+        "common_patterns": {
+          "dynamic_growth": {
+            "description": "Growing arrays as needed to accommodate new data",
+            "example_code": [
+              "'$DYNAMIC",
+              "DIM SHARED dataArray() AS STRING",
+              "DIM SHARED itemCount AS INTEGER",
+              "",
+              "SUB AddItem(newItem AS STRING)",
+              "    ' Grow array if needed",
+              "    IF itemCount = 0 THEN",
+              "        REDIM SHARED dataArray(0 TO 0)",
+              "    ELSE",
+              "        REDIM PRESERVE SHARED dataArray(0 TO itemCount)",
+              "    END IF",
+              "    ",
+              "    ' Add new item",
+              "    dataArray(itemCount) = newItem",
+              "    itemCount = itemCount + 1",
+              "END SUB"
+            ]
+          },
+          "safe_iteration": {
+            "description": "Safely iterating through arrays using boundary functions",
+            "example_code": [
+              "SUB ProcessArray(arr() AS INTEGER)",
+              "    ' Check if array has elements",
+              "    IF UBOUND(arr) >= LBOUND(arr) THEN",
+              "        FOR i = LBOUND(arr) TO UBOUND(arr)",
+              "            ' Process arr(i) safely",
+              "            PRINT \"Element \"; i; \" = \"; arr(i)",
+              "        NEXT i",
+              "    ELSE",
+              "        PRINT \"Array is empty\"",
+              "    END IF",
+              "END SUB"
+            ]
+          },
+          "multi_dimensional_resize": {
+            "description": "Resizing multi-dimensional arrays properly",
+            "example_code": [
+              "'$DYNAMIC",
+              "DIM SHARED grid() AS INTEGER",
+              "",
+              "SUB ResizeGrid(newRows AS INTEGER, newCols AS INTEGER)",
+              "    ' For multi-dimensional arrays, can only preserve last dimension",
+              "    IF newRows <> 0 AND newCols <> 0 THEN",
+              "        REDIM SHARED grid(0 TO newRows - 1, 0 TO newCols - 1)",
+              "        PRINT \"Grid resized to \"; newRows; \" x \"; newCols",
+              "    END IF",
+              "END SUB",
+              "",
+              "SUB ShowGridBounds",
+              "    PRINT \"Rows: \"; LBOUND(grid, 1); \" TO \"; UBOUND(grid, 1)",
+              "    PRINT \"Cols: \"; LBOUND(grid, 2); \" TO \"; UBOUND(grid, 2)",
+              "END SUB"
+            ]
+          },
+          "conditional_resizing": {
+            "description": "Resizing based on data requirements with bounds checking",
+            "example_code": [
+              "'$DYNAMIC",
+              "DIM SHARED buffer() AS DOUBLE",
+              "",
+              "SUB EnsureCapacity(requiredSize AS INTEGER)",
+              "    DIM currentSize AS INTEGER",
+              "    ",
+              "    ' Check current array size",
+              "    currentSize = -1  ' Default for unallocated array",
+              "    IF UBOUND(buffer) >= LBOUND(buffer) THEN",
+              "        currentSize = UBOUND(buffer) - LBOUND(buffer) + 1",
+              "    END IF",
+              "    ",
+              "    ' Resize if needed",
+              "    IF currentSize < requiredSize THEN",
+              "        IF currentSize = -1 THEN",
+              "            ' First allocation",
+              "            REDIM SHARED buffer(0 TO requiredSize - 1)",
+              "        ELSE",
+              "            ' Grow existing array",
+              "            REDIM PRESERVE SHARED buffer(0 TO requiredSize - 1)",
+              "        END IF",
+              "        PRINT \"Buffer resized to \"; requiredSize; \" elements\"",
+              "    END IF",
+              "END SUB"
+            ]
+          }
+        },
+        "troubleshooting": {
+          "common_errors": {
+            "subscript_out_of_range": {
+              "cause": "Accessing array index outside LBOUND to UBOUND range",
+              "solution": "Always check bounds with UBOUND/LBOUND before access",
+              "prevention": "Use boundary functions in loop conditions"
+            },
+            "array_not_defined": {
+              "cause": "Attempting to REDIM an array not declared with empty dimensions",
+              "solution": "Declare with DIM arrayName() AS type before using REDIM",
+              "prevention": "Always declare dynamic arrays with empty parentheses"
+            },
+            "preserve_dimension_error": {
+              "cause": "Trying to REDIM PRESERVE non-last dimension in multi-dimensional array",
+              "solution": "Only resize the last dimension when using PRESERVE",
+              "prevention": "Design arrays with resizable dimension last"
+            },
+            "static_array_redim": {
+              "cause": "Attempting to REDIM a static array (declared with fixed size)",
+              "solution": "Declare as dynamic array with empty dimensions",
+              "prevention": "Use $DYNAMIC directive and empty parentheses for resizable arrays"
+            }
+          },
+          "debugging_tips": [
+            "Print LBOUND and UBOUND values before array operations",
+            "Use error handling around REDIM operations",
+            "Test with empty arrays and single-element arrays",
+            "Verify $DYNAMIC directive is in correct location",
+            "Check for proper SHARED declarations in multi-procedure code"
+          ]
+        }
+      },
       "examples": {
         "proper_shared_usage": {
           "description": "Correct way to share variables between procedures",
@@ -411,6 +638,172 @@
             "    FOR i = 0 TO UBOUND(dataArray)",
             "        PRINT dataArray(i)",
             "    NEXT i",
+            "END SUB"
+          ]
+        },
+        "array_boundary_checking": {
+          "description": "Comprehensive example of safe array boundary checking and resizing",
+          "code": [
+            "'$DYNAMIC",
+            "DIM SHARED inventory() AS STRING",
+            "DIM SHARED itemCount AS INTEGER",
+            "",
+            "' Main program demonstrating safe array operations",
+            "InitializeInventory",
+            "AddItem \"Sword\"",
+            "AddItem \"Shield\"", 
+            "AddItem \"Potion\"",
+            "ShowInventory",
+            "ResizeInventory 10",
+            "ShowInventory",
+            "END",
+            "",
+            "SUB InitializeInventory",
+            "    ' Start with empty inventory",
+            "    itemCount = 0",
+            "    PRINT \"Inventory system initialized\"",
+            "END SUB",
+            "",
+            "SUB AddItem(newItem AS STRING)",
+            "    ' Safely add item with automatic resizing",
+            "    IF itemCount = 0 THEN",
+            "        ' First item - create array",
+            "        REDIM SHARED inventory(0 TO 0)",
+            "    ELSE",
+            "        ' Check if we need more space",
+            "        IF itemCount > UBOUND(inventory) THEN",
+            "            ' Grow array preserving existing data",
+            "            REDIM PRESERVE SHARED inventory(LBOUND(inventory) TO itemCount)",
+            "        END IF",
+            "    END IF",
+            "    ",
+            "    ' Add the item",
+            "    inventory(itemCount) = newItem",
+            "    itemCount = itemCount + 1",
+            "    PRINT \"Added: \"; newItem",
+            "END SUB",
+            "",
+            "SUB ShowInventory",
+            "    PRINT \"=== Inventory Status ===\"",
+            "    IF itemCount = 0 THEN",
+            "        PRINT \"Inventory is empty\"",
+            "    ELSE",
+            "        PRINT \"Items (\"; itemCount; \"):\";",
+            "        PRINT \" Bounds: \"; LBOUND(inventory); \" TO \"; UBOUND(inventory)",
+            "        FOR i = LBOUND(inventory) TO UBOUND(inventory)",
+            "            IF i < itemCount THEN",
+            "                PRINT i; \": \"; inventory(i)",
+            "            ELSE",
+            "                PRINT i; \": [empty slot]\"",
+            "            END IF",
+            "        NEXT i",
+            "    END IF",
+            "    PRINT",
+            "END SUB",
+            "",
+            "SUB ResizeInventory(newSize AS INTEGER)",
+            "    ' Resize inventory to specific size with bounds checking",
+            "    IF newSize < 1 THEN",
+            "        PRINT \"Error: Invalid inventory size\"",
+            "        EXIT SUB",
+            "    END IF",
+            "    ",
+            "    IF itemCount = 0 THEN",
+            "        ' Create new array",
+            "        REDIM SHARED inventory(0 TO newSize - 1)",
+            "    ELSE",
+            "        ' Resize existing array",
+            "        REDIM PRESERVE SHARED inventory(LBOUND(inventory) TO newSize - 1)",
+            "    END IF",
+            "    ",
+            "    ' Adjust item count if we shrunk the array",
+            "    IF itemCount > newSize THEN",
+            "        PRINT \"Warning: Some items were lost during resize\"",
+            "        itemCount = newSize",
+            "    END IF",
+            "    ",
+            "    PRINT \"Inventory resized to \"; newSize; \" slots\"",
+            "END SUB"
+          ]
+        },
+        "multi_dimensional_arrays": {
+          "description": "Working with multi-dimensional dynamic arrays and boundary functions",
+          "code": [
+            "'$DYNAMIC",
+            "DIM SHARED gameMap() AS INTEGER",
+            "DIM SHARED mapWidth AS INTEGER, mapHeight AS INTEGER",
+            "",
+            "' Main program",
+            "CreateMap 5, 3",
+            "FillMap",
+            "ShowMap",
+            "ResizeMap 8, 6",
+            "ShowMap",
+            "END",
+            "",
+            "SUB CreateMap(width AS INTEGER, height AS INTEGER)",
+            "    ' Create a new game map with specified dimensions",
+            "    IF width < 1 OR height < 1 THEN",
+            "        PRINT \"Error: Invalid map dimensions\"",
+            "        EXIT SUB",
+            "    END IF",
+            "    ",
+            "    mapWidth = width",
+            "    mapHeight = height",
+            "    REDIM SHARED gameMap(0 TO height - 1, 0 TO width - 1)",
+            "    ",
+            "    PRINT \"Created map: \"; width; \" x \"; height",
+            "    PRINT \"Row bounds: \"; LBOUND(gameMap, 1); \" TO \"; UBOUND(gameMap, 1)",
+            "    PRINT \"Col bounds: \"; LBOUND(gameMap, 2); \" TO \"; UBOUND(gameMap, 2)",
+            "END SUB",
+            "",
+            "SUB FillMap",
+            "    ' Fill map with sample data using boundary functions",
+            "    FOR row = LBOUND(gameMap, 1) TO UBOUND(gameMap, 1)",
+            "        FOR col = LBOUND(gameMap, 2) TO UBOUND(gameMap, 2)",
+            "            ' Create a simple pattern",
+            "            gameMap(row, col) = (row + col) MOD 3",
+            "        NEXT col",
+            "    NEXT row",
+            "    PRINT \"Map filled with pattern data\"",
+            "END SUB",
+            "",
+            "SUB ShowMap",
+            "    ' Display the map using safe boundary checking",
+            "    PRINT \"=== Current Map ===\"",
+            "    FOR row = LBOUND(gameMap, 1) TO UBOUND(gameMap, 1)",
+            "        FOR col = LBOUND(gameMap, 2) TO UBOUND(gameMap, 2)",
+            "            PRINT gameMap(row, col);",
+            "        NEXT col",
+            "        PRINT",
+            "    NEXT row",
+            "    PRINT",
+            "END SUB",
+            "",
+            "SUB ResizeMap(newWidth AS INTEGER, newHeight AS INTEGER)",
+            "    ' Resize map - note: PRESERVE only works on last dimension",
+            "    IF newWidth < 1 OR newHeight < 1 THEN",
+            "        PRINT \"Error: Invalid map dimensions\"",
+            "        EXIT SUB",
+            "    END IF",
+            "    ",
+            "    PRINT \"Resizing map from \"; mapWidth; \"x\"; mapHeight;",
+            "    PRINT \" to \"; newWidth; \"x\"; newHeight",
+            "    ",
+            "    ' For multi-dimensional arrays, PRESERVE only works on last dimension",
+            "    ' So we can preserve columns but not rows",
+            "    IF newHeight = mapHeight THEN",
+            "        ' Same height, can preserve data in all rows",
+            "        REDIM PRESERVE SHARED gameMap(0 TO newHeight - 1, 0 TO newWidth - 1)",
+            "    ELSE",
+            "        ' Different height, data will be lost",
+            "        PRINT \"Warning: Map data will be reset due to height change\"",
+            "        REDIM SHARED gameMap(0 TO newHeight - 1, 0 TO newWidth - 1)",
+            "        FillMap  ' Refill with pattern",
+            "    END IF",
+            "    ",
+            "    mapWidth = newWidth",
+            "    mapHeight = newHeight",
             "END SUB"
           ]
         }
@@ -638,8 +1031,320 @@
       "SHARED keyword used without DIM statement", 
       "Local variables shadowing SHARED variables with same names",
       "Arrays not properly shared between procedures",
-      "Missing SHARED declarations for global variable access in procedures"
+      "Missing SHARED declarations for global variable access in procedures",
+      "REDIM used on static arrays (declared with fixed dimensions)",
+      "REDIM operations without proper $DYNAMIC directive",
+      "Array access with hardcoded indices instead of boundary functions",
+      "Loop iterations using hardcoded bounds instead of UBOUND/LBOUND",
+      "REDIM PRESERVE used on non-last dimension of multi-dimensional arrays",
+      "Array access without boundary validation using UBOUND/LBOUND",
+      "Missing error handling around REDIM operations",
+      "REDIM SHARED used in procedures without considering global impact",
+      "Dynamic arrays not properly initialized before REDIM operations",
+      "Array boundary checking missing in user input validation",
+      "Inconsistent array indexing patterns (mixing 0-based and 1-based)",
+      "Memory management issues with large dynamic arrays"
     ],
+    "array_management": {
+      "title": "Comprehensive Array Management in QB64PE",
+      "description": "Complete guide to array declaration, resizing, boundary checking, and safe array operations",
+      "array_types": {
+        "static_arrays": {
+          "title": "Static Arrays",
+          "description": "Arrays with fixed size determined at compile time",
+          "characteristics": [
+            "Size cannot be changed during program execution",
+            "Faster memory access than dynamic arrays",
+            "Memory allocated at compile time",
+            "Default array type in QB64PE"
+          ],
+          "declaration_syntax": [
+            "DIM arrayName(size) AS dataType",
+            "DIM arrayName(lowerBound TO upperBound) AS dataType",
+            "DIM arrayName(rows, cols) AS dataType ' Multi-dimensional"
+          ],
+          "examples": [
+            "DIM scores(100) AS INTEGER ' 0 to 100 (101 elements)",
+            "DIM grades(1 TO 10) AS SINGLE ' 1 to 10 (10 elements)",
+            "DIM matrix(0 TO 9, 0 TO 9) AS DOUBLE ' 10x10 matrix"
+          ]
+        },
+        "dynamic_arrays": {
+          "title": "Dynamic Arrays",
+          "description": "Arrays that can be resized during program execution",
+          "requirements": [
+            "$DYNAMIC directive must be used",
+            "Arrays must be declared with empty parentheses",
+            "REDIM statement used to allocate/resize"
+          ],
+          "declaration_syntax": [
+            "'$DYNAMIC",
+            "DIM arrayName() AS dataType",
+            "REDIM arrayName(newSize) AS dataType"
+          ],
+          "advantages": [
+            "Size can change based on runtime conditions",
+            "Memory efficient for variable-sized data",
+            "Supports data growth and shrinkage"
+          ],
+          "disadvantages": [
+            "Slightly slower access than static arrays",
+            "Additional memory management overhead",
+            "Potential for memory fragmentation"
+          ]
+        }
+      },
+      "redim_operations": {
+        "basic_redim": {
+          "syntax": "REDIM arrayName(newDimensions) AS dataType",
+          "behavior": [
+            "Destroys all existing array content",
+            "Allocates new memory with specified dimensions",
+            "Initializes all elements to zero/empty",
+            "Can change any dimension of multi-dimensional arrays"
+          ],
+          "use_cases": [
+            "Initial allocation of dynamic arrays",
+            "Complete resize when data preservation not needed",
+            "Changing array structure significantly"
+          ]
+        },
+        "preserve_redim": {
+          "syntax": "REDIM PRESERVE arrayName(newDimensions) AS dataType",
+          "behavior": [
+            "Preserves existing data that fits in new dimensions",
+            "Only allows resizing the last dimension in multi-dimensional arrays",
+            "New elements initialized to zero/empty",
+            "Slower than basic REDIM due to data copying"
+          ],
+          "limitations": [
+            "Multi-dimensional arrays: only last dimension can be resized",
+            "Cannot change the number of dimensions",
+            "Cannot change the data type",
+            "Performance impact on large arrays"
+          ],
+          "use_cases": [
+            "Growing arrays while keeping existing data",
+            "Expanding the last dimension of multi-dimensional arrays",
+            "Adding elements to existing collections"
+          ]
+        },
+        "shared_redim": {
+          "syntax": "REDIM SHARED arrayName(newDimensions) AS dataType",
+          "behavior": [
+            "Creates or resizes a global array",
+            "Array becomes accessible from all procedures",
+            "Can be called from within SUB/FUNCTION",
+            "Combines REDIM functionality with SHARED scope"
+          ],
+          "considerations": [
+            "Affects global state from within procedures",
+            "Should be used carefully to avoid unexpected side effects",
+            "Useful for creating global arrays at runtime",
+            "Can be combined with PRESERVE: REDIM PRESERVE SHARED"
+          ]
+        }
+      },
+      "boundary_functions": {
+        "ubound_function": {
+          "purpose": "Returns the upper boundary (maximum valid index) of an array dimension",
+          "syntax": [
+            "upperBound = UBOUND(arrayName) ' Single dimension",
+            "upperBound = UBOUND(arrayName, dimensionNumber) ' Specific dimension"
+          ],
+          "behavior": [
+            "Returns highest valid index for the specified dimension",
+            "Dimension numbering starts from 1 (first dimension = 1)",
+            "Works with both static and dynamic arrays",
+            "Essential for safe array iteration and bounds checking"
+          ],
+          "common_usage": [
+            "FOR i = 0 TO UBOUND(array): ... : NEXT i",
+            "FOR i = LBOUND(array) TO UBOUND(array): ... : NEXT i",
+            "IF index <= UBOUND(array) THEN array(index) = value"
+          ]
+        },
+        "lbound_function": {
+          "purpose": "Returns the lower boundary (minimum valid index) of an array dimension",
+          "syntax": [
+            "lowerBound = LBOUND(arrayName) ' Single dimension", 
+            "lowerBound = LBOUND(arrayName, dimensionNumber) ' Specific dimension"
+          ],
+          "behavior": [
+            "Returns lowest valid index for the specified dimension",
+            "Usually 0 for QB64PE arrays unless TO keyword used",
+            "Dimension numbering starts from 1 (first dimension = 1)",
+            "Important for arrays with custom lower bounds"
+          ],
+          "default_values": [
+            "DIM array(10): LBOUND = 0, UBOUND = 10",
+            "DIM array(5 TO 15): LBOUND = 5, UBOUND = 15",
+            "DIM array(-10 TO 10): LBOUND = -10, UBOUND = 10"
+          ]
+        },
+        "multi_dimensional_bounds": {
+          "description": "Working with boundaries in multi-dimensional arrays",
+          "syntax_examples": [
+            "rows = UBOUND(matrix, 1) - LBOUND(matrix, 1) + 1",
+            "cols = UBOUND(matrix, 2) - LBOUND(matrix, 2) + 1",
+            "FOR r = LBOUND(matrix, 1) TO UBOUND(matrix, 1)",
+            "    FOR c = LBOUND(matrix, 2) TO UBOUND(matrix, 2)",
+            "        ' Safe access to matrix(r, c)",
+            "    NEXT c",
+            "NEXT r"
+          ],
+          "best_practices": [
+            "Always specify dimension number for multi-dimensional arrays",
+            "Store boundary values in variables for repeated use",
+            "Use boundary functions in all loop conditions",
+            "Validate indices before array access"
+          ]
+        }
+      },
+      "safe_array_practices": {
+        "boundary_validation": {
+          "description": "Always validate array indices before access",
+          "techniques": [
+            "Check indices against LBOUND and UBOUND before access",
+            "Use boundary functions in loop conditions",
+            "Implement bounds checking functions for reusability",
+            "Validate user input before using as array index"
+          ],
+          "example_patterns": [
+            "IF index >= LBOUND(array) AND index <= UBOUND(array) THEN",
+            "    array(index) = value",
+            "ELSE",
+            "    PRINT \"Index out of bounds\"",
+            "END IF"
+          ]
+        },
+        "safe_iteration": {
+          "description": "Use boundary functions for all array loops",
+          "recommended_patterns": [
+            "FOR i = LBOUND(array) TO UBOUND(array)",
+            "FOR row = LBOUND(matrix, 1) TO UBOUND(matrix, 1)",
+            "    FOR col = LBOUND(matrix, 2) TO UBOUND(matrix, 2)"
+          ],
+          "avoid_patterns": [
+            "FOR i = 0 TO 100 ' Hardcoded upper bound",
+            "FOR i = 1 TO arraySize ' Variable that may not match actual size"
+          ]
+        },
+        "resize_strategies": {
+          "growth_patterns": [
+            "Exponential growth: newSize = oldSize * 2",
+            "Linear growth: newSize = oldSize + increment",
+            "Exact fit: newSize = requiredElements",
+            "Block allocation: newSize = ((required / blockSize) + 1) * blockSize"
+          ],
+          "performance_considerations": [
+            "Minimize resize operations for better performance",
+            "Use REDIM PRESERVE only when data must be kept",
+            "Consider memory usage with large arrays",
+            "Plan for typical data sizes to reduce resizing"
+          ]
+        },
+        "error_handling": {
+          "description": "Robust error handling for array operations",
+          "common_errors": [
+            "Subscript out of range (accessing invalid index)",
+            "Array not defined (using unallocated dynamic array)",
+            "Type mismatch (wrong data type for array element)",
+            "Memory allocation failure (insufficient memory for large arrays)"
+          ],
+          "prevention_techniques": [
+            "Always check array allocation before use",
+            "Validate all indices before array access",
+            "Use error trapping around REDIM operations",
+            "Implement defensive programming practices"
+          ]
+        }
+      },
+      "advanced_techniques": {
+        "conditional_allocation": {
+          "description": "Allocate arrays only when needed",
+          "pattern": [
+            "' Check if array needs to be allocated",
+            "IF UBOUND(array) < LBOUND(array) THEN",
+            "    ' Array not allocated yet",
+            "    REDIM array(initialSize)",
+            "END IF"
+          ]
+        },
+        "capacity_management": {
+          "description": "Manage array capacity efficiently",
+          "pattern": [
+            "SUB EnsureCapacity(array() AS INTEGER, requiredSize AS INTEGER)",
+            "    DIM currentCapacity AS INTEGER",
+            "    currentCapacity = UBOUND(array) - LBOUND(array) + 1",
+            "    IF currentCapacity < requiredSize THEN",
+            "        REDIM PRESERVE array(LBOUND(array) TO LBOUND(array) + requiredSize - 1)",
+            "    END IF",
+            "END SUB"
+          ]
+        },
+        "multi_dimensional_resize": {
+          "description": "Strategies for resizing multi-dimensional arrays",
+          "preserve_limitation": [
+            "REDIM PRESERVE only works on the last dimension",
+            "To resize other dimensions, must use REDIM (loses data)",
+            "Consider array design with resizable dimension last"
+          ],
+          "workaround_strategies": [
+            "Manually copy data to new array when resizing non-last dimensions",
+            "Use array of arrays for more flexible resizing",
+            "Design data structures with growth dimension last"
+          ]
+        }
+      },
+      "common_pitfalls": {
+        "static_array_redim": {
+          "problem": "Attempting to REDIM a static array",
+          "error": "Array already dimensioned",
+          "solution": "Declare dynamic arrays with empty parentheses: DIM array()"
+        },
+        "preserve_wrong_dimension": {
+          "problem": "Using REDIM PRESERVE on non-last dimension",
+          "error": "Can't REDIM PRESERVE that dimension",
+          "solution": "Only resize the last dimension with PRESERVE, or use regular REDIM"
+        },
+        "missing_dynamic_directive": {
+          "problem": "Using REDIM without $DYNAMIC directive",
+          "error": "Array not defined or subscript out of range",
+          "solution": "Add '$DYNAMIC before dynamic array declarations"
+        },
+        "hardcoded_bounds": {
+          "problem": "Using hardcoded array bounds in loops",
+          "issue": "Code breaks when array size changes",
+          "solution": "Always use LBOUND and UBOUND functions"
+        },
+        "uninitialized_access": {
+          "problem": "Accessing dynamic array before allocation",
+          "error": "Subscript out of range",
+          "solution": "Check array allocation or use error handling"
+        }
+      },
+      "performance_guidelines": {
+        "memory_efficiency": [
+          "Use static arrays when size is known and fixed",
+          "Minimize REDIM operations in performance-critical code",
+          "Consider memory usage patterns with large arrays",
+          "Free unused array memory when possible"
+        ],
+        "access_patterns": [
+          "Sequential access is faster than random access",
+          "Locality of reference improves cache performance",
+          "Minimize array copying in REDIM PRESERVE operations",
+          "Use appropriate data types to optimize memory usage"
+        ],
+        "optimization_tips": [
+          "Pre-allocate arrays to expected maximum size when possible",
+          "Use exponential growth strategies for dynamic arrays",
+          "Batch array operations when feasible",
+          "Profile memory usage with large datasets"
+        ]
+      }
+    },
     "debugging": {
       "error_handling": {
         "traditional": {
@@ -761,6 +1466,48 @@
       "severity": "info",
       "message": "Local variable may shadow a SHARED variable with the same name",
       "suggestion": "Use unique variable names in local scope or explicitly reference SHARED variables"
+    },
+    "redim_static_array": {
+      "regex": "DIM\\s+(\\w+)\\s*\\(\\s*\\d+\\s*(?:TO\\s+\\d+)?\\s*\\)[\\s\\S]*?REDIM\\s+\\1",
+      "severity": "error",
+      "message": "Cannot REDIM a static array (declared with fixed dimensions)",
+      "suggestion": "Declare array with empty dimensions DIM arrayName() for dynamic resizing"
+    },
+    "redim_without_dynamic": {
+      "regex": "(?!.*\\$DYNAMIC)[\\s\\S]*REDIM\\s+\\w+",
+      "severity": "warning",
+      "message": "REDIM used without $DYNAMIC directive",
+      "suggestion": "Add '$DYNAMIC directive before array declarations that will be resized"
+    },
+    "unsafe_array_access": {
+      "regex": "\\w+\\s*\\(\\s*\\d+\\s*\\)\\s*=",
+      "severity": "info",
+      "message": "Hardcoded array index may be unsafe",
+      "suggestion": "Use UBOUND/LBOUND functions to ensure array bounds are respected"
+    },
+    "loop_without_bounds": {
+      "regex": "FOR\\s+\\w+\\s*=\\s*\\d+\\s+TO\\s+\\d+[\\s\\S]*?\\w+\\s*\\([\\s\\S]*?\\)",
+      "severity": "warning",
+      "message": "Array access in loop with hardcoded bounds",
+      "suggestion": "Use LBOUND and UBOUND functions for safe array iteration"
+    },
+    "redim_preserve_multi_dim": {
+      "regex": "REDIM\\s+PRESERVE\\s+\\w+\\s*\\([^,]*,[^,]*,",
+      "severity": "error",
+      "message": "REDIM PRESERVE can only resize the last dimension of multi-dimensional arrays",
+      "suggestion": "Only resize the rightmost dimension when using PRESERVE with multi-dimensional arrays"
+    },
+    "missing_boundary_check": {
+      "regex": "\\w+\\s*\\(\\s*[a-zA-Z]\\w*\\s*\\)\\s*=",
+      "severity": "info",
+      "message": "Array access with variable index without boundary checking",
+      "suggestion": "Validate index against LBOUND and UBOUND before array access"
+    },
+    "redim_shared_in_procedure": {
+      "regex": "(?:SUB|FUNCTION)\\s+\\w+[\\s\\S]*?REDIM\\s+SHARED\\s+\\w+",
+      "severity": "info",
+      "message": "REDIM SHARED used within procedure affects global array",
+      "suggestion": "Consider if global array modification is intended or use local array instead"
     }
   }
 }

@@ -167,7 +167,7 @@ _DISPLAY
 DIM screenshotFile AS STRING
 
 ' Screenshot 1: Initial render
-screenshotFile = "qb64pe-screenshots/grid-shapes-test.bmp"
+screenshotFile = "qb64pe-screenshots/grid-shapes-test.png"
 _SAVEIMAGE screenshotFile
 
 ' Short pause
@@ -188,7 +188,7 @@ NEXT i
 _PRINTSTRING (820, 220), "ANIMATED"
 
 ' Screenshot 2: With animation
-screenshotFile = "qb64pe-screenshots/grid-shapes-animated.bmp"
+screenshotFile = "qb64pe-screenshots/grid-shapes-animated.png"
 _SAVEIMAGE screenshotFile
 
 ' Final pause then exit

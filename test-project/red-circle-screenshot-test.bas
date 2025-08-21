@@ -34,14 +34,14 @@ _DISPLAY
 
 ' Take screenshot for analysis
 DIM screenshotFile AS STRING
-screenshotFile = "qb64pe-screenshots/red-circle-test.bmp"
+screenshotFile = "qb64pe-screenshots/red-circle-test.png"
 _SAVEIMAGE screenshotFile
 
 ' Short pause to ensure screenshot is saved
 _DELAY 1
 
 ' Take a second screenshot for comparison
-screenshotFile = "qb64pe-screenshots/red-circle-test-final.bmp"
+screenshotFile = "qb64pe-screenshots/red-circle-test-final.png"
 _SAVEIMAGE screenshotFile
 
 ' Wait briefly then exit automatically (for testing)

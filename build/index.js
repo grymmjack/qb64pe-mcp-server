@@ -1,4 +1,37 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
 const mcp_js_1 = require("@modelcontextprotocol/sdk/server/mcp.js");
 const stdio_js_1 = require("@modelcontextprotocol/sdk/server/stdio.js");
@@ -1212,6 +1245,547 @@ Remember: QB64PE installation and PATH configuration is often the first hurdle f
                 };
             }
         });
+        // Graphics Screenshot Analysis Tool
+        this.server.registerTool("analyze_qb64pe_graphics_screenshot", {
+            title: "Analyze QB64PE Graphics Screenshot",
+            description: "Analyze QB64PE graphics program screenshots to detect shapes, colors, layout, and visual elements for LLM analysis",
+            inputSchema: {
+                screenshotPath: zod_1.z.string().describe("Path to the screenshot file to analyze (PNG, BMP, JPG, GIF)"),
+                analysisType: zod_1.z.enum([
+                    "shapes",
+                    "colors",
+                    "layout",
+                    "text",
+                    "quality",
+                    "comprehensive"
+                ]).optional().describe("Type of analysis to perform (default: comprehensive)"),
+                expectedElements: zod_1.z.array(zod_1.z.string()).optional().describe("List of expected visual elements to look for"),
+                programCode: zod_1.z.string().optional().describe("Original QB64PE code that generated the screenshot for context")
+            }
+        }, async ({ screenshotPath, analysisType = "comprehensive", expectedElements, programCode }) => {
+            try {
+                // Import required modules
+                const fs = await Promise.resolve().then(() => __importStar(require('fs')));
+                const path = await Promise.resolve().then(() => __importStar(require('path')));
+                // Validate screenshot file exists
+                if (!fs.existsSync(screenshotPath)) {
+                    return {
+                        content: [{
+                                type: "text",
+                                text: JSON.stringify({
+                                    error: "Screenshot file not found",
+                                    path: screenshotPath,
+                                    suggestion: "Check file path and ensure QB64PE program has executed and saved screenshots"
+                                }, null, 2)
+                            }],
+                        isError: true
+                    };
+                }
+                // Get file stats and info
+                const stats = fs.statSync(screenshotPath);
+                const ext = path.extname(screenshotPath).toLowerCase();
+                const supportedFormats = ['.png', '.bmp', '.jpg', '.jpeg', '.gif'];
+                if (!supportedFormats.includes(ext)) {
+                    return {
+                        content: [{
+                                type: "text",
+                                text: JSON.stringify({
+                                    error: "Unsupported image format",
+                                    format: ext,
+                                    supportedFormats,
+                                    suggestion: "Use PNG, BMP, JPG, or GIF format for screenshots"
+                                }, null, 2)
+                            }],
+                        isError: true
+                    };
+                }
+                // Analyze program code if provided
+                let codeAnalysis = null;
+                if (programCode) {
+                    const executionState = this.executionService.analyzeExecutionMode(programCode);
+                    codeAnalysis = {
+                        hasGraphics: executionState.hasGraphics,
+                        detectedShapes: this.extractShapesFromCode(programCode),
+                        detectedColors: this.extractColorsFromCode(programCode),
+                        screenSize: this.extractScreenSize(programCode),
+                        textElements: this.extractTextElements(programCode)
+                    };
+                }
+                // Generate comprehensive analysis instructions for LLM
+                const analysisInstructions = this.generateAnalysisInstructions(analysisType, expectedElements, codeAnalysis);
+                // Prepare analysis metadata
+                const analysisMetadata = {
+                    screenshot: {
+                        path: screenshotPath,
+                        format: ext,
+                        sizeBytes: stats.size,
+                        lastModified: stats.mtime.toISOString(),
+                        isWebCompatible: ['.png', '.jpg', '.jpeg', '.gif'].includes(ext)
+                    },
+                    analysis: {
+                        type: analysisType,
+                        expectedElements: expectedElements || [],
+                        codeContext: codeAnalysis
+                    },
+                    instructions: analysisInstructions,
+                    llmGuidance: this.generateLLMGuidance(analysisType, codeAnalysis)
+                };
+                return {
+                    content: [{
+                            type: "text",
+                            text: JSON.stringify(analysisMetadata, null, 2)
+                        }]
+                };
+            }
+            catch (error) {
+                return {
+                    content: [{
+                            type: "text",
+                            text: `Error analyzing screenshot: ${error instanceof Error ? error.message : 'Unknown error'}`
+                        }],
+                    isError: true
+                };
+            }
+        });
+        // Generate Screenshot Analysis Template Tool
+        this.server.registerTool("generate_qb64pe_screenshot_analysis_template", {
+            title: "Generate QB64PE Screenshot Analysis Template",
+            description: "Generate a QB64PE program template specifically designed for screenshot analysis testing with known visual elements",
+            inputSchema: {
+                testType: zod_1.z.enum([
+                    "basic_shapes",
+                    "color_palette",
+                    "text_rendering",
+                    "layout_grid",
+                    "animation_frames",
+                    "complex_scene",
+                    "custom"
+                ]).describe("Type of visual test to generate"),
+                customSpecs: zod_1.z.object({
+                    shapes: zod_1.z.array(zod_1.z.string()).optional(),
+                    colors: zod_1.z.array(zod_1.z.string()).optional(),
+                    textElements: zod_1.z.array(zod_1.z.string()).optional(),
+                    screenSize: zod_1.z.string().optional()
+                }).optional().describe("Custom specifications for the test (only used with 'custom' testType)")
+            }
+        }, async ({ testType, customSpecs }) => {
+            try {
+                let templateCode = '';
+                let analysisSpecs = {};
+                switch (testType) {
+                    case 'basic_shapes':
+                        templateCode = this.generateBasicShapesTemplate();
+                        analysisSpecs = {
+                            expectedShapes: ['circle', 'rectangle', 'line', 'triangle'],
+                            expectedColors: ['red', 'blue', 'green', 'yellow'],
+                            textElements: ['BASIC SHAPES TEST', 'Circle', 'Rectangle', 'Line', 'Triangle'],
+                            screenSize: '800x600'
+                        };
+                        break;
+                    case 'color_palette':
+                        templateCode = this.generateColorPaletteTemplate();
+                        analysisSpecs = {
+                            expectedShapes: ['rectangle'],
+                            expectedColors: ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet'],
+                            textElements: ['COLOR PALETTE TEST', 'RGB Test'],
+                            screenSize: '1024x768'
+                        };
+                        break;
+                    case 'text_rendering':
+                        templateCode = this.generateTextRenderingTemplate();
+                        analysisSpecs = {
+                            expectedShapes: [],
+                            expectedColors: ['white', 'red', 'green', 'blue'],
+                            textElements: ['TEXT RENDERING TEST', 'Different Sizes', 'Different Colors', 'Different Positions'],
+                            screenSize: '800x600'
+                        };
+                        break;
+                    case 'layout_grid':
+                        templateCode = this.generateLayoutGridTemplate();
+                        analysisSpecs = {
+                            expectedShapes: ['circle', 'rectangle', 'line'],
+                            expectedColors: ['red', 'green', 'blue', 'yellow', 'magenta', 'cyan'],
+                            textElements: ['LAYOUT GRID TEST', 'Grid System'],
+                            screenSize: '1024x768'
+                        };
+                        break;
+                    case 'custom':
+                        templateCode = this.generateCustomTemplate(customSpecs || {});
+                        analysisSpecs = customSpecs || {};
+                        break;
+                    default:
+                        templateCode = this.generateBasicShapesTemplate();
+                        analysisSpecs = {
+                            expectedShapes: ['circle', 'rectangle'],
+                            expectedColors: ['red', 'blue'],
+                            textElements: ['DEFAULT TEST'],
+                            screenSize: '800x600'
+                        };
+                }
+                return {
+                    content: [{
+                            type: "text",
+                            text: JSON.stringify({
+                                testType,
+                                templateCode,
+                                analysisSpecs,
+                                usage: {
+                                    compilation: "qb64pe -c template.bas",
+                                    execution: "template.exe",
+                                    expectedOutput: "Screenshots will be saved to qb64pe-screenshots/",
+                                    analysisCommand: "Use analyze_qb64pe_graphics_screenshot with generated images"
+                                },
+                                files: {
+                                    saveAs: `${testType.replace('_', '-')}-template.bas`,
+                                    screenshotDir: "qb64pe-screenshots/",
+                                    expectedScreenshots: [`${testType.replace('_', '-')}-test.png`]
+                                }
+                            }, null, 2)
+                        }]
+                };
+            }
+            catch (error) {
+                return {
+                    content: [{
+                            type: "text",
+                            text: `Error generating screenshot analysis template: ${error instanceof Error ? error.message : 'Unknown error'}`
+                        }],
+                    isError: true
+                };
+            }
+        });
+    }
+    /**
+     * Helper methods for graphics screenshot analysis
+     */
+    extractShapesFromCode(code) {
+        const shapes = [];
+        const shapePatterns = {
+            circle: /\bCIRCLE\s*\(/i,
+            line: /\bLINE\s*\(/i,
+            rectangle: /\bLINE\s*\([^)]*\)\s*,\s*\([^)]*\)\s*,.*,\s*B/i,
+            ellipse: /\b_ELLIPSE\s*\(/i,
+            polygon: /\b_POLYGON\s*\(/i,
+            triangle: /\bLINE\s*.*LINETO.*LINETO/i
+        };
+        for (const [shape, pattern] of Object.entries(shapePatterns)) {
+            if (pattern.test(code)) {
+                shapes.push(shape);
+            }
+        }
+        return shapes;
+    }
+    extractColorsFromCode(code) {
+        const colors = [];
+        const colorPatterns = {
+            red: /_RGB32\s*\(\s*255\s*,\s*0\s*,\s*0\s*\)|_RED/i,
+            green: /_RGB32\s*\(\s*0\s*,\s*255\s*,\s*0\s*\)|_GREEN/i,
+            blue: /_RGB32\s*\(\s*0\s*,\s*0\s*,\s*255\s*\)|_BLUE/i,
+            white: /_RGB32\s*\(\s*255\s*,\s*255\s*,\s*255\s*\)|_WHITE/i,
+            black: /_RGB32\s*\(\s*0\s*,\s*0\s*,\s*0\s*\)|_BLACK/i,
+            yellow: /_RGB32\s*\(\s*255\s*,\s*255\s*,\s*0\s*\)|_YELLOW/i,
+            magenta: /_RGB32\s*\(\s*255\s*,\s*0\s*,\s*255\s*\)|_MAGENTA/i,
+            cyan: /_RGB32\s*\(\s*0\s*,\s*255\s*,\s*255\s*\)|_CYAN/i
+        };
+        for (const [color, pattern] of Object.entries(colorPatterns)) {
+            if (pattern.test(code)) {
+                colors.push(color);
+            }
+        }
+        return colors;
+    }
+    extractScreenSize(code) {
+        const sizePattern = /SCREEN\s+_NEWIMAGE\s*\(\s*(\d+)\s*,\s*(\d+)/i;
+        const match = code.match(sizePattern);
+        return match ? `${match[1]}x${match[2]}` : 'unknown';
+    }
+    extractTextElements(code) {
+        const textElements = [];
+        const patterns = [
+            /_PRINTSTRING\s*\([^)]*\)\s*,\s*"([^"]+)"/g,
+            /PRINT\s+"([^"]+)"/g,
+            /_TITLE\s+"([^"]+)"/g
+        ];
+        patterns.forEach(pattern => {
+            let match;
+            while ((match = pattern.exec(code)) !== null) {
+                textElements.push(match[1]);
+            }
+        });
+        return textElements;
+    }
+    generateAnalysisInstructions(analysisType, expectedElements, codeAnalysis) {
+        let instructions = `# QB64PE Screenshot Analysis Instructions\n\n`;
+        instructions += `## Analysis Type: ${analysisType.toUpperCase()}\n\n`;
+        if (codeAnalysis) {
+            instructions += `## Code Context\n`;
+            instructions += `- Screen Size: ${codeAnalysis.screenSize}\n`;
+            instructions += `- Expected Shapes: ${codeAnalysis.detectedShapes.join(', ') || 'None detected'}\n`;
+            instructions += `- Expected Colors: ${codeAnalysis.detectedColors.join(', ') || 'None detected'}\n`;
+            instructions += `- Text Elements: ${codeAnalysis.textElements.join(', ') || 'None detected'}\n\n`;
+        }
+        switch (analysisType) {
+            case 'shapes':
+                instructions += `## Shape Analysis Tasks\n`;
+                instructions += `- Identify all geometric shapes (circles, rectangles, lines, triangles, etc.)\n`;
+                instructions += `- Measure approximate dimensions and positions\n`;
+                instructions += `- Check for shape completeness and accuracy\n`;
+                break;
+            case 'colors':
+                instructions += `## Color Analysis Tasks\n`;
+                instructions += `- Identify primary and secondary colors used\n`;
+                instructions += `- Check color accuracy against expected RGB values\n`;
+                instructions += `- Analyze color distribution and gradients\n`;
+                break;
+            case 'layout':
+                instructions += `## Layout Analysis Tasks\n`;
+                instructions += `- Assess overall composition and balance\n`;
+                instructions += `- Check element positioning and alignment\n`;
+                instructions += `- Verify screen utilization and spacing\n`;
+                break;
+            case 'text':
+                instructions += `## Text Analysis Tasks\n`;
+                instructions += `- Read and transcribe all visible text\n`;
+                instructions += `- Check text positioning and font rendering\n`;
+                instructions += `- Verify text color and readability\n`;
+                break;
+            case 'quality':
+                instructions += `## Quality Analysis Tasks\n`;
+                instructions += `- Check for rendering artifacts or distortion\n`;
+                instructions += `- Assess image clarity and sharpness\n`;
+                instructions += `- Verify color accuracy and saturation\n`;
+                break;
+            default: // comprehensive
+                instructions += `## Comprehensive Analysis Tasks\n`;
+                instructions += `1. **Shape Detection**: Identify all geometric shapes and their properties\n`;
+                instructions += `2. **Color Analysis**: Document all colors and their usage\n`;
+                instructions += `3. **Text Recognition**: Read and locate all text elements\n`;
+                instructions += `4. **Layout Assessment**: Analyze composition and positioning\n`;
+                instructions += `5. **Quality Evaluation**: Check rendering quality and accuracy\n`;
+        }
+        if (expectedElements && expectedElements.length > 0) {
+            instructions += `\n## Expected Elements to Verify\n`;
+            expectedElements.forEach((element, index) => {
+                instructions += `${index + 1}. ${element}\n`;
+            });
+        }
+        return instructions;
+    }
+    generateLLMGuidance(analysisType, codeAnalysis) {
+        return {
+            responseFormat: "Provide detailed description of visual elements found in the screenshot",
+            analysisDepth: analysisType === 'comprehensive' ? 'detailed' : 'focused',
+            requiredElements: [
+                "Overall composition description",
+                "Shape identification and properties",
+                "Color usage and accuracy",
+                "Text content and positioning",
+                "Quality assessment"
+            ],
+            successCriteria: {
+                shapeAccuracy: "All expected shapes are correctly identified",
+                colorAccuracy: "Colors match expected RGB values within tolerance",
+                textReadability: "All text elements are clearly readable",
+                layoutCorrectness: "Elements are positioned as expected",
+                overallQuality: "Rendering is clean without artifacts"
+            },
+            contextualAnalysis: codeAnalysis ? "Use provided code context to validate visual output" : "Analyze screenshot independently"
+        };
+    }
+    generateBasicShapesTemplate() {
+        return `' QB64PE Basic Shapes Screenshot Analysis Template
+$NoPrefix
+$Resize:Smooth
+
+Title "QB64PE Basic Shapes Test"
+Screen _NewImage(800, 600, 32)
+Cls , _RGB32(0, 0, 0) ' Black background
+
+' Colors
+Dim red, blue, green, yellow, white
+red = _RGB32(255, 0, 0)
+blue = _RGB32(0, 0, 255)
+green = _RGB32(0, 255, 0)  
+yellow = _RGB32(255, 255, 0)
+white = _RGB32(255, 255, 255)
+
+' Title text
+Color white
+_PrintString (300, 50), "BASIC SHAPES TEST"
+
+' Circle in top-left quadrant
+Circle (200, 200), 80, red
+Paint (200, 200), red
+_PrintString (160, 290), "Circle"
+
+' Rectangle in top-right quadrant
+Line (450, 120)-(650, 280), blue, BF
+_PrintString (530, 290), "Rectangle"
+
+' Line in bottom-left quadrant
+Line (100, 350)-(300, 500), green
+_PrintString (180, 510), "Line"
+
+' Triangle in bottom-right quadrant
+Line (500, 350)-(600, 500), yellow
+Line (600, 500)-(700, 350), yellow
+Line (700, 350)-(500, 350), yellow
+_PrintString (580, 510), "Triangle"
+
+Display
+_SaveImage "qb64pe-screenshots/basic-shapes-test.png"
+_Delay 2
+System 0`;
+    }
+    generateColorPaletteTemplate() {
+        return `' QB64PE Color Palette Screenshot Analysis Template
+$NoPrefix
+Screen _NewImage(1024, 768, 32)
+Cls , _RGB32(32, 32, 32) ' Dark gray background
+
+Title "QB64PE Color Palette Test"
+
+' Title
+Color _RGB32(255, 255, 255)
+_PrintString (400, 50), "COLOR PALETTE TEST"
+
+' Color palette
+Dim colors(7), colorNames$(7)
+colors(0) = _RGB32(255, 0, 0): colorNames$(0) = "Red"
+colors(1) = _RGB32(255, 127, 0): colorNames$(1) = "Orange"  
+colors(2) = _RGB32(255, 255, 0): colorNames$(2) = "Yellow"
+colors(3) = _RGB32(0, 255, 0): colorNames$(3) = "Green"
+colors(4) = _RGB32(0, 0, 255): colorNames$(4) = "Blue"
+colors(5) = _RGB32(75, 0, 130): colorNames$(5) = "Indigo"
+colors(6) = _RGB32(148, 0, 211): colorNames$(6) = "Violet"
+
+For i = 0 To 6
+    Line (100 + i * 120, 200)-(200 + i * 120, 400), colors(i), BF
+    Color _RGB32(255, 255, 255)
+    _PrintString (120 + i * 120, 420), colorNames$(i)
+Next i
+
+_PrintString (450, 500), "RGB Test"
+Display
+_SaveImage "qb64pe-screenshots/color-palette-test.png"
+_Delay 2
+System 0`;
+    }
+    generateTextRenderingTemplate() {
+        return `' QB64PE Text Rendering Screenshot Analysis Template
+$NoPrefix
+Screen _NewImage(800, 600, 32)
+Cls , _RGB32(0, 0, 0) ' Black background
+
+Title "QB64PE Text Rendering Test"
+
+' Title
+Color _RGB32(255, 255, 255)
+_PrintString (250, 50), "TEXT RENDERING TEST"
+
+' Different colors
+Color _RGB32(255, 0, 0)
+_PrintString (100, 150), "Red Text"
+
+Color _RGB32(0, 255, 0)  
+_PrintString (100, 200), "Green Text"
+
+Color _RGB32(0, 0, 255)
+_PrintString (100, 250), "Blue Text"
+
+' Different positions
+Color _RGB32(255, 255, 255)
+_PrintString (50, 350), "Left Position"
+_PrintString (350, 350), "Center Position"  
+_PrintString (600, 350), "Right Position"
+
+' Size variations (using different strings)
+_PrintString (200, 450), "Different Sizes"
+_PrintString (250, 480), "Different Colors"
+_PrintString (300, 510), "Different Positions"
+
+Display
+_SaveImage "qb64pe-screenshots/text-rendering-test.png"
+_Delay 2
+System 0`;
+    }
+    generateLayoutGridTemplate() {
+        return `' QB64PE Layout Grid Screenshot Analysis Template
+$NoPrefix
+Screen _NewImage(1024, 768, 32)
+Cls , _RGB32(0, 0, 0) ' Black background
+
+Title "QB64PE Layout Grid Test"
+
+' Grid colors
+Dim red, green, blue, yellow, magenta, cyan, white
+red = _RGB32(255, 0, 0)
+green = _RGB32(0, 255, 0)
+blue = _RGB32(0, 0, 255)
+yellow = _RGB32(255, 255, 0)
+magenta = _RGB32(255, 0, 255)
+cyan = _RGB32(0, 255, 255)
+white = _RGB32(255, 255, 255)
+
+' Title
+Color white
+_PrintString (400, 30), "LAYOUT GRID TEST"
+
+' 3x3 grid of different elements
+' Row 1
+Circle (200, 150), 50, red: Paint (200, 150), red
+Line (350, 100)-(450, 200), green, BF
+Circle (600, 150), 30, blue
+
+' Row 2  
+Line (150, 300)-(250, 400), yellow, BF
+Circle (400, 350), 40, magenta: Paint (400, 350), magenta
+Line (550, 300)-(650, 400), cyan, B
+
+' Row 3
+Line (100, 500)-(300, 520), white
+Circle (400, 520), 60, green
+Line (550, 450)-(650, 550), red, BF
+
+' Grid labels
+Color white
+_PrintString (450, 650), "Grid System"
+
+Display
+_SaveImage "qb64pe-screenshots/layout-grid-test.png" 
+_Delay 2
+System 0`;
+    }
+    generateCustomTemplate(specs) {
+        const shapes = specs.shapes || ['circle'];
+        const colors = specs.colors || ['red'];
+        const textElements = specs.textElements || ['CUSTOM TEST'];
+        const screenSize = specs.screenSize || '800x600';
+        const [width, height] = screenSize.split('x').map(Number);
+        return `' QB64PE Custom Screenshot Analysis Template
+$NoPrefix
+Screen _NewImage(${width}, ${height}, 32)
+Cls , _RGB32(0, 0, 0) ' Black background
+
+Title "QB64PE Custom Test"
+
+' Custom elements based on specifications
+' Colors
+Dim testColor
+testColor = _RGB32(255, 0, 0) ' Default red
+
+' Title
+Color _RGB32(255, 255, 255)
+_PrintString (${Math.floor(width / 2) - 50}, 50), "${textElements[0] || 'CUSTOM TEST'}"
+
+' Add custom shapes and elements here
+Circle (${Math.floor(width / 2)}, ${Math.floor(height / 2)}, 50, testColor
+Paint (${Math.floor(width / 2)}, ${Math.floor(height / 2)}, testColor
+
+Display
+_SaveImage "qb64pe-screenshots/custom-test.png"
+_Delay 2
+System 0`;
     }
     /**
      * Setup resource implementations

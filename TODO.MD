@@ -25,6 +25,8 @@
     - _HSV, _HSV32, _HSV32A
     - _HSL, _HSL32, _HSL32A
     - HEX COLORS &H
+    - FREEIMAGE
+        - CANNOT FREEIMAGE current _DEST
 - SOUND
     - PLAY
     - BEEP

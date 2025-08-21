@@ -1,6 +1,26 @@
 # QB64PE MCP Server
 
-A comprehensive Model Context Protocol (MCP) server that provides advanced QB64PE (QBasic 64 Phoenix Edition) programming assistance. This server enables AI assistants to search the QB64PE wiki, understand compiler options, provide debugging help, validate QB64PE-only syntax, and handle cross-platform differences.
+A comprehensive Model Context Pr### 🔍 **Keywords Reference System**
+- Complete QB64PE keywords database (800+ keywords)
+- Smart categorization (statements, functions, operators, metacommands, OpenGL, types, legacy)
+- Real-time keyword validation with intelligent suggestions
+- Autocomplete support for partial keywords
+- Full-text search across keyword definitions and examples
+- Version compatibility checking (QBasic vs QB64 vs QB64PE)
+- Platform availability information
+- Syntax examples and related keyword suggestions
+
+### ⚡ **Execution Monitoring & Process Management**
+- **Program execution type detection** - Identifies graphics vs console vs mixed programs
+- **LLM timeout strategies** - Prevents infinite waiting for graphics programs that require user interaction
+- **Cross-platform process monitoring** - Commands for Windows, Linux, and macOS process management
+- **Real-time console output parsing** - Detects completion signals, input prompts, and program state
+- **Automatic screenshot generation** - Captures visual output from graphics programs using `_SAVEIMAGE`
+- **Enhanced logging and monitoring** - Automatic log file generation with timestamps and progress tracking
+- **Console output formatting** - Color-coded, structured output for better terminal parsing
+- **Process termination strategies** - Graceful and force termination commands across platforms
+- **File monitoring utilities** - Real-time log file monitoring and pattern searching
+- **Code template generation** - Wraps user code with monitoring, logging, and screenshot capabilitiesCP) server that provides advanced QB64PE (QBasic 64 Phoenix Edition) programming assistance. This server enables AI assistants to search the QB64PE wiki, understand compiler options, provide debugging help, validate QB64PE-only syntax, and handle cross-platform differences.
 
 ## Features
 
@@ -331,6 +351,93 @@ Search for QB64PE keywords by name, description, or functionality.
 }
 ```
 
+### 13. `analyze_qb64pe_execution_mode`
+Analyze QB64PE source code to determine execution characteristics and monitoring requirements.
+
+**Arguments:**
+- `sourceCode` (string): QB64PE source code to analyze
+
+**Returns execution state and guidance for monitoring:**
+- Program type (graphics, console, mixed)
+- Timeout recommendations for LLMs
+- Monitoring strategies
+- Screenshot and logging requirements
+
+**Example:**
+```json
+{
+  "sourceCode": "SCREEN _NEWIMAGE(800, 600, 32)\\nDO\\n    _LIMIT 60\\nLOOP"
+}
+```
+
+### 14. `get_process_monitoring_commands`
+Get cross-platform commands for monitoring QB64PE processes.
+
+**Arguments:**
+- `processName` (string, optional): Process name to monitor (default: "qb64pe")
+- `platform` (string, optional): Target platform (windows, linux, macos, current)
+
+**Example:**
+```json
+{
+  "processName": "qb64pe",
+  "platform": "windows"
+}
+```
+
+### 15. `generate_monitoring_template`
+Generate QB64PE code template with built-in logging, screenshots, and execution monitoring.
+
+**Arguments:**
+- `originalCode` (string): Original QB64PE code to wrap with monitoring
+
+**Example:**
+```json
+{
+  "originalCode": "PRINT \"Hello World\"\\nFOR i = 1 TO 5\\n    PRINT i\\nNEXT i"
+}
+```
+
+### 16. `generate_console_formatting_template`
+Generate QB64PE template with enhanced console output formatting for better terminal parsing.
+
+**Arguments:** None
+
+**Returns:** Template code with color-coded console output functions
+
+### 17. `get_execution_monitoring_guidance`
+Get comprehensive guidance for monitoring QB64PE program execution, including LLM timeout strategies.
+
+**Arguments:** None
+
+**Returns:** Detailed markdown guide for execution monitoring best practices
+
+### 18. `parse_console_output`
+Parse QB64PE console output to detect completion signals, input prompts, and execution state.
+
+**Arguments:**
+- `output` (string): Console output to parse
+
+**Example:**
+```json
+{
+  "output": "Processing complete.\\nPress any key to continue..."
+}
+```
+
+### 19. `get_file_monitoring_commands`
+Get cross-platform commands for monitoring QB64PE log files and output.
+
+**Arguments:**
+- `logFile` (string): Path to log file to monitor
+
+**Example:**
+```json
+{
+  "logFile": "qb64pe-logs/execution_timestamp.log"
+}
+```
+
 ## Available Resources
 
 ### 1. `qb64pe://wiki/search`
@@ -351,6 +458,9 @@ Keywords filtered by specific category (statements, functions, operators, etc.).
 ### 6. `qb64pe://keywords/detail/{keyword}`
 Detailed information about a specific QB64PE keyword.
 
+### 7. `qb64pe://execution/monitoring`
+Comprehensive guide for monitoring QB64PE program execution, process management, and timeout strategies for LLMs.
+
 ## Available Prompts
 
 ### 1. `review-qb64pe-code`
@@ -367,6 +477,22 @@ Template for comprehensive QB64PE code review.
 - `cross-platform`: Platform compatibility
 - `debugging`: Debugging and troubleshooting
 
+### 2. `monitor-qb64pe-execution`
+Template for monitoring QB64PE program execution with timeout strategies.
+
+**Arguments:**
+- `sourceCode` (string): QB64PE source code to analyze
+- `expectedBehavior` (string, optional): Expected program behavior
+- `platform` (string, optional): Target platform (windows, macos, linux)
+
+**Provides guidance for:**
+- Program type analysis (graphics, console, mixed)
+- Execution timeout recommendations for LLMs
+- Process monitoring strategy
+- Console output parsing guidance
+- Screenshot/logging recommendations
+- When to hand over to human interaction
+
 ## Architecture
 
 ### Core Components
@@ -376,6 +502,8 @@ Template for comprehensive QB64PE code review.
 - **Compiler Service**: Compiler options and platform guidance  
 - **Syntax Service**: QB64PE syntax validation and analysis
 - **Compatibility Service**: Compatibility knowledge and validation
+- **Keywords Service**: Keywords reference and validation
+- **Execution Service**: Program execution monitoring and process management
 - **Search Service**: Semantic search across compatibility content
 
 ### Service Details
@@ -413,6 +541,17 @@ Template for comprehensive QB64PE code review.
 - Category and tag filtering
 - Semantic search capabilities
 
+#### Execution Service (`QB64PEExecutionService`)
+- Program execution type detection (graphics, console, mixed)
+- LLM timeout strategy recommendations
+- Cross-platform process monitoring commands
+- Console output parsing and completion signal detection
+- Automatic screenshot generation using `_SAVEIMAGE`
+- Enhanced logging and monitoring template generation
+- Console output formatting for better parsing
+- Real-time log file monitoring utilities
+- Process termination strategies across platforms
+
 ## Development
 
 ### Building
@@ -440,6 +579,7 @@ src/
 │   ├── syntax-service.ts    # Syntax validation
 │   ├── compatibility-service.ts # Compatibility validation
 │   ├── keywords-service.ts  # Keywords reference and validation
+│   ├── execution-service.ts # Program execution monitoring
 │   └── search-service.ts    # Search indexing
 ├── data/
 │   ├── compatibility-rules.json # Structured compatibility rules
@@ -449,6 +589,8 @@ src/
 
 ## Documentation
 
+- [Execution Monitoring Guide](./docs/QB64PE_EXECUTION_MONITORING.md) - Comprehensive guide for monitoring QB64PE program execution, process management, and LLM timeout strategies
+- [Execution Monitoring Examples](./docs/EXECUTION_MONITORING_EXAMPLES.md) - Practical examples and usage patterns for execution monitoring features
 - [Compatibility Integration Guide](./docs/COMPATIBILITY_INTEGRATION.md) - Detailed documentation of the compatibility validation system
 - [Keywords Integration Guide](./docs/KEYWORDS_INTEGRATION.md) - Comprehensive guide to the keywords reference system
 - [Variable Scoping Rules](./docs/VARIABLE_SCOPING_RULES.md) - Complete guide to DIM SHARED, $DYNAMIC, and variable scoping
@@ -504,6 +646,37 @@ NEXT x`,
 }
 ```
 
+### Example 6: Analyze Program Execution Mode
+```javascript
+// Using the analyze_qb64pe_execution_mode tool
+{
+  "sourceCode": "SCREEN _NEWIMAGE(800, 600, 32)\\nDO\\n    WHILE _MOUSEINPUT\\n        IF _MOUSEBUTTON(1) THEN CLS\\n    WEND\\n    _LIMIT 60\\nLOOP"
+}
+
+// Result indicates graphics program that will wait indefinitely for user input
+// LLM should timeout after 30-60 seconds and hand over to human
+```
+
+### Example 7: Generate Monitoring Template
+```javascript
+// Using the generate_monitoring_template tool
+{
+  "originalCode": "PRINT \"Processing data...\"\\nFOR i = 1 TO 100\\n    PRINT \"Item\"; i\\nNEXT i"
+}
+
+// Returns enhanced code with automatic logging, screenshots, and progress tracking
+```
+
+### Example 8: Parse Console Output
+```javascript
+// Using the parse_console_output tool
+{
+  "output": "Processing complete.\\nPress any key to continue..."
+}
+
+// Result: {"isWaitingForInput": true, "isCompleted": true, "suggestedAction": "requires_user_input"}
+```
+
 ## Contributing
 
 1. Fork the repository
@@ -542,3 +715,10 @@ MIT License - see LICENSE file for details.
 - **NEW**: Variable accessibility analysis
 - **NEW**: Variable shadowing detection
 - **NEW**: Scope-specific debugging guidance
+- **NEW**: Program execution monitoring and timeout strategies
+- **NEW**: Cross-platform process monitoring commands
+- **NEW**: Console output parsing for completion signals
+- **NEW**: Automatic screenshot generation using _SAVEIMAGE
+- **NEW**: Enhanced logging and monitoring templates
+- **NEW**: Real-time log file monitoring utilities
+- **NEW**: LLM timeout recommendations for graphics programs

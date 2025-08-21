@@ -250,3 +250,12 @@ artifacts
 # package-lock.json
 # yarn.lock
 # pnpm-lock.yaml
+
+# QB64PE execution output
+qb64pe-screenshots/
+qb64pe-logs/
+*.exe
+*.dmg
+# QB64PE temporary files
+internal/temp/
+internal/c/parts/core/temp/

@@ -8,6 +8,7 @@ const compiler_service_js_1 = require("./services/compiler-service.js");
 const syntax_service_js_1 = require("./services/syntax-service.js");
 const compatibility_service_js_1 = require("./services/compatibility-service.js");
 const keywords_service_js_1 = require("./services/keywords-service.js");
+const execution_service_js_1 = require("./services/execution-service.js");
 /**
  * Main MCP Server for QB64PE Development
  */
@@ -18,6 +19,7 @@ class QB64PEMCPServer {
     syntaxService;
     compatibilityService;
     keywordsService;
+    executionService;
     constructor() {
         this.server = new mcp_js_1.McpServer({
             name: "qb64pe-mcp-server",
@@ -29,6 +31,7 @@ class QB64PEMCPServer {
         this.syntaxService = new syntax_service_js_1.QB64PESyntaxService();
         this.compatibilityService = new compatibility_service_js_1.QB64PECompatibilityService();
         this.keywordsService = new keywords_service_js_1.KeywordsService();
+        this.executionService = new execution_service_js_1.QB64PEExecutionService();
     }
     /**
      * Initialize and configure the MCP server
@@ -619,6 +622,216 @@ class QB64PEMCPServer {
                 };
             }
         });
+        // Execution monitoring tools
+        this.server.registerTool("analyze_qb64pe_execution_mode", {
+            title: "Analyze QB64PE Execution Mode",
+            description: "Analyze QB64PE source code to determine execution characteristics and monitoring requirements",
+            inputSchema: {
+                sourceCode: zod_1.z.string().describe("QB64PE source code to analyze")
+            }
+        }, async ({ sourceCode }) => {
+            try {
+                const executionState = this.executionService.analyzeExecutionMode(sourceCode);
+                const guidance = this.executionService.getExecutionGuidance(executionState);
+                return {
+                    content: [{
+                            type: "text",
+                            text: JSON.stringify({
+                                executionState,
+                                guidance,
+                                summary: `Program type: ${executionState.hasGraphics ? 'Graphics' : 'Console'} ${executionState.hasConsole ? '+ Console' : ''}. ${guidance.recommendation}`
+                            }, null, 2)
+                        }]
+                };
+            }
+            catch (error) {
+                return {
+                    content: [{
+                            type: "text",
+                            text: `Error analyzing execution mode: ${error instanceof Error ? error.message : 'Unknown error'}`
+                        }],
+                    isError: true
+                };
+            }
+        });
+        this.server.registerTool("get_process_monitoring_commands", {
+            title: "Get Process Monitoring Commands",
+            description: "Get cross-platform commands for monitoring QB64PE processes",
+            inputSchema: {
+                processName: zod_1.z.string().optional().describe("Process name to monitor (default: qb64pe)"),
+                platform: zod_1.z.enum(["windows", "linux", "macos", "current"]).optional().describe("Target platform (default: current)")
+            }
+        }, async ({ processName = "qb64pe", platform = "current" }) => {
+            try {
+                const monitoringCommands = this.executionService.getProcessMonitoringCommands(processName);
+                const terminationCommands = this.executionService.getProcessTerminationCommands(12345); // Example PID
+                return {
+                    content: [{
+                            type: "text",
+                            text: JSON.stringify({
+                                platform: platform === "current" ? require('os').platform() : platform,
+                                processName,
+                                monitoring: {
+                                    commands: monitoringCommands,
+                                    description: "Commands to check if process is running and monitor resource usage"
+                                },
+                                termination: {
+                                    commands: terminationCommands.map(cmd => cmd.replace('12345', '{pid}')),
+                                    description: "Commands to terminate process (replace {pid} with actual process ID)"
+                                }
+                            }, null, 2)
+                        }]
+                };
+            }
+            catch (error) {
+                return {
+                    content: [{
+                            type: "text",
+                            text: `Error getting monitoring commands: ${error instanceof Error ? error.message : 'Unknown error'}`
+                        }],
+                    isError: true
+                };
+            }
+        });
+        this.server.registerTool("generate_monitoring_template", {
+            title: "Generate QB64PE Monitoring Template",
+            description: "Generate QB64PE code template with built-in logging, screenshots, and execution monitoring",
+            inputSchema: {
+                originalCode: zod_1.z.string().describe("Original QB64PE code to wrap with monitoring")
+            }
+        }, async ({ originalCode }) => {
+            try {
+                const monitoringCode = this.executionService.generateMonitoringTemplate(originalCode);
+                return {
+                    content: [{
+                            type: "text",
+                            text: monitoringCode
+                        }]
+                };
+            }
+            catch (error) {
+                return {
+                    content: [{
+                            type: "text",
+                            text: `Error generating monitoring template: ${error instanceof Error ? error.message : 'Unknown error'}`
+                        }],
+                    isError: true
+                };
+            }
+        });
+        this.server.registerTool("generate_console_formatting_template", {
+            title: "Generate Console Formatting Template",
+            description: "Generate QB64PE template with enhanced console output formatting for better terminal parsing",
+            inputSchema: {}
+        }, async () => {
+            try {
+                const formattingTemplate = this.executionService.generateConsoleFormattingTemplate();
+                return {
+                    content: [{
+                            type: "text",
+                            text: formattingTemplate
+                        }]
+                };
+            }
+            catch (error) {
+                return {
+                    content: [{
+                            type: "text",
+                            text: `Error generating console formatting template: ${error instanceof Error ? error.message : 'Unknown error'}`
+                        }],
+                    isError: true
+                };
+            }
+        });
+        this.server.registerTool("get_execution_monitoring_guidance", {
+            title: "Get QB64PE Execution Monitoring Guidance",
+            description: "Get comprehensive guidance for monitoring QB64PE program execution, including LLM timeout strategies",
+            inputSchema: {}
+        }, async () => {
+            try {
+                const guidance = this.executionService.getRealTimeMonitoringGuidance();
+                return {
+                    content: [{
+                            type: "text",
+                            text: guidance
+                        }]
+                };
+            }
+            catch (error) {
+                return {
+                    content: [{
+                            type: "text",
+                            text: `Error getting monitoring guidance: ${error instanceof Error ? error.message : 'Unknown error'}`
+                        }],
+                    isError: true
+                };
+            }
+        });
+        this.server.registerTool("parse_console_output", {
+            title: "Parse QB64PE Console Output",
+            description: "Parse QB64PE console output to detect completion signals, input prompts, and execution state",
+            inputSchema: {
+                output: zod_1.z.string().describe("Console output to parse")
+            }
+        }, async ({ output }) => {
+            try {
+                const parseResult = this.executionService.parseConsoleOutput(output);
+                return {
+                    content: [{
+                            type: "text",
+                            text: JSON.stringify(parseResult, null, 2)
+                        }]
+                };
+            }
+            catch (error) {
+                return {
+                    content: [{
+                            type: "text",
+                            text: `Error parsing console output: ${error instanceof Error ? error.message : 'Unknown error'}`
+                        }],
+                    isError: true
+                };
+            }
+        });
+        this.server.registerTool("get_file_monitoring_commands", {
+            title: "Get File Monitoring Commands",
+            description: "Get cross-platform commands for monitoring QB64PE log files and output",
+            inputSchema: {
+                logFile: zod_1.z.string().describe("Path to log file to monitor")
+            }
+        }, async ({ logFile }) => {
+            try {
+                const commands = this.executionService.getFileMonitoringCommands(logFile);
+                return {
+                    content: [{
+                            type: "text",
+                            text: JSON.stringify({
+                                logFile,
+                                platform: require('os').platform(),
+                                commands: {
+                                    tail: commands[0],
+                                    display: commands[1],
+                                    search: commands.length > 2 ? commands[2] : "grep available on Unix-like systems only"
+                                },
+                                usage: {
+                                    tail: "Monitor file in real-time as content is added",
+                                    display: "Show current content of the file",
+                                    search: "Search for specific patterns in the file"
+                                }
+                            }, null, 2)
+                        }]
+                };
+            }
+            catch (error) {
+                return {
+                    content: [{
+                            type: "text",
+                            text: `Error getting file monitoring commands: ${error instanceof Error ? error.message : 'Unknown error'}`
+                        }],
+                    isError: true
+                };
+            }
+        });
     }
     /**
      * Setup resource implementations
@@ -811,6 +1024,32 @@ Use the tools above to get detailed information and solutions for specific issue
                 };
             }
         });
+        // QB64PE execution monitoring resource
+        this.server.registerResource("qb64pe-execution", "qb64pe://execution/monitoring", {
+            title: "QB64PE Execution Monitoring Guide",
+            description: "Comprehensive guide for monitoring QB64PE program execution, process management, and timeout strategies",
+            mimeType: "text/markdown"
+        }, async (uri) => {
+            try {
+                const guidance = this.executionService.getRealTimeMonitoringGuidance();
+                const formattingTemplate = this.executionService.generateConsoleFormattingTemplate();
+                const content = guidance + "\n\n# Console Formatting Template\n\n```basic\n" + formattingTemplate + "\n```";
+                return {
+                    contents: [{
+                            uri: uri.href,
+                            text: content
+                        }]
+                };
+            }
+            catch (error) {
+                return {
+                    contents: [{
+                            uri: uri.href,
+                            text: `Error loading execution monitoring guide: ${error instanceof Error ? error.message : 'Unknown error'}`
+                        }]
+                };
+            }
+        });
     }
     /**
      * Setup prompt templates
@@ -876,6 +1115,43 @@ Please provide:
 6. Common QB64PE pitfalls to check
 
 Focus specifically on QB64PE debugging techniques and tools.`
+                    }
+                }]
+        }));
+        // Execution monitoring prompt
+        this.server.registerPrompt("monitor-qb64pe-execution", {
+            title: "Monitor QB64PE Program Execution",
+            description: "Provide guidance for monitoring QB64PE program execution with timeout strategies",
+            argsSchema: {
+                sourceCode: zod_1.z.string().describe("QB64PE source code to analyze"),
+                expectedBehavior: zod_1.z.string().optional().describe("Expected program behavior"),
+                platform: zod_1.z.enum(["windows", "macos", "linux"]).optional().describe("Target platform")
+            }
+        }, ({ sourceCode, expectedBehavior, platform }) => ({
+            messages: [{
+                    role: "user",
+                    content: {
+                        type: "text",
+                        text: `Analyze this QB64PE program for execution monitoring and provide timeout guidance:
+
+Code:
+\`\`\`basic
+${sourceCode}
+\`\`\`
+
+${expectedBehavior ? `Expected Behavior: ${expectedBehavior}` : ''}
+${platform ? `Platform: ${platform}` : ''}
+
+Please provide:
+1. Program type analysis (graphics, console, mixed)
+2. Execution timeout recommendations for LLMs
+3. Process monitoring strategy
+4. Console output parsing guidance
+5. Screenshot/logging recommendations
+6. Cross-platform considerations
+7. When to hand over to human interaction
+
+**Important**: LLMs should NOT wait indefinitely for graphics programs. Provide specific timeout values and detection strategies.`
                     }
                 }]
         }));

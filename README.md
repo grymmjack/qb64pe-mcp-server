@@ -1,6 +1,8 @@
 # QB64PE MCP Server
 
-A comprehensive Model Context Pr### 🔍 **Keywords Reference System**
+A comprehensive Model Context Protocol (MCP) server that provides advanced QB64PE (QBasic 64 Phoenix Edition) programming assistance. This server enables AI assistants to search the QB64PE wiki, understand compiler options, provide debugging help, validate QB64PE-only syntax, and handle cross-platform differences.
+
+### 🔍 **Keywords Reference System**
 - Complete QB64PE keywords database (800+ keywords)
 - Smart categorization (statements, functions, operators, metacommands, OpenGL, types, legacy)
 - Real-time keyword validation with intelligent suggestions

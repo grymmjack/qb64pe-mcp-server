@@ -32,6 +32,7 @@
     - BEEP
     - _SND* COMMANDS
     - PLAYING MIDI
+    - PLAYING MODS, S3Ms, XMs, RADs, ITs
     - PLAYING WAV
     - PLAYING MP3
     - USING SOUNDFONTS

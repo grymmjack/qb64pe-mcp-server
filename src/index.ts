@@ -7,6 +7,7 @@ import { QB64PESyntaxService } from "./services/syntax-service.js";
 import { QB64PECompatibilityService } from "./services/compatibility-service.js";
 import { KeywordsService } from "./services/keywords-service.js";
 import { QB64PEExecutionService } from "./services/execution-service.js";
+import { QB64PEInstallationService } from "./services/installation-service.js";
 
 /**
  * Main MCP Server for QB64PE Development
@@ -19,6 +20,7 @@ class QB64PEMCPServer {
   private compatibilityService: QB64PECompatibilityService;
   private keywordsService: KeywordsService;
   private executionService: QB64PEExecutionService;
+  private installationService: QB64PEInstallationService;
 
   constructor() {
     this.server = new McpServer({
@@ -33,6 +35,7 @@ class QB64PEMCPServer {
     this.compatibilityService = new QB64PECompatibilityService();
     this.keywordsService = new KeywordsService();
     this.executionService = new QB64PEExecutionService();
+    this.installationService = new QB64PEInstallationService();
   }
 
   /**
@@ -943,6 +946,205 @@ class QB64PEMCPServer {
         }
       }
     );
+
+    // QB64PE Installation Detection Tools
+    this.server.registerTool(
+      "detect_qb64pe_installation",
+      {
+        title: "Detect QB64PE Installation",
+        description: "Detect QB64PE installation and check if it's properly configured in PATH",
+        inputSchema: {}
+      },
+      async () => {
+        try {
+          const installation = await this.installationService.detectInstallation();
+          const guidance = this.installationService.generateInstallationGuidance(installation);
+          
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                installation,
+                guidance,
+                summary: installation.isInstalled 
+                  ? `QB64PE found at ${installation.installPath}${installation.inPath ? ' (in PATH)' : ' (not in PATH)'}` 
+                  : 'QB64PE not found - installation required'
+              }, null, 2)
+            }]
+          };
+        } catch (error) {
+          return {
+            content: [{
+              type: "text",
+              text: `Error detecting QB64PE installation: ${error instanceof Error ? error.message : 'Unknown error'}`
+            }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    this.server.registerTool(
+      "get_qb64pe_path_configuration",
+      {
+        title: "Get QB64PE PATH Configuration Guide",
+        description: "Get platform-specific instructions for adding QB64PE to system PATH",
+        inputSchema: {
+          installPath: z.string().optional().describe("Known QB64PE installation path (if any)")
+        }
+      },
+      async ({ installPath }) => {
+        try {
+          const config = this.installationService.getPathConfiguration(installPath);
+          
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                platform: config.platform,
+                currentPath: config.currentPath,
+                pathSeparator: config.pathSeparator,
+                instructions: config.instructions,
+                commonInstallPaths: config.commonInstallPaths,
+                downloadUrl: config.downloadUrl
+              }, null, 2)
+            }]
+          };
+        } catch (error) {
+          return {
+            content: [{
+              type: "text",
+              text: `Error getting PATH configuration: ${error instanceof Error ? error.message : 'Unknown error'}`
+            }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    this.server.registerTool(
+      "validate_qb64pe_path",
+      {
+        title: "Validate QB64PE Installation Path",
+        description: "Check if a specific path contains a valid QB64PE installation",
+        inputSchema: {
+          testPath: z.string().describe("Directory path to test for QB64PE installation")
+        }
+      },
+      async ({ testPath }) => {
+        try {
+          const validation = await this.installationService.validatePath(testPath);
+          
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                testPath,
+                validation,
+                result: validation.valid 
+                  ? `Valid QB64PE installation found${validation.version ? ` (${validation.version})` : ''}`
+                  : 'No valid QB64PE installation found at this path'
+              }, null, 2)
+            }]
+          };
+        } catch (error) {
+          return {
+            content: [{
+              type: "text",
+              text: `Error validating path: ${error instanceof Error ? error.message : 'Unknown error'}`
+            }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    this.server.registerTool(
+      "generate_qb64pe_installation_report",
+      {
+        title: "Generate QB64PE Installation Report",
+        description: "Generate a comprehensive report about QB64PE installation status and configuration",
+        inputSchema: {}
+      },
+      async () => {
+        try {
+          const report = await this.installationService.generateInstallationReport();
+          
+          return {
+            content: [{
+              type: "text",
+              text: report
+            }]
+          };
+        } catch (error) {
+          return {
+            content: [{
+              type: "text",
+              text: `Error generating installation report: ${error instanceof Error ? error.message : 'Unknown error'}`
+            }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    this.server.registerTool(
+      "get_qb64pe_installation_guidance",
+      {
+        title: "Get QB64PE Installation Guidance for LLMs",
+        description: "Get user-friendly guidance for QB64PE installation and PATH configuration, optimized for LLM responses",
+        inputSchema: {}
+      },
+      async () => {
+        try {
+          const installation = await this.installationService.detectInstallation();
+          const guidance = this.installationService.generateInstallationGuidance(installation);
+          
+          // Enhanced guidance specifically for LLMs to provide to users
+          const llmGuidance = `# QB64PE Installation Status
+
+${guidance}
+
+## 🤖 **For LLMs: Important Reminders**
+
+When helping users with QB64PE:
+
+1. **Always check installation first** - Use the detection tools before suggesting QB64PE commands
+2. **Provide PATH instructions** - If QB64PE is installed but not in PATH, give clear platform-specific instructions
+3. **Be platform-aware** - Instructions differ significantly between Windows, macOS, and Linux
+4. **Suggest alternatives** - If installation is complex, recommend package managers or pre-built binaries
+5. **Verify after setup** - Always have users test with \`qb64pe --version\` after configuration
+
+## 🔧 **Quick Troubleshooting**
+
+**Command not found?**
+- Check if QB64PE is installed: Use \`detect_qb64pe_installation\`
+- Add to PATH: Use \`get_qb64pe_path_configuration\`
+- Verify installation: Use \`validate_qb64pe_path\`
+
+**Installation issues?**
+- Generate full report: Use \`generate_qb64pe_installation_report\`
+- Get comprehensive guidance: Use \`get_qb64pe_installation_guidance\`
+
+Remember: QB64PE installation and PATH configuration is often the first hurdle for users!`;
+
+          return {
+            content: [{
+              type: "text",
+              text: llmGuidance
+            }]
+          };
+        } catch (error) {
+          return {
+            content: [{
+              type: "text",
+              text: `Error getting installation guidance: ${error instanceof Error ? error.message : 'Unknown error'}`
+            }],
+            isError: true
+          };
+        }
+      }
+    );
   }
 
   /**
@@ -1203,6 +1405,86 @@ Use the tools above to get detailed information and solutions for specific issue
             contents: [{
               uri: uri.href,
               text: `Error loading execution monitoring guide: ${error instanceof Error ? error.message : 'Unknown error'}`
+            }]
+          };
+        }
+      }
+    );
+
+    // QB64PE installation guidance resource
+    this.server.registerResource(
+      "qb64pe-installation",
+      "qb64pe://installation/guide",
+      {
+        title: "QB64PE Installation and PATH Configuration Guide",
+        description: "Comprehensive guide for installing QB64PE and configuring system PATH across platforms",
+        mimeType: "text/markdown"
+      },
+      async (uri) => {
+        try {
+          const report = await this.installationService.generateInstallationReport();
+          const installation = await this.installationService.detectInstallation();
+          const config = this.installationService.getPathConfiguration(installation.installPath);
+          
+          const content = `${report}
+
+# Additional Resources
+
+## Download Links
+- **Official Releases:** ${config.downloadUrl}
+- **Development Builds:** https://github.com/QB64-Phoenix-Edition/QB64pe/actions
+
+## Platform-Specific Guides
+
+### Windows
+- Use Windows Subsystem for Linux (WSL) for Unix-like development
+- Consider using package managers like Chocolatey or Scoop
+- PowerShell and Command Prompt have different PATH syntax
+
+### macOS
+- Homebrew is the recommended package manager
+- Use Terminal.app or iTerm2 for command-line access
+- Consider using QB64PE.app bundle for GUI access
+
+### Linux
+- Most distributions require manual installation or building from source
+- Check your distribution's package repository first
+- AppImage and Flatpak provide universal installation options
+
+## Troubleshooting
+
+### Common Issues
+1. **Permission denied errors:** Ensure executable permissions on Unix-like systems
+2. **Library missing errors:** Install required development libraries
+3. **PATH not working:** Restart terminal or source shell configuration files
+4. **Compilation errors:** Check QB64PE version compatibility with your OS
+
+### Diagnostic Commands
+\`\`\`bash
+# Check if QB64PE is accessible
+qb64pe --version
+
+# Verify PATH configuration
+echo $PATH | grep -i qb64  # Unix-like
+echo %PATH% | findstr /i qb64  # Windows
+
+# Test compilation
+qb64pe -c test.bas
+\`\`\`
+
+Use the MCP tools for automated detection and configuration assistance.`;
+          
+          return {
+            contents: [{
+              uri: uri.href,
+              text: content
+            }]
+          };
+        } catch (error) {
+          return {
+            contents: [{
+              uri: uri.href,
+              text: `Error loading installation guide: ${error instanceof Error ? error.message : 'Unknown error'}`
             }]
           };
         }

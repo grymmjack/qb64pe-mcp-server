@@ -38,9 +38,23 @@ export interface KeywordSearchResult {
 export class KeywordsService {
   private keywordsData: KeywordsData = { categories: {}, keywords: {} };
   private originalKeywords: Record<string, string> = {};
+  private wikiCategoriesData: Record<string, string[]> = {};
 
   constructor() {
     this.loadKeywordsData();
+    this.loadWikiCategoriesData();
+  }
+
+  private loadWikiCategoriesData(): void {
+    try {
+      const wikiCategoriesPath = path.join(__dirname, '../../docs/resources/QB64PE Keywords by Category.json');
+      const wikiData = JSON.parse(fs.readFileSync(wikiCategoriesPath, 'utf-8'));
+      this.wikiCategoriesData = wikiData.categories || {};
+      console.log(`Loaded ${Object.keys(this.wikiCategoriesData).length} wiki categories`);
+    } catch (error) {
+      console.error('Error loading wiki categories data:', error);
+      this.wikiCategoriesData = {};
+    }
   }
 
   private loadKeywordsData(): void {
@@ -644,5 +658,32 @@ export class KeywordsService {
   public getLegacyKeywords(): KeywordInfo[] {
     return Object.values(this.keywordsData.keywords)
       .filter(keyword => keyword.version === 'QBasic' || keyword.type === 'legacy');
+  }
+
+  public getWikiCategories(): Record<string, string[]> {
+    return this.wikiCategoriesData;
+  }
+
+  public getWikiCategoryCounts(): Record<string, number> {
+    const counts: Record<string, number> = {};
+    for (const [category, keywords] of Object.entries(this.wikiCategoriesData)) {
+      counts[category] = keywords.length;
+    }
+    return counts;
+  }
+
+  public getKeywordsByWikiCategory(category: string): string[] {
+    return this.wikiCategoriesData[category] || [];
+  }
+
+  public getWikiCategoryNames(): string[] {
+    return Object.keys(this.wikiCategoriesData);
+  }
+
+  public searchWikiCategories(query: string): string[] {
+    const lowerQuery = query.toLowerCase();
+    return Object.keys(this.wikiCategoriesData).filter(category =>
+      category.toLowerCase().includes(lowerQuery)
+    );
   }
 }

@@ -478,6 +478,147 @@ class QB64PEMCPServer {
                 };
             }
         });
+        // Search keywords by wiki category tool
+        this.server.registerTool("search_qb64pe_keywords_by_wiki_category", {
+            title: "Search QB64PE Keywords by Wiki Category",
+            description: "Search for QB64PE keywords within specific functional categories from the QB64PE wiki",
+            inputSchema: {
+                category: zod_1.z.enum([
+                    "Arrays and Data Storage",
+                    "Colors and Transparency",
+                    "Console Window",
+                    "Conditional Operations",
+                    "Definitions and Variable Types",
+                    "External Disk and API calls",
+                    "Error Trapping, Logging & Debugging",
+                    "Event Trapping",
+                    "File Input and Output",
+                    "Checksums and Hashes",
+                    "Compression and Encoding",
+                    "Fonts",
+                    "Game Controller Input (Joystick)",
+                    "Graphic Commands",
+                    "Graphics and Imaging:",
+                    "Keyboard Input",
+                    "Libraries",
+                    "Logical Bitwise Operations",
+                    "Mathematical Functions and Operations",
+                    "Memory Handling and Clipboard",
+                    "Mouse Input",
+                    "Numerical Manipulation and Conversion",
+                    "Port Input and Output (COM and LPT)",
+                    "Print formatting",
+                    "Printer Output (LPT and USB)",
+                    "Program Flow and Loops",
+                    "Sounds and Music",
+                    "String Text Manipulation and Conversion",
+                    "Sub procedures and Functions",
+                    "TCP/IP Networking HTTP(S) and Email",
+                    "Text on Screen",
+                    "Time, Date and Timing",
+                    "Window and Desktop",
+                    "QB64 Programming Symbols"
+                ]).describe("The functional category to search within"),
+                query: zod_1.z.string().optional().describe("Optional search query to filter keywords within the category"),
+                maxResults: zod_1.z.number().optional().describe("Maximum number of results (default: 50)")
+            }
+        }, async ({ category, query, maxResults = 50 }) => {
+            try {
+                const categoryKeywords = this.keywordsService.getKeywordsByWikiCategory(category);
+                let filteredKeywords = categoryKeywords;
+                // If a query is provided, filter the category keywords
+                if (query) {
+                    const lowerQuery = query.toLowerCase();
+                    filteredKeywords = categoryKeywords.filter((keyword) => {
+                        const keywordInfo = this.keywordsService.getKeyword(keyword);
+                        const lowerKeyword = keyword.toLowerCase();
+                        const lowerDesc = keywordInfo?.description.toLowerCase() || '';
+                        return lowerKeyword.includes(lowerQuery) ||
+                            lowerDesc.includes(lowerQuery) ||
+                            keyword.toLowerCase().startsWith(lowerQuery);
+                    });
+                }
+                // Limit results
+                const limitedResults = filteredKeywords.slice(0, maxResults);
+                // Get detailed information for each keyword
+                const keywordDetails = limitedResults.map((keyword) => {
+                    const keywordInfo = this.keywordsService.getKeyword(keyword);
+                    return {
+                        keyword,
+                        category,
+                        info: keywordInfo ? {
+                            name: keywordInfo.name,
+                            type: keywordInfo.type,
+                            description: keywordInfo.description,
+                            syntax: keywordInfo.syntax,
+                            example: keywordInfo.example,
+                            version: keywordInfo.version,
+                            related: keywordInfo.related
+                        } : {
+                            name: keyword,
+                            description: "Keyword found in wiki category but not in enhanced database"
+                        }
+                    };
+                });
+                return {
+                    content: [{
+                            type: "text",
+                            text: JSON.stringify({
+                                category,
+                                query: query || null,
+                                totalInCategory: categoryKeywords.length,
+                                totalReturned: limitedResults.length,
+                                keywords: keywordDetails
+                            }, null, 2)
+                        }]
+                };
+            }
+            catch (error) {
+                return {
+                    content: [{
+                            type: "text",
+                            text: `Error searching keywords by wiki category: ${error instanceof Error ? error.message : 'Unknown error'}`
+                        }],
+                    isError: true
+                };
+            }
+        });
+        // Get all available wiki categories tool
+        this.server.registerTool("get_qb64pe_wiki_categories", {
+            title: "Get QB64PE Wiki Categories",
+            description: "Get all available QB64PE wiki keyword categories with keyword counts",
+            inputSchema: {}
+        }, async () => {
+            try {
+                const wikiCategories = this.keywordsService.getWikiCategories();
+                const categoryCounts = this.keywordsService.getWikiCategoryCounts();
+                const categoriesWithCounts = Object.entries(wikiCategories).map(([categoryName, keywords]) => ({
+                    category: categoryName,
+                    keywordCount: keywords.length,
+                    sampleKeywords: keywords.slice(0, 5), // First 5 keywords as examples
+                    description: this.getCategoryDescription(categoryName)
+                }));
+                return {
+                    content: [{
+                            type: "text",
+                            text: JSON.stringify({
+                                totalCategories: categoriesWithCounts.length,
+                                totalKeywords: Object.values(categoryCounts).reduce((sum, count) => sum + count, 0),
+                                categories: categoriesWithCounts.sort((a, b) => b.keywordCount - a.keywordCount)
+                            }, null, 2)
+                        }]
+                };
+            }
+            catch (error) {
+                return {
+                    content: [{
+                            type: "text",
+                            text: `Error getting wiki categories: ${error instanceof Error ? error.message : 'Unknown error'}`
+                        }],
+                    isError: true
+                };
+            }
+        });
     }
     /**
      * Setup resource implementations
@@ -738,6 +879,48 @@ Focus specifically on QB64PE debugging techniques and tools.`
                     }
                 }]
         }));
+    }
+    /**
+     * Get a description for a wiki category
+     */
+    getCategoryDescription(categoryName) {
+        const descriptions = {
+            "Arrays and Data Storage": "Functions and statements for working with arrays, data, and storage",
+            "Colors and Transparency": "Color manipulation, palette operations, and transparency functions",
+            "Console Window": "Console window creation and management",
+            "Conditional Operations": "Boolean logic and conditional evaluation",
+            "Definitions and Variable Types": "Variable type definitions and declarations",
+            "External Disk and API calls": "File system operations and external API interactions",
+            "Error Trapping, Logging & Debugging": "Error handling, logging, and debugging utilities",
+            "Event Trapping": "Event handling and trapping mechanisms",
+            "File Input and Output": "File operations for reading and writing data",
+            "Checksums and Hashes": "Data integrity and hashing functions",
+            "Compression and Encoding": "Data compression and encoding utilities",
+            "Fonts": "Font loading, manipulation, and text rendering",
+            "Game Controller Input (Joystick)": "Game controller and joystick input handling",
+            "Graphic Commands": "Graphics rendering and display commands",
+            "Graphics and Imaging:": "Image manipulation and graphics operations",
+            "Keyboard Input": "Keyboard input handling and key detection",
+            "Libraries": "External library integration and declarations",
+            "Logical Bitwise Operations": "Bitwise and logical operations",
+            "Mathematical Functions and Operations": "Mathematical calculations and functions",
+            "Memory Handling and Clipboard": "Memory management and clipboard operations",
+            "Mouse Input": "Mouse input detection and handling",
+            "Numerical Manipulation and Conversion": "Number manipulation and type conversion",
+            "Port Input and Output (COM and LPT)": "Serial and parallel port communications",
+            "Print formatting": "Text formatting for printing",
+            "Printer Output (LPT and USB)": "Printer output and control",
+            "Program Flow and Loops": "Control flow, loops, and program structure",
+            "Sounds and Music": "Audio playback, sound generation, and music",
+            "String Text Manipulation and Conversion": "String operations and text manipulation",
+            "Sub procedures and Functions": "Subroutines, functions, and procedure management",
+            "TCP/IP Networking HTTP(S) and Email": "Network communications and internet protocols",
+            "Text on Screen": "Screen text display and positioning",
+            "Time, Date and Timing": "Time, date, and timing operations",
+            "Window and Desktop": "Window management and desktop operations",
+            "QB64 Programming Symbols": "Programming symbols, operators, and syntax elements"
+        };
+        return descriptions[categoryName] || "QB64PE keyword category";
     }
     /**
      * Start the MCP server

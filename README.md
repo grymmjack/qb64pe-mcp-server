@@ -48,7 +48,24 @@ Auto-exiting in 10 seconds...
 - ✅ **Automated Workflow**: Zero manual intervention required
 - ✅ **Structured Output**: Easy parsing for LLM analysis
 
-## 🔧 Available Tools & Prompts
+## � **NEW: Graphics Statements Guide for LLMs**
+
+### 🎯 **Critical Issue Solved: _PUTIMAGE Stretching**
+The new comprehensive graphics guide specifically addresses the common LLM mistake of accidentally stretching images with `_PUTIMAGE`.
+
+**Access the Guide:**
+- **`get_qb64pe_graphics_guide`** - Comprehensive graphics statements guide designed for LLMs
+- **`get_qb64pe_graphics_guide putimage`** - Focus on _PUTIMAGE usage patterns and pitfalls
+- **`get_qb64pe_graphics_guide troubleshooting`** - Common graphics issues and solutions
+
+**Key Features:**
+- ✅ **5 _PUTIMAGE syntax forms clearly explained** with stretching vs. non-stretching behavior
+- ✅ **Complete graphics workflow** from image loading to display management
+- ✅ **Memory management best practices** to prevent leaks
+- ✅ **LLM-specific troubleshooting** for common mistakes
+- ✅ **Code examples and patterns** optimized for AI understanding
+
+## �🔧 Available Tools & Prompts
 
 This MCP server provides **37 tools** and **3 prompts** for comprehensive QB64PE development support:
 

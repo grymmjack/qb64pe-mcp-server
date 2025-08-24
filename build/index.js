@@ -2229,6 +2229,81 @@ These commands are specifically designed for automated QB64PE debugging workflow
                 };
             }
         });
+        // Graphics Guide Tool
+        this.server.registerTool("get_qb64pe_graphics_guide", {
+            title: "Get QB64PE Graphics Statements Guide for LLMs",
+            description: "Get comprehensive graphics statements guide specifically designed for LLMs, including _PUTIMAGE usage patterns, image management, and common pitfalls to avoid",
+            inputSchema: {
+                section: zod_1.z.enum([
+                    "all",
+                    "putimage",
+                    "image_management",
+                    "drawing_commands",
+                    "screen_management",
+                    "troubleshooting",
+                    "examples"
+                ]).optional().describe("Specific section to retrieve (default: all)")
+            }
+        }, async ({ section = "all" }) => {
+            try {
+                const fs = await Promise.resolve().then(() => __importStar(require('fs')));
+                const path = await Promise.resolve().then(() => __importStar(require('path')));
+                const guidePath = path.join(process.cwd(), 'docs', 'QB64PE_GRAPHICS_STATEMENTS_GUIDE.md');
+                if (!fs.existsSync(guidePath)) {
+                    return {
+                        content: [{
+                                type: "text",
+                                text: `Graphics guide not found at ${guidePath}. Please ensure the guide exists.`
+                            }],
+                        isError: true
+                    };
+                }
+                const fullGuide = fs.readFileSync(guidePath, 'utf-8');
+                let responseContent = fullGuide;
+                if (section !== "all") {
+                    // Extract specific section
+                    const sections = {
+                        putimage: /## 1\. _PUTIMAGE.*?(?=## 2\.)/s,
+                        image_management: /## 2\. Essential Graphics Image Management.*?(?=## 3\.)/s,
+                        drawing_commands: /## 4\. Basic Drawing Commands.*?(?=## 5\.)/s,
+                        screen_management: /## 3\. Screen and Display Management.*?(?=## 4\.)/s,
+                        troubleshooting: /## 9\. Troubleshooting Guide for LLMs.*?(?=---)/s,
+                        examples: /## 8\. Example Code Patterns for LLMs.*?(?=## 9\.)/s
+                    };
+                    const sectionRegex = sections[section];
+                    if (sectionRegex) {
+                        const match = fullGuide.match(sectionRegex);
+                        responseContent = match ? match[0] : `Section "${section}" not found in guide.`;
+                    }
+                }
+                return {
+                    content: [{
+                            type: "text",
+                            text: `# QB64PE Graphics Guide${section !== "all" ? ` - ${section.toUpperCase()} Section` : ""}
+
+${responseContent}
+
+---
+
+💡 **LLM Usage Tips:**
+- Always use \`_PUTIMAGE (x, y), imageHandle\` for original size placement
+- Avoid \`_PUTIMAGE (x1,y1)-(x2,y2), imageHandle\` unless you want stretching
+- Remember to \_FREEIMAGE all loaded images
+- Use structured error checking for image operations
+- Test with small images first to verify behavior`
+                        }]
+                };
+            }
+            catch (error) {
+                return {
+                    content: [{
+                            type: "text",
+                            text: `Error reading graphics guide: ${error instanceof Error ? error.message : 'Unknown error'}`
+                        }],
+                    isError: true
+                };
+            }
+        });
         // ECHO Helper Functions Tool
         this.server.registerTool("generate_qb64pe_echo_functions", {
             title: "Generate QB64PE ECHO Functions",

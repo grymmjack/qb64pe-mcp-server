@@ -1,12 +1,69 @@
 # QB64PE MCP Server
 
-A comprehensive Model Context Protocol (MCP) server that provides advanced QB64PE (QBasic 64 Phoenix Edition) programming assistance. This server enables AI assistants to search the QB64PE wiki, understand compiler options, provide debugging help, validate QB64PE-only syntax, handle cross-platform differences, and **port QBasic programs to QB64PE**.
+A comprehensive Model Context Protocol (MCP) server that provides advanced QB64PE (QBasic 64 Phoenix Edition) programming assistance. This server enables AI assistants to search the QB64PE wiki, understand compiler options, provide debugging help, validate QB64PE-only syntax, handle cross-platform differences, **port QBasic programs to QB64PE**, and **provides advanced automated debugging capabilities with native logging**.
+
+## 🚀 **NEW: Advanced Debugging & Logging System**
+
+### 🔍 **Critical Discovery: $CONSOLE:ONLY vs $CONSOLE**
+```basic
+' ❌ OLD WAY - Creates separate console window (no shell redirection)
+$CONSOLE
+
+' ✅ NEW WAY - Enables shell output redirection for automation
+$CONSOLE:ONLY
+```
+**Impact**: Enables automated output capture: `program.exe > output.txt 2>&1`
+
+### 🛠️ **Comprehensive Debugging Enhancement (5 tools)**
+- **`enhance_qb64pe_code_for_debugging`** - Apply comprehensive debugging enhancements with console visibility, flow control, resource management, and graphics context fixes
+- **`get_qb64pe_debugging_best_practices`** - Get comprehensive debugging best practices specifically for QB64PE
+- **`get_llm_debugging_guide`** - Get LLM-specific debugging guidance with timeout strategies and automation workflows
+
+### 🔧 **Native QB64PE Logging System (4 NEW tools)**
+- **`inject_native_qb64pe_logging`** - Inject native QB64PE logging functions (_LOGINFO, _LOGERROR, etc.) with proper $CONSOLE:ONLY directive
+- **`generate_advanced_debugging_template`** - Create comprehensive debugging templates with native logging, structured output, and automated execution monitoring
+- **`parse_qb64pe_structured_output`** - Parse structured output from enhanced QB64PE programs with section analysis and execution status
+- **`generate_output_capture_commands`** - Generate cross-platform commands for capturing and monitoring QB64PE program output
+
+### 📊 **Real-World Success: ASEPRITE ZLIB Analysis**
+```
+=== PROGRAM ANALYSIS ===
+Program: ASEPRITE ZLIB Analyzer
+Expected: 82944 bytes
+
+=== STEP 1: HEADER VALIDATION ===
+INFO: ZLIB header validation completed
+CMF: 120, FLG: 156 - Valid header
+
+=== STEP 2: DEFLATE PARSING ===
+ERROR: Dynamic Huffman decoder incomplete
+Only 51 bytes decoded (0.06% of expected)
+
+=== RESULTS SUMMARY ===
+FAILED: Incomplete DEFLATE implementation
+Auto-exiting in 10 seconds...
+```
+- ✅ **Root Cause Found**: Incomplete Dynamic Huffman decoder
+- ✅ **Precise Metrics**: 51 bytes vs 82,944 expected (0.06%)
+- ✅ **Automated Workflow**: Zero manual intervention required
+- ✅ **Structured Output**: Easy parsing for LLM analysis
 
 ## 🔧 Available Tools & Prompts
 
-This MCP server provides **29 tools** and **3 prompts** for comprehensive QB64PE development support:
+This MCP server provides **37 tools** and **3 prompts** for comprehensive QB64PE development support:
 
-### 🔄 **NEW: QBasic to QB64PE Porting (3 tools)**
+### � **Advanced Debugging & Automation (9 tools)**
+- **`enhance_qb64pe_code_for_debugging`** - Apply comprehensive debugging enhancements with console management, flow control, resource tracking, and graphics context fixes
+- **`get_qb64pe_debugging_best_practices`** - Get debugging best practices specifically for QB64PE development
+- **`get_llm_debugging_guide`** - Get LLM-specific debugging guidance with timeout strategies and automation workflows
+- **`inject_native_qb64pe_logging`** - Inject native QB64PE logging functions (_LOGINFO, _LOGERROR, etc.) with $CONSOLE:ONLY directive for shell redirection
+- **`generate_advanced_debugging_template`** - Create comprehensive debugging templates with native logging, structured output, and execution monitoring
+- **`parse_qb64pe_structured_output`** - Parse structured output from enhanced QB64PE programs with section analysis and execution status
+- **`generate_output_capture_commands`** - Generate cross-platform commands for capturing and monitoring QB64PE program output
+- **`get_debugging_help`** - Get help with debugging QB64PE programs using PRINT statements, $CONSOLE, etc.
+- **`get_execution_monitoring_guidance`** - Get comprehensive guidance for monitoring QB64PE program execution with LLM timeout strategies
+
+### 🔄 **QBasic to QB64PE Porting (3 tools)**
 - **`port_qbasic_to_qb64pe`** - Complete automated porting of QBasic programs to QB64PE with 13+ transformation patterns
 - **`analyze_qbasic_compatibility`** - Pre-porting analysis with complexity assessment and effort estimation  
 - **`get_porting_dialect_info`** - Multi-dialect support information and implementation status
@@ -16,10 +73,10 @@ This MCP server provides **29 tools** and **3 prompts** for comprehensive QB64PE
 - **`get_qb64pe_page`** - Retrieve detailed content from a specific QB64PE wiki page
 - **`get_qb64pe_wiki_categories`** - Get all available QB64PE wiki keyword categories with keyword counts
 
-### 🛠️ Compiler & Debugging (3 tools)
+### 🛠️ Compiler & Development (3 tools)
 - **`get_compiler_options`** - Get information about QB64PE compiler command-line options and flags
-- **`get_debugging_help`** - Get help with debugging QB64PE programs using PRINT statements, $CONSOLE, etc.
-- **`get_qb64pe_best_practices`** - Get best practices and coding guidelines for QB64PE development
+- **`get_qb64pe_best_practices`** - Get best practices and coding guidelines for QB64PE development  
+- **`detect_qb64pe_installation`** - Detect QB64PE installation and check if it's properly configured in PATH
 
 ### ✅ Syntax & Compatibility (3 tools)
 - **`validate_qb64pe_syntax`** - Validate QB64PE code syntax and suggest corrections
@@ -34,17 +91,21 @@ This MCP server provides **29 tools** and **3 prompts** for comprehensive QB64PE
 - **`search_qb64pe_keywords_by_wiki_category`** - Search keywords within specific functional categories from the QB64PE wiki
 - **`get_qb64pe_wiki_categories`** - Get all available QB64PE wiki keyword categories with counts
 
-### ⚡ Execution Monitoring (6 tools)
+### ⚡ Execution Monitoring & Screenshots (12 tools)
 - **`analyze_qb64pe_execution_mode`** - Analyze QB64PE source code to determine execution characteristics and monitoring requirements
 - **`get_process_monitoring_commands`** - Get cross-platform commands for monitoring QB64PE processes
 - **`generate_monitoring_template`** - Generate QB64PE code template with built-in logging, screenshots, and execution monitoring
 - **`generate_console_formatting_template`** - Generate QB64PE template with enhanced console output formatting
-- **`get_execution_monitoring_guidance`** - Get comprehensive guidance for monitoring QB64PE program execution
 - **`parse_console_output`** - Parse QB64PE console output to detect completion signals and execution state
 - **`get_file_monitoring_commands`** - Get cross-platform commands for monitoring QB64PE log files and output
+- **`capture_qb64pe_screenshot`** - Automatically capture screenshot of QB64PE program window
+- **`analyze_qb64pe_graphics_screenshot`** - Analyze QB64PE graphics program screenshots to detect shapes, colors, layout, and visual elements
+- **`generate_qb64pe_screenshot_analysis_template`** - Generate QB64PE program templates for screenshot analysis testing
+- **`start_screenshot_monitoring`** - Start monitoring QB64PE processes and automatically capture screenshots at intervals
+- **`stop_screenshot_monitoring`** - Stop automatic screenshot monitoring of QB64PE processes
+- **`get_automation_status`** - Get comprehensive status of all screenshot automation services
 
-### 🔧 Installation & Setup (5 tools)
-- **`detect_qb64pe_installation`** - Detect QB64PE installation and check if it's properly configured in PATH
+### 🔧 Installation & Setup (4 tools)
 - **`get_qb64pe_path_configuration`** - Get platform-specific instructions for adding QB64PE to system PATH
 - **`validate_qb64pe_path`** - Check if a specific path contains a valid QB64PE installation
 - **`generate_qb64pe_installation_report`** - Generate a comprehensive report about QB64PE installation status
@@ -119,7 +180,17 @@ This MCP server provides **29 tools** and **3 prompts** for comprehensive QB64PE
 
 ## Features
 
-### 🔍 **Wiki Integration**
+### � **Advanced Debugging & Automation System**
+- **Comprehensive Code Enhancement** - Automatically fixes console visibility, flow control, resource management, and graphics context issues
+- **Native QB64PE Logging** - Injects _LOGINFO, _LOGERROR, _LOGWARN, _LOGTRACE functions for structured debugging
+- **Critical $CONSOLE:ONLY Discovery** - Enables shell redirection (`program.exe > output.txt 2>&1`) for automated workflows
+- **Structured Output Generation** - Creates organized debugging sections for systematic analysis
+- **Auto-Exit Mechanisms** - Prevents infinite waiting in automated LLM workflows
+- **Real-World Proven** - Successfully diagnosed complex issues like ASEPRITE ZLIB decompression problems
+- **Cross-Platform Monitoring** - Commands for Windows, Linux, macOS process and file monitoring
+- **Advanced Template Generation** - Creates comprehensive debugging programs with built-in logging and error handling
+
+### �🔍 **Wiki Integration**
 - Search the official QB64PE wiki (https://qb64phoenix.com/qb64wiki/)
 - Retrieve complete page content with formatted examples
 - Intelligent caching system for improved performance
@@ -131,12 +202,15 @@ This MCP server provides **29 tools** and **3 prompts** for comprehensive QB64PE
 - Optimization recommendations and build strategies
 - Cross-platform compatibility insights
 
-### 🐛 **Debugging Support**
-- PRINT statement debugging techniques
-- $CONSOLE output management
-- File-based logging strategies
-- Error handling best practices
-- Step-by-step execution guidance
+### 🐛 **Enhanced Debugging Support**
+- **Native Logging Integration** - _LOGINFO, _LOGERROR, _LOGWARN, _LOGTRACE functions
+- **Structured Debugging Sections** - Organized output for systematic analysis
+- **$CONSOLE:ONLY Management** - Proper console directives for shell redirection
+- **Auto-Exit Mechanisms** - Timeout-based program termination for automation
+- **Resource Tracking** - File handle and graphics context management
+- **Error Detection & Cleanup** - Comprehensive error handling and resource cleanup
+- **Template Generation** - Advanced debugging templates with built-in monitoring
+- **Output Parsing** - Structured analysis of program execution results
 
 ### ✅ **Syntax Validation & Compatibility**
 - QB64PE-only syntax enforcement (excludes Visual Basic/QBasic constructs)
@@ -684,11 +758,21 @@ src/
 
 ## Documentation
 
+### 🚀 **New Debugging & Automation Guides**
+- [QB64PE Debugging Enhancement System](./docs/QB64PE_DEBUGGING_ENHANCEMENT_SYSTEM.md) - Complete guide to the advanced debugging system
+- [QB64PE Logging Service Guide](./docs/QB64PE_LOGGING_SERVICE_GUIDE.md) - Comprehensive native logging service documentation
+- [Logging Service Implementation Summary](./docs/LOGGING_SERVICE_IMPLEMENTATION_SUMMARY.md) - Implementation summary and success metrics
+- [LLM Usage Guide](./docs/LLM_USAGE_GUIDE.md) - How LLMs use the MCP server tools and workflows
+- [LLM Connection Examples](./docs/LLM_CONNECTION_EXAMPLES.md) - Configuration examples for connecting LLMs to the MCP server
+
+### 📚 **Core Development Guides**
 - [Execution Monitoring Guide](./docs/QB64PE_EXECUTION_MONITORING.md) - Comprehensive guide for monitoring QB64PE program execution, process management, and LLM timeout strategies
 - [Execution Monitoring Examples](./docs/EXECUTION_MONITORING_EXAMPLES.md) - Practical examples and usage patterns for execution monitoring features
 - [Compatibility Integration Guide](./docs/COMPATIBILITY_INTEGRATION.md) - Detailed documentation of the compatibility validation system
 - [Keywords Integration Guide](./docs/KEYWORDS_INTEGRATION.md) - Comprehensive guide to the keywords reference system
 - [Variable Scoping Rules](./docs/VARIABLE_SCOPING_RULES.md) - Complete guide to DIM SHARED, $DYNAMIC, and variable scoping
+
+### 🌐 **External Resources**
 - [QB64PE Official Wiki](https://qb64phoenix.com/qb64wiki/) - Official QB64PE documentation
 
 ## Examples
@@ -772,6 +856,64 @@ NEXT x`,
 // Result: {"isWaitingForInput": true, "isCompleted": true, "suggestedAction": "requires_user_input"}
 ```
 
+### Example 9: Enhanced Code Debugging (NEW!)
+```javascript
+// Using the enhance_qb64pe_code_for_debugging tool
+{
+  "sourceCode": "PRINT \"Hello\"\\nFOR i = 1 TO 10\\n    PRINT i\\nNEXT",
+  "config": {
+    "enableConsole": true,
+    "enableLogging": true,
+    "enableFlowControl": true,
+    "timeoutSeconds": 30,
+    "autoExit": true
+  }
+}
+
+// Returns enhanced code with console management, logging, auto-exit, and resource tracking
+```
+
+### Example 10: Native Logging Injection (NEW!)
+```javascript
+// Using the inject_native_qb64pe_logging tool
+{
+  "sourceCode": "PRINT \"Processing data\"\\nFOR i = 1 TO 100\\n    PRINT i\\nNEXT",
+  "config": {
+    "consoleDirective": "$CONSOLE:ONLY",  // Critical for shell redirection!
+    "enableNativeLogging": true,
+    "enableStructuredOutput": true
+  }
+}
+
+// Returns code with _LOGINFO, _LOGERROR functions and structured sections
+```
+
+### Example 11: Advanced Debugging Template (NEW!)
+```javascript
+// Using the generate_advanced_debugging_template tool
+{
+  "programName": "Data Analyzer",
+  "analysisSteps": ["Header Validation", "Data Processing", "Results Summary"],
+  "config": {
+    "consoleDirective": "$CONSOLE:ONLY",
+    "enableNativeLogging": true,
+    "autoExitTimeout": 15
+  }
+}
+
+// Returns complete debugging program with systematic analysis structure
+```
+
+### Example 12: Parse Structured Output (NEW!)
+```javascript
+// Using the parse_qb64pe_structured_output tool
+{
+  "output": "=== PROGRAM ANALYSIS ===\\nProgram: Test\\n=== STEP 1: VALIDATION ===\\nINFO: Validation completed\\n=== RESULTS SUMMARY ===\\nSUCCESS: All steps completed"
+}
+
+// Returns structured analysis with sections, logs, execution status, and completion rate
+```
+
 ## Contributing
 
 1. Fork the repository
@@ -791,6 +933,24 @@ MIT License - see LICENSE file for details.
 - QB64PE Forum: https://qb64phoenix.com/forum/
 
 ## Changelog
+
+### v2.0.0 - Advanced Debugging & Automation Release
+- **🚀 MAJOR**: Advanced Debugging Enhancement System with comprehensive code fixing
+- **🚀 MAJOR**: Native QB64PE Logging Service with _LOGINFO, _LOGERROR, etc.
+- **🔍 CRITICAL DISCOVERY**: $CONSOLE:ONLY vs $CONSOLE for shell redirection compatibility
+- **NEW**: `enhance_qb64pe_code_for_debugging` - Comprehensive debugging enhancements
+- **NEW**: `inject_native_qb64pe_logging` - Native logging injection with proper console directives
+- **NEW**: `generate_advanced_debugging_template` - Advanced debugging templates
+- **NEW**: `parse_qb64pe_structured_output` - Structured output analysis
+- **NEW**: `generate_output_capture_commands` - Cross-platform monitoring commands
+- **NEW**: `get_qb64pe_debugging_best_practices` - Debugging best practices
+- **NEW**: `get_llm_debugging_guide` - LLM-specific debugging guidance
+- **ENHANCED**: Shell redirection compatibility for automated workflows
+- **ENHANCED**: Real-world tested with ASEPRITE ZLIB analysis success case
+- **ENHANCED**: Structured debugging sections for systematic analysis
+- **ENHANCED**: Auto-exit mechanisms for LLM automation compatibility
+- **ENHANCED**: Resource tracking and cleanup management
+- **ENHANCED**: Cross-platform output capture and monitoring
 
 ### v1.0.0
 - Initial release

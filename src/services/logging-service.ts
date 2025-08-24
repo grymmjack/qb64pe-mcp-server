@@ -98,16 +98,16 @@ export class QB64PELoggingService {
         sections.forEach((section, index) => {
             const sectionName = section.toUpperCase().replace(/\s+/g, ' ');
             
-            // Use ECHO if enabled, otherwise use PRINT
+            // Use _ECHO if enabled, otherwise use PRINT
             if (cfg.enableEchoOutput) {
-                output += `\nCALL ECHO("=== ${sectionName} ===")\n`;
+                output += `\n_ECHO "=== ${sectionName} ==="\n`;
             } else {
                 output += `\nPRINT "=== ${sectionName} ==="\n`;
             }
             
             if (includeLogging) {
                 if (cfg.enableEchoOutput) {
-                    output += `CALL ECHO_INFO("Starting ${section.toLowerCase()}")\n`;
+                    output += `_ECHO "[INFO] Starting ${section.toLowerCase()}"\n`;
                 } else {
                     output += `_LOGINFO "Starting ${section.toLowerCase()}"\n`;
                 }
@@ -116,7 +116,7 @@ export class QB64PELoggingService {
             output += `' TODO: Add ${section.toLowerCase()} logic here\n`;
             
             if (cfg.enableEchoOutput) {
-                output += `CALL ECHO("Step ${index + 1} completed")\n`;
+                output += `_ECHO "Step ${index + 1} completed"\n`;
             } else {
                 output += `PRINT "Step ${index + 1} completed"\n`;
             }
@@ -245,43 +245,43 @@ DIM total_errors AS INTEGER
 
 ' Initialize logging
 program_start_time = TIMER
-${cfg.enableEchoOutput ? 'CALL ECHO_INFO("Starting " + PROGRAM_NAME$ + " analysis")' : '_LOGINFO "Starting " + PROGRAM_NAME$ + " analysis"'}
-${cfg.enableEchoOutput ? 'CALL ECHO("=== PROGRAM INITIALIZATION ===")' : 'PRINT "=== PROGRAM INITIALIZATION ==="'}
-${cfg.enableEchoOutput ? 'CALL ECHO("Program: " + PROGRAM_NAME$)' : 'PRINT "Program: " + PROGRAM_NAME$'}
-${cfg.enableEchoOutput ? 'CALL ECHO("Start Time: " + STR$(program_start_time))' : 'PRINT "Start Time: " + STR$(program_start_time)'}
-${cfg.enableEchoOutput ? 'CALL ECHO("Debug Mode: " + STR$(DEBUG_MODE))' : 'PRINT "Debug Mode: " + STR$(DEBUG_MODE)'}
+${cfg.enableEchoOutput ? '_ECHO "[INFO] Starting " + PROGRAM_NAME$ + " analysis"' : '_LOGINFO "Starting " + PROGRAM_NAME$ + " analysis"'}
+${cfg.enableEchoOutput ? '_ECHO "=== PROGRAM INITIALIZATION ==="' : 'PRINT "=== PROGRAM INITIALIZATION ==="'}
+${cfg.enableEchoOutput ? '_ECHO "Program: " + PROGRAM_NAME$' : 'PRINT "Program: " + PROGRAM_NAME$'}
+${cfg.enableEchoOutput ? '_ECHO "Start Time: " + STR$(program_start_time)' : 'PRINT "Start Time: " + STR$(program_start_time)'}
+${cfg.enableEchoOutput ? '_ECHO "Debug Mode: " + STR$(DEBUG_MODE)' : 'PRINT "Debug Mode: " + STR$(DEBUG_MODE)'}
 
 ${this.generateStructuredAnalysisSteps(analysisSteps, cfg)}
 
 ' Results summary with native logging
-${cfg.enableEchoOutput ? 'CALL ECHO("=== EXECUTION SUMMARY ===")' : 'PRINT "=== EXECUTION SUMMARY ==="'}
+${cfg.enableEchoOutput ? '_ECHO "=== EXECUTION SUMMARY ==="' : 'PRINT "=== EXECUTION SUMMARY ==="'}
 IF total_errors = 0 THEN
-    ${cfg.enableEchoOutput ? 'CALL ECHO_INFO("Analysis completed successfully")' : '_LOGINFO "Analysis completed successfully"'}
-    ${cfg.enableEchoOutput ? 'CALL ECHO("SUCCESS: All " + STR$(current_step) + " steps completed")' : 'PRINT "SUCCESS: All " + STR$(current_step) + " steps completed"'}
+    ${cfg.enableEchoOutput ? '_ECHO "[INFO] Analysis completed successfully"' : '_LOGINFO "Analysis completed successfully"'}
+    ${cfg.enableEchoOutput ? '_ECHO "SUCCESS: All " + STR$(current_step) + " steps completed"' : 'PRINT "SUCCESS: All " + STR$(current_step) + " steps completed"'}
 ELSE
-    ${cfg.enableEchoOutput ? 'CALL ECHO_ERROR("Analysis failed with " + STR$(total_errors) + " errors")' : '_LOGERROR "Analysis failed with " + STR$(total_errors) + " errors"'}
-    ${cfg.enableEchoOutput ? 'CALL ECHO("FAILED: " + STR$(total_errors) + " errors in " + STR$(current_step) + " steps")' : 'PRINT "FAILED: " + STR$(total_errors) + " errors in " + STR$(current_step) + " steps"'}
+    ${cfg.enableEchoOutput ? '_ECHO "[ERROR] Analysis failed with " + STR$(total_errors) + " errors"' : '_LOGERROR "Analysis failed with " + STR$(total_errors) + " errors"'}
+    ${cfg.enableEchoOutput ? '_ECHO "FAILED: " + STR$(total_errors) + " errors in " + STR$(current_step) + " steps"' : 'PRINT "FAILED: " + STR$(total_errors) + " errors in " + STR$(current_step) + " steps"'}
 END IF
 
 DIM execution_time AS DOUBLE
 execution_time = TIMER - program_start_time
-${cfg.enableEchoOutput ? 'CALL ECHO("Execution Time: " + STR$(execution_time) + " seconds")' : 'PRINT "Execution Time: " + STR$(execution_time) + " seconds"'}
-${cfg.enableEchoOutput ? 'CALL ECHO_INFO("Total execution time: " + STR$(execution_time) + " seconds")' : '_LOGINFO "Total execution time: " + STR$(execution_time) + " seconds"'}
+${cfg.enableEchoOutput ? '_ECHO "Execution Time: " + STR$(execution_time) + " seconds"' : 'PRINT "Execution Time: " + STR$(execution_time) + " seconds"'}
+${cfg.enableEchoOutput ? '_ECHO "[INFO] Total execution time: " + STR$(execution_time) + " seconds"' : '_LOGINFO "Total execution time: " + STR$(execution_time) + " seconds"'}
 
 ' Auto-exit for automation
 IF DEBUG_MODE = 1 THEN
-    ${cfg.enableEchoOutput ? 'CALL ECHO("Auto-exiting in " + STR$(' + cfg.autoExitTimeout + ') + " seconds...")' : 'PRINT "Auto-exiting in " + STR$(' + cfg.autoExitTimeout + ') + " seconds..."'}
+    ${cfg.enableEchoOutput ? '_ECHO "Auto-exiting in " + STR$(' + cfg.autoExitTimeout + ') + " seconds..."' : 'PRINT "Auto-exiting in " + STR$(' + cfg.autoExitTimeout + ') + " seconds..."'}
     _DELAY ${cfg.autoExitTimeout}
     SYSTEM
 END IF
 
 ' Cleanup and exit
-${cfg.enableEchoOutput ? 'CALL ECHO_INFO("Program cleanup completed")' : '_LOGINFO "Program cleanup completed"'}
+${cfg.enableEchoOutput ? '_ECHO "[INFO] Program cleanup completed"' : '_LOGINFO "Program cleanup completed"'}
 END`;
     }
 
     /**
-     * Generate ECHO helper functions for simplified console output
+     * Generate native _ECHO usage guide
      */
     public generateEchoFunctions(config?: Partial<LoggingConfiguration>): string {
         const cfg = { ...this.defaultConfig, ...config };
@@ -318,44 +318,14 @@ END`;
 
 `;
 
-        // Add ECHO subroutine for simplified console output
+        // Add _ECHO usage note for simplified console output
         if (config.enableEchoOutput) {
             header += `
-' ECHO - Simplified console output without _DEST management
-' CRITICAL: In graphics modes (SCREEN 1,2,7,8,9,10,11,12,13, etc.)
-'           ALWAYS use ECHO functions instead of PRINT/_PRINTSTRING
-'           for console output that needs stdio redirection capture
+' _ECHO - Native QB64PE console output
+' Auto-generated by QB64PE Logging Service
 '
-' NOTE: These are QB64PE ECHO subroutines, NOT shell echo commands
-
-SUB ECHO (message AS STRING)
-    DIM old_dest AS LONG
-    old_dest = _DEST
-    _DEST _CONSOLE
-    PRINT message
-    _DEST old_dest
-END SUB
-
-' ECHO variants for different output types
-SUB ECHO_INFO (message AS STRING)
-    CALL ECHO("[INFO] " + message)
-    IF ${config.enableNativeLogging ? 'TRUE' : 'FALSE'} THEN _LOGINFO message
-END SUB
-
-SUB ECHO_ERROR (message AS STRING)
-    CALL ECHO("[ERROR] " + message)
-    IF ${config.enableNativeLogging ? 'TRUE' : 'FALSE'} THEN _LOGERROR message
-END SUB
-
-SUB ECHO_WARN (message AS STRING)
-    CALL ECHO("[WARN] " + message)
-    IF ${config.enableNativeLogging ? 'TRUE' : 'FALSE'} THEN _LOGWARN message
-END SUB
-
-SUB ECHO_DEBUG (message AS STRING)
-    CALL ECHO("[DEBUG] " + message)
-    IF ${config.enableNativeLogging ? 'TRUE' : 'FALSE'} THEN _LOGTRACE message
-END SUB
+' Use _ECHO for direct console output without _DEST management
+' Compatible with ${config.consoleDirective} directive for shell redirection
 
 `;
         }
@@ -365,38 +335,11 @@ END SUB
 
     private generateEchoHeader(config: LoggingConfiguration): string {
         return `
-' ECHO - Simplified console output without _DEST management
+' _ECHO - Native QB64PE console output
 ' Auto-generated by QB64PE Logging Service
 '
-' CRITICAL: In graphics modes (SCREEN 1,2,7,8,9,10,11,12,13, etc.)
-'           ALWAYS use ECHO functions instead of PRINT/_PRINTSTRING
-'           for console output that needs stdio redirection capture
-'
-' NOTE: These are QB64PE ECHO subroutines, NOT shell echo commands
-
-SUB ECHO (message AS STRING)
-    DIM old_dest AS LONG
-    old_dest = _DEST
-    _DEST _CONSOLE
-    PRINT message
-    _DEST old_dest
-END SUB
-
-SUB ECHO_INFO (message AS STRING)
-    CALL ECHO("[INFO] " + message)
-END SUB
-
-SUB ECHO_ERROR (message AS STRING)
-    CALL ECHO("[ERROR] " + message)
-END SUB
-
-SUB ECHO_WARN (message AS STRING)
-    CALL ECHO("[WARN] " + message)
-END SUB
-
-SUB ECHO_DEBUG (message AS STRING)
-    CALL ECHO("[DEBUG] " + message)
-END SUB
+' Use _ECHO for direct console output without _DEST management
+' Compatible with ${config.consoleDirective} directive for shell redirection
 
 `;
     }
@@ -489,18 +432,18 @@ current_step = ${stepNumber}`;
 
             if (cfg.enableEchoOutput) {
                 output += `
-CALL ECHO("=== STEP ${stepNumber}: ${sectionName} ===")
-CALL ECHO_INFO("Starting step ${stepNumber}: ${step.toLowerCase()}")
+_ECHO "=== STEP ${stepNumber}: ${sectionName} ==="
+_ECHO "[INFO] Starting step ${stepNumber}: ${step.toLowerCase()}"
 
 ' TODO: Implement ${step.toLowerCase()} logic here
-CALL ECHO("Processing ${step.toLowerCase()}...")
+_ECHO "Processing ${step.toLowerCase()}..."
 
 ' Example error detection
 ' IF error_condition THEN
 '     total_errors = total_errors + 1
-'     CALL ECHO_ERROR("Step ${stepNumber} failed: " + error_message$)
+'     _ECHO "[ERROR] Step ${stepNumber} failed: " + error_message$
 ' ELSE
-'     CALL ECHO_INFO("Step ${stepNumber} completed successfully")
+'     _ECHO "[INFO] Step ${stepNumber} completed successfully"
 ' END IF
 `;
             } else {

@@ -2546,10 +2546,10 @@ When using with \`inject_native_qb64pe_logging\`, these functions are automatica
             const programCode = analysisResult.metadata?.programCode;
             // Generate programming feedback
             const feedback = this.feedbackService.generateFeedback(analysisResult, programCode);
-            console.log(`Generated feedback for ${analysisResult.screenshotPath}:`);
-            console.log(`- Quality: ${feedback.overallAssessment.quality}`);
-            console.log(`- Suggestions: ${feedback.suggestions.length}`);
-            console.log(`- Next steps: ${feedback.nextSteps.join(', ')}`);
+            console.error(`Generated feedback for ${analysisResult.screenshotPath}:`);
+            console.error(`- Quality: ${feedback.overallAssessment.quality}`);
+            console.error(`- Suggestions: ${feedback.suggestions.length}`);
+            console.error(`- Next steps: ${feedback.nextSteps.join(', ')}`);
             // Emit feedback event (could be used by dashboard or notifications)
             this.screenshotWatcher.emit('feedback-generated', feedback);
         }

@@ -50,7 +50,7 @@ export class KeywordsService {
       const wikiCategoriesPath = path.join(__dirname, '../../docs/resources/QB64PE Keywords by Category.json');
       const wikiData = JSON.parse(fs.readFileSync(wikiCategoriesPath, 'utf-8'));
       this.wikiCategoriesData = wikiData.categories || {};
-      console.log(`Loaded ${Object.keys(this.wikiCategoriesData).length} wiki categories`);
+      // Removed console.log to prevent MCP protocol parsing issues
     } catch (error) {
       console.error('Error loading wiki categories data:', error);
       this.wikiCategoriesData = {};
@@ -74,11 +74,11 @@ export class KeywordsService {
         const originalKeywordCount = Object.keys(this.originalKeywords).length;
         const enhancedKeywordCount = Object.keys(this.keywordsData.keywords).length;
         
-        console.log(`Original keywords: ${originalKeywordCount}, Enhanced keywords: ${enhancedKeywordCount}`);
+        // Removed console.log to prevent MCP protocol parsing issues
         
         // Regenerate if we're missing keywords or have significantly fewer
         if (enhancedKeywordCount < originalKeywordCount * 0.9) {
-          console.log('Enhanced keywords data is incomplete, regenerating...');
+          // Removed console.log to prevent MCP protocol parsing issues
           shouldRegenerate = true;
         }
       } else {
@@ -86,10 +86,10 @@ export class KeywordsService {
       }
       
       if (shouldRegenerate) {
-        console.log('Generating enhanced keywords data...');
+        // Removed console.log to prevent MCP protocol parsing issues
         this.keywordsData = this.generateEnhancedKeywordsData();
         this.saveEnhancedKeywordsData();
-        console.log(`Generated ${Object.keys(this.keywordsData.keywords).length} enhanced keywords`);
+        // Removed console.log to prevent MCP protocol parsing issues
       }
     } catch (error) {
       console.error('Error loading keywords data:', error);
@@ -495,7 +495,7 @@ export class KeywordsService {
       fs.writeFileSync(srcPath, dataStr);
       fs.writeFileSync(buildPath, dataStr);
       
-      console.log(`Enhanced keywords data saved to both src and build directories`);
+      // Removed console.log to prevent MCP protocol parsing issues
     } catch (error) {
       console.error('Error saving enhanced keywords data:', error);
     }
@@ -623,10 +623,10 @@ export class KeywordsService {
   }
 
   public regenerateKeywordsData(): void {
-    console.log('Force regenerating keywords data...');
+    // Removed console.log to prevent MCP protocol parsing issues
     this.keywordsData = this.generateEnhancedKeywordsData();
     this.saveEnhancedKeywordsData();
-    console.log(`Regenerated ${Object.keys(this.keywordsData.keywords).length} keywords`);
+    // Removed console.log to prevent MCP protocol parsing issues
   }
 
   public getKeywordCount(): number {

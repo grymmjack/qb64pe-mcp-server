@@ -464,7 +464,7 @@ export class ScreenshotService {
           });
           
           if (result.success) {
-            console.log(`Screenshot captured: ${result.filePath}`);
+            console.error(`Screenshot captured: ${result.filePath}`);
             lastCaptureTime = now;
           } else {
             console.warn(`Screenshot failed: ${result.error}`);
@@ -475,7 +475,7 @@ export class ScreenshotService {
       }
     }, intervalMs);
     
-    console.log(`Started monitoring QB64PE processes (check every ${intervalMs}ms, capture every ${captureIntervalMs}ms)`);
+    // Removed console.error to prevent MCP protocol parsing issues
   }
 
   /**
@@ -487,7 +487,7 @@ export class ScreenshotService {
       this.monitoringInterval = null;
     }
     this.isMonitoring = false;
-    console.log('Stopped monitoring QB64PE processes');
+    console.error('Stopped monitoring QB64PE processes');
   }
 
   /**
@@ -530,7 +530,7 @@ export class ScreenshotService {
         const stats = fs.statSync(file);
         if (now - stats.mtime.getTime() > maxAge) {
           fs.unlinkSync(file);
-          console.log(`Cleaned up old screenshot: ${file}`);
+          console.error(`Cleaned up old screenshot: ${file}`);
         }
       } catch (error) {
         console.warn(`Error cleaning up ${file}:`, error);

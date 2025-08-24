@@ -107,7 +107,7 @@ export class ScreenshotWatcherService extends EventEmitter {
     const fullPattern = path.join(absolutePath, watchPattern);
     this.watcher.add(fullPattern);
 
-    console.log(`Started watching ${absolutePath} for screenshots`);
+    // Removed console.error to prevent MCP protocol parsing issues
     this.emit('watching-started', { directory: absolutePath, pattern: watchPattern });
   }
 
@@ -123,7 +123,7 @@ export class ScreenshotWatcherService extends EventEmitter {
         this.watcher.unwatch(path.join(absolutePath, '**/*.{png,jpg,jpeg,gif}'));
       }
       
-      console.log(`Stopped watching ${absolutePath}`);
+      console.error(`Stopped watching ${absolutePath}`);
       this.emit('watching-stopped', { directory: absolutePath });
     } else {
       // Stop watching all directories
@@ -132,7 +132,7 @@ export class ScreenshotWatcherService extends EventEmitter {
         this.watcher = null;
       }
       this.watchedDirectories.clear();
-      console.log('Stopped watching all directories');
+      console.error('Stopped watching all directories');
       this.emit('watching-stopped', { directory: 'all' });
     }
   }
@@ -142,7 +142,7 @@ export class ScreenshotWatcherService extends EventEmitter {
    */
   private handleNewFile(filePath: string, options: any): void {
     if (this.isScreenshotFile(filePath)) {
-      console.log(`New screenshot detected: ${filePath}`);
+      console.error(`New screenshot detected: ${filePath}`);
       
       const stats = fs.statSync(filePath);
       const analysisRequest: AnalysisRequest = {
@@ -165,7 +165,7 @@ export class ScreenshotWatcherService extends EventEmitter {
    */
   private handleFileChange(filePath: string, options: any): void {
     if (this.isScreenshotFile(filePath)) {
-      console.log(`Screenshot file updated: ${filePath}`);
+      console.error(`Screenshot file updated: ${filePath}`);
       // Could trigger re-analysis if needed
     }
   }
@@ -182,7 +182,7 @@ export class ScreenshotWatcherService extends EventEmitter {
    * Handle screenshot detected event
    */
   private async handleScreenshotDetected(request: AnalysisRequest): Promise<void> {
-    console.log(`Processing screenshot: ${request.screenshotPath}`);
+    console.error(`Processing screenshot: ${request.screenshotPath}`);
     
     // Extract any metadata from filename or directory structure
     const enhancedRequest = await this.enhanceAnalysisRequest(request);
@@ -337,7 +337,7 @@ export class ScreenshotWatcherService extends EventEmitter {
    * Perform analysis on screenshot
    */
   private async performAnalysis(request: AnalysisRequest): Promise<AnalysisResult> {
-    console.log(`Analyzing ${request.screenshotPath} (${request.analysisType})`);
+    console.error(`Analyzing ${request.screenshotPath} (${request.analysisType})`);
 
     // This would normally call the MCP server's analyze_qb64pe_graphics_screenshot tool
     // For now, we'll create a mock analysis that would be replaced with actual LLM calls
@@ -375,10 +375,10 @@ export class ScreenshotWatcherService extends EventEmitter {
    * Handle analysis completion
    */
   private handleAnalysisComplete(result: AnalysisResult): void {
-    console.log(`Analysis complete for ${result.screenshotPath}: ${result.success ? 'SUCCESS' : 'FAILED'}`);
+    console.error(`Analysis complete for ${result.screenshotPath}: ${result.success ? 'SUCCESS' : 'FAILED'}`);
     
     if (result.success && result.analysis) {
-      console.log(`Found ${result.analysis.shapes.length} shapes, ${result.analysis.colors.length} colors`);
+      console.error(`Found ${result.analysis.shapes.length} shapes, ${result.analysis.colors.length} colors`);
     }
 
     // Could trigger additional actions like notifications, reports, etc.
@@ -426,7 +426,7 @@ export class ScreenshotWatcherService extends EventEmitter {
    */
   clearHistory(): void {
     this.analysisHistory = [];
-    console.log('Analysis history cleared');
+    console.error('Analysis history cleared');
   }
 
   /**

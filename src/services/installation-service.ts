@@ -8,13 +8,13 @@ const execAsync = promisify(exec);
 
 // Timeout utility for preventing hanging operations
 const withTimeout = <T>(promise: Promise<T>, timeoutMs: number, operation: string): Promise<T> => {
-  console.log(`[QB64PE-Install] Starting operation: ${operation} (timeout: ${timeoutMs}ms)`);
+  console.error(`[QB64PE-Install] Starting operation: ${operation} (timeout: ${timeoutMs}ms)`);
   
   let timeoutId: NodeJS.Timeout;
   
   const timeoutPromise = new Promise<T>((_, reject) => {
     timeoutId = setTimeout(() => {
-      console.log(`[QB64PE-Install] Operation timed out: ${operation} after ${timeoutMs}ms`);
+      console.error(`[QB64PE-Install] Operation timed out: ${operation} after ${timeoutMs}ms`);
       reject(new Error(`Timeout after ${timeoutMs}ms for operation: ${operation}`));
     }, timeoutMs);
   });
@@ -22,22 +22,23 @@ const withTimeout = <T>(promise: Promise<T>, timeoutMs: number, operation: strin
   return Promise.race([
     promise.then(result => {
       clearTimeout(timeoutId);
-      console.log(`[QB64PE-Install] Operation completed: ${operation}`);
+      console.error(`[QB64PE-Install] Operation completed: ${operation}`);
       return result;
     }).catch(error => {
       clearTimeout(timeoutId);
-      console.log(`[QB64PE-Install] Operation failed: ${operation} - ${error.message}`);
+      console.error(`[QB64PE-Install] Operation failed: ${operation} - ${error.message}`);
       throw error;
     }),
     timeoutPromise
   ]);
 };
 
-// Logging utility
+// Logging utility - MCP-compatible (no emojis or special formatting)
 const log = (message: string, level: 'info' | 'warn' | 'error' = 'info') => {
   const timestamp = new Date().toISOString();
-  const prefix = level === 'error' ? '❌' : level === 'warn' ? '⚠️' : 'ℹ️';
-  console.error(`[${timestamp}] ${prefix} QB64PE-Install: ${message}`);
+  const prefix = level === 'error' ? 'ERROR' : level === 'warn' ? 'WARN' : 'INFO';
+  // Use console.error instead of console.error for MCP compatibility
+  console.error(`[${timestamp}] [${prefix}] QB64PE-Install: ${message}`);
 };
 
 export interface QB64PEInstallation {
@@ -100,21 +101,21 @@ export class QB64PEInstallationService {
       );
       
       if (pathResult.found) {
-        log(`✅ Found QB64PE in PATH: ${pathResult.path}`);
+        log(`Found QB64PE in PATH: ${pathResult.path}`);
         installation.isInstalled = true;
         installation.inPath = true;
         installation.installPath = pathResult.path;
         installation.executable = pathResult.executable;
         
-        // Get version with timeout
+        // Get version with timeout (8 seconds to accommodate internal 5s timeout)
         log('Getting version information...');
         installation.version = pathResult.executable ? await withTimeout(
           this.getVersion(pathResult.executable), 
-          3000, 
+          8000, 
           'getVersion from PATH'
         ) : undefined;
         
-        log(`✅ Detection complete - QB64PE found in PATH (version: ${installation.version || 'unknown'})`);
+        log(`Detection complete - QB64PE found in PATH (version: ${installation.version || 'unknown'})`);
         return installation;
       }
 
@@ -128,25 +129,25 @@ export class QB64PEInstallationService {
       );
       
       if (searchResult.found) {
-        log(`✅ Found QB64PE installation: ${searchResult.path}`);
+        log(`Found QB64PE installation: ${searchResult.path}`);
         installation.isInstalled = true;
         installation.inPath = false;
         installation.installPath = searchResult.path;
         installation.executable = searchResult.executable;
         
-        // Get version with timeout
+        // Get version with timeout (8 seconds to accommodate internal 5s timeout)
         log('Getting version information...');
         installation.version = searchResult.executable ? await withTimeout(
           this.getVersion(searchResult.executable), 
-          3000, 
+          8000, 
           'getVersion from search'
         ) : undefined;
         
-        log(`✅ Detection complete - QB64PE found but not in PATH (version: ${installation.version || 'unknown'})`);
+        log(`Detection complete - QB64PE found but not in PATH (version: ${installation.version || 'unknown'})`);
         return installation;
       }
 
-      log('❌ QB64PE not found in PATH or common installation directories');
+      log('QB64PE not found in PATH or common installation directories', 'warn');
       return installation;
       
     } catch (error) {
@@ -194,20 +195,20 @@ export class QB64PEInstallationService {
         try {
           const exists = fs.existsSync(executablePath);
           if (exists) {
-            log(`✅ Found executable at: ${executablePath}`);
+            log(`Found executable at: ${executablePath}`);
             return {
               found: true,
               path: path.dirname(executablePath),
               executable: executablePath
             };
           } else {
-            log('❌ Executable path does not exist');
+            log('Executable path does not exist', 'warn');
           }
         } catch (fsError) {
-          log(`❌ File system error checking path: ${fsError}`);
+          log(`File system error checking path: ${fsError}`, 'error');
         }
       } else {
-        log('❌ No executable path returned from command');
+        log('No executable path returned from command', 'warn');
       }
     } catch (error) {
       log(`PATH check failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 'warn');
@@ -264,7 +265,7 @@ export class QB64PEInstallationService {
           );
           
           if (isFile) {
-            log(`✅ Valid QB64PE installation found: ${searchPath}`);
+            log(`Valid QB64PE installation found: ${searchPath}`);
             return {
               found: true,
               path: searchPath,
@@ -280,7 +281,7 @@ export class QB64PEInstallationService {
       }
     }
 
-    log('❌ No QB64PE installation found in common paths');
+    log('No QB64PE installation found in common paths', 'warn');
     return { found: false };
   }
 
@@ -291,16 +292,9 @@ export class QB64PEInstallationService {
     log(`Getting version for: ${executablePath}`);
     
     try {
-      // Try --version first with timeout
+      // Try --version first
       log('Trying --version flag...');
-      const versionPromise = execAsync(`"${executablePath}" --version`);
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => {
-          reject(new Error(`Version command timed out after 5s`));
-        }, 5000);
-      });
-      
-      const { stdout } = await Promise.race([versionPromise, timeoutPromise]);
+      const { stdout } = await execAsync(`"${executablePath}" --version`);
       const version = stdout.trim();
       log(`Version output: ${version}`);
       return version;
@@ -308,36 +302,14 @@ export class QB64PEInstallationService {
       log(`--version failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 'warn');
       
       try {
-        // Try alternative -v flag with timeout
+        // Try alternative -v flag
         log('Trying -v flag...');
-        const versionPromise = execAsync(`"${executablePath}" -v`);
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => {
-            reject(new Error(`Version -v command timed out after 5s`));
-          }, 5000);
-        });
-        
-        const { stdout } = await Promise.race([versionPromise, timeoutPromise]);
+        const { stdout } = await execAsync(`"${executablePath}" -v`);
         const version = stdout.trim();
-        log(`Version output: ${version}`);
+        log(`Version -v output: ${version}`);
         return version;
       } catch (error2) {
-        log(`-v also failed: ${error2 instanceof Error ? error2.message : 'Unknown error'}`, 'warn');
-        
-        // Try to get version from filename or directory structure
-        try {
-          log('Attempting to extract version from path...');
-          const dirName = path.basename(path.dirname(executablePath));
-          const versionMatch = dirName.match(/v?\d+\.\d+(\.\d+)?/);
-          if (versionMatch) {
-            log(`Extracted version from path: ${versionMatch[0]}`);
-            return versionMatch[0];
-          }
-        } catch (error3) {
-          log(`Path version extraction failed: ${error3}`, 'warn');
-        }
-        
-        log('Could not determine version', 'warn');
+        log(`-v flag also failed: ${error2 instanceof Error ? error2.message : 'Unknown error'}`, 'warn');
         return undefined;
       }
     }
@@ -820,7 +792,7 @@ ${this.getPackageManagerInstructions()}
         );
         
         if (isFile) {
-          log('✅ Valid executable found, getting version...');
+          log('Valid executable found, getting version...');
           
           // Get version with timeout
           const version = await withTimeout(
@@ -829,17 +801,17 @@ ${this.getPackageManagerInstructions()}
             'getVersion for validation'
           );
           
-          log(`✅ Path validation successful (version: ${version || 'unknown'})`);
+          log(`Path validation successful (version: ${version || 'unknown'})`);
           return {
             valid: true,
             executable: executablePath,
             version
           };
         } else {
-          log('❌ Path exists but is not a file');
+          log('Path exists but is not a file', 'warn');
         }
       } else {
-        log('❌ Executable not found at path');
+        log('Executable not found at path', 'warn');
       }
       
       return { valid: false };
@@ -902,7 +874,7 @@ ${config.commonInstallPaths.map(p => `- ${p}`).join('\n')}
 ---
 *This report was generated by the QB64PE MCP Server Installation Service*`;
 
-      log('✅ Installation report generated successfully');
+      log('Installation report generated successfully');
       return report;
       
     } catch (error) {

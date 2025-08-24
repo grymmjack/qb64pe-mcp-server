@@ -20,7 +20,7 @@ This MCP server provides **51 comprehensive tools** and **5 intelligent prompts*
 | `generate_advanced_debugging_template` | Create comprehensive debugging templates with native logging and structured output | [📖](./tool-docs/generate_advanced_debugging_template.md) |
 | `generate_qb64pe_echo_functions` | Generate ECHO helper functions for simplified console output (mandatory for graphics modes) | [📖](./tool-docs/generate_qb64pe_echo_functions.md) |
 | `parse_qb64pe_structured_output` | Parse structured output from enhanced QB64PE programs with section analysis | [📖](./tool-docs/parse_qb64pe_structured_output.md) |
-| `generate_output_capture_commands` | Generate cross-platform commands for capturing and monitoring QB64PE program output | [�](./tool-docs/generate_output_capture_commands.md) |
+| `generate_output_capture_commands` | Generate cross-platform commands for capturing and monitoring QB64PE program output | [📖](./tool-docs/generate_output_capture_commands.md) |
 | `get_debugging_help` | Get help with debugging QB64PE programs using PRINT statements, $CONSOLE, etc. | [📖](./tool-docs/get_debugging_help.md) |
 | `get_execution_monitoring_guidance` | Get comprehensive guidance for monitoring QB64PE program execution with LLM timeout strategies | [📖](./tool-docs/get_execution_monitoring_guidance.md) |
 | `generate_monitoring_template` | Generate QB64PE code template with built-in logging, screenshots, and execution monitoring | [📖](./tool-docs/generate_monitoring_template.md) |

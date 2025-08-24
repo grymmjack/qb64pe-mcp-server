@@ -47,6 +47,7 @@ const porting_service_js_1 = require("./services/porting-service.js");
 const screenshot_service_js_1 = require("./services/screenshot-service.js");
 const screenshot_watcher_service_js_1 = require("./services/screenshot-watcher-service.js");
 const feedback_service_js_1 = require("./services/feedback-service.js");
+const debugging_service_js_1 = require("./services/debugging-service.js");
 /**
  * Main MCP Server for QB64PE Development
  */
@@ -63,6 +64,7 @@ class QB64PEMCPServer {
     screenshotService;
     screenshotWatcher;
     feedbackService;
+    debuggingService;
     constructor() {
         this.server = new mcp_js_1.McpServer({
             name: "qb64pe-mcp-server",
@@ -80,6 +82,7 @@ class QB64PEMCPServer {
         this.screenshotService = new screenshot_service_js_1.ScreenshotService();
         this.screenshotWatcher = new screenshot_watcher_service_js_1.ScreenshotWatcherService();
         this.feedbackService = new feedback_service_js_1.FeedbackService();
+        this.debuggingService = new debugging_service_js_1.QB64PEDebuggingService();
         // Connect screenshot watcher to feedback service
         this.screenshotWatcher.on('analysis-complete', (analysisResult) => {
             this.handleAnalysisComplete(analysisResult);
@@ -1778,6 +1781,114 @@ Remember: QB64PE installation and PATH configuration is often the first hurdle f
                 };
             }
         });
+        // Enhanced Debugging Tools
+        this.server.registerTool("enhance_qb64pe_code_for_debugging", {
+            title: "Enhance QB64PE Code for Debugging",
+            description: "Apply comprehensive debugging enhancements to QB64PE source code to address console visibility, flow control, resource management, and graphics context issues",
+            inputSchema: {
+                sourceCode: zod_1.z.string().describe("QB64PE source code to enhance"),
+                config: zod_1.z.object({
+                    enableConsole: zod_1.z.boolean().optional().describe("Enable console management (default: true)"),
+                    enableLogging: zod_1.z.boolean().optional().describe("Enable logging system (default: true)"),
+                    enableScreenshots: zod_1.z.boolean().optional().describe("Enable screenshot system (default: true)"),
+                    enableFlowControl: zod_1.z.boolean().optional().describe("Enable flow control for automation (default: true)"),
+                    enableResourceTracking: zod_1.z.boolean().optional().describe("Enable resource management (default: true)"),
+                    timeoutSeconds: zod_1.z.number().optional().describe("Timeout for automated operations (default: 30)"),
+                    autoExit: zod_1.z.boolean().optional().describe("Enable automatic exit behavior (default: true)"),
+                    verboseOutput: zod_1.z.boolean().optional().describe("Enable verbose debug output (default: true)")
+                }).optional().describe("Debugging configuration options")
+            }
+        }, async ({ sourceCode, config = {} }) => {
+            try {
+                const result = this.debuggingService.enhanceCodeForDebugging(sourceCode, config);
+                return {
+                    content: [{
+                            type: "text",
+                            text: JSON.stringify({
+                                enhancedCode: result.enhancedCode,
+                                debugFeatures: result.debugFeatures,
+                                modifications: result.modifications,
+                                issuesDetected: result.issues.length,
+                                solutionsApplied: result.solutions.length,
+                                summary: {
+                                    originalLines: sourceCode.split('\n').length,
+                                    enhancedLines: result.enhancedCode.split('\n').length,
+                                    linesAdded: result.enhancedCode.split('\n').length - sourceCode.split('\n').length,
+                                    debugFeaturesEnabled: result.debugFeatures.join(', '),
+                                    keyModifications: result.modifications.slice(0, 3).join('; ')
+                                },
+                                usage: {
+                                    saveAs: "enhanced_program.bas",
+                                    compile: "qb64pe -c enhanced_program.bas",
+                                    expectedOutputs: [
+                                        "Console output with debugging information",
+                                        "Log files in qb64pe-logs/",
+                                        "Screenshots in qb64pe-screenshots/ (if graphics program)",
+                                        "Resource tracking and cleanup messages"
+                                    ]
+                                }
+                            }, null, 2)
+                        }]
+                };
+            }
+            catch (error) {
+                return {
+                    content: [{
+                            type: "text",
+                            text: `Error enhancing code for debugging: ${error instanceof Error ? error.message : 'Unknown error'}`
+                        }],
+                    isError: true
+                };
+            }
+        });
+        this.server.registerTool("get_qb64pe_debugging_best_practices", {
+            title: "Get QB64PE Debugging Best Practices",
+            description: "Get comprehensive debugging best practices and guidelines specifically for QB64PE development",
+            inputSchema: {}
+        }, async () => {
+            try {
+                const bestPractices = this.debuggingService.getDebuggingBestPractices();
+                return {
+                    content: [{
+                            type: "text",
+                            text: bestPractices
+                        }]
+                };
+            }
+            catch (error) {
+                return {
+                    content: [{
+                            type: "text",
+                            text: `Error getting debugging best practices: ${error instanceof Error ? error.message : 'Unknown error'}`
+                        }],
+                    isError: true
+                };
+            }
+        });
+        this.server.registerTool("get_llm_debugging_guide", {
+            title: "Get LLM QB64PE Debugging Guide",
+            description: "Get comprehensive debugging guide specifically designed for LLMs and automated systems working with QB64PE",
+            inputSchema: {}
+        }, async () => {
+            try {
+                const guide = this.debuggingService.getLLMDebuggingGuide();
+                return {
+                    content: [{
+                            type: "text",
+                            text: guide
+                        }]
+                };
+            }
+            catch (error) {
+                return {
+                    content: [{
+                            type: "text",
+                            text: `Error getting LLM debugging guide: ${error instanceof Error ? error.message : 'Unknown error'}`
+                        }],
+                    isError: true
+                };
+            }
+        });
         // Programming Feedback Tools
         this.server.registerTool("generate_programming_feedback", {
             title: "Generate Programming Feedback",
@@ -2941,6 +3052,56 @@ Please provide:
                     }
                 }]
         }));
+        // Enhanced debugging prompt
+        this.server.registerPrompt("debug-qb64pe-comprehensive", {
+            title: "Comprehensive QB64PE Debugging Session",
+            description: "Create a comprehensive debugging session for QB64PE programs with enhanced analysis and automated fixes",
+            argsSchema: {
+                sourceCode: zod_1.z.string().describe("QB64PE source code to debug"),
+                problemDescription: zod_1.z.string().optional().describe("Description of the problem being experienced"),
+                executionContext: zod_1.z.enum(["automated", "interactive", "testing"]).optional().describe("How the program will be executed"),
+                platform: zod_1.z.enum(["windows", "macos", "linux"]).optional().describe("Target platform")
+            }
+        }, ({ sourceCode, problemDescription, executionContext = "automated", platform }) => ({
+            messages: [{
+                    role: "user",
+                    content: {
+                        type: "text",
+                        text: `Please help me debug this QB64PE program using the enhanced debugging tools:
+
+**Source Code:**
+\`\`\`basic
+${sourceCode}
+\`\`\`
+
+${problemDescription ? `**Problem Description:** ${problemDescription}\n` : ''}
+**Execution Context:** ${executionContext}
+${platform ? `**Platform:** ${platform}\n` : ''}
+
+**Please follow this debugging workflow:**
+
+1. **Use \`enhance_qb64pe_code_for_debugging\`** to analyze and enhance the code
+2. **Apply debugging best practices** from \`get_qb64pe_debugging_best_practices\`
+3. **Consider LLM-specific guidance** from \`get_llm_debugging_guide\`
+4. **Provide execution recommendations** based on the program type detected
+
+**Focus Areas:**
+- Console output visibility issues
+- Flow control for ${executionContext} execution
+- Resource management (file handles, graphics contexts)
+- Process lifecycle management
+- Cross-platform compatibility
+
+**Expected Output:**
+- Enhanced code with debugging features
+- Clear execution strategy with timeouts
+- Monitoring recommendations
+- Human handoff points (if needed)
+
+**Critical:** If this is a graphics program, provide specific timeout guidance and suggest when to hand over to human testing.`
+                    }
+                }]
+        }));
         // QBasic to QB64PE porting prompt
         this.server.registerPrompt("port-qbasic-to-qb64pe", {
             title: "Port QBasic Program to QB64PE",
@@ -3141,6 +3302,67 @@ ${preserveOriginal === "true" ? 'Please preserve original comments and structure
             effort = effort === 'Low' ? 'Medium' : 'High';
         }
         return effort;
+    }
+    /**
+     * Generate session recommendations for debugging
+     */
+    generateSessionRecommendations(session) {
+        const recommendations = [];
+        if (session.issues.length === 0) {
+            recommendations.push('No critical issues detected - code appears ready for testing');
+        }
+        else {
+            const criticalIssues = session.issues.filter((i) => i.severity === 'critical');
+            const highIssues = session.issues.filter((i) => i.severity === 'high');
+            if (criticalIssues.length > 0) {
+                recommendations.push(`Address ${criticalIssues.length} critical issue(s) before testing`);
+            }
+            if (highIssues.length > 0) {
+                recommendations.push(`Review ${highIssues.length} high-priority issue(s) for better reliability`);
+            }
+        }
+        if (session.executionMode === 'graphics') {
+            recommendations.push('Graphics program detected - expect window interaction, use timeouts');
+        }
+        else if (session.executionMode === 'mixed') {
+            recommendations.push('Mixed mode program - monitor console output and graphics window');
+        }
+        const autoFixableIssues = session.issues.filter((i) => i.autoFixable);
+        if (autoFixableIssues.length > 0) {
+            recommendations.push(`${autoFixableIssues.length} issue(s) can be auto-fixed with enhance_qb64pe_code_for_debugging`);
+        }
+        return recommendations;
+    }
+    /**
+     * Get recommended actions for a debugging session
+     */
+    getSessionRecommendedActions(session) {
+        const actions = [];
+        const unresolvedIssues = session.issues.filter((i) => !i.resolved);
+        if (unresolvedIssues.length > 0) {
+            actions.push('Apply debugging enhancements to resolve outstanding issues');
+        }
+        if (session.status === 'active' && new Date().getTime() - session.startTime.getTime() > 300000) {
+            actions.push('Session has been active for over 5 minutes - consider closing if completed');
+        }
+        if (session.executionMode === 'graphics' && !session.solutions.some((s) => s.strategy === 'code_injection')) {
+            actions.push('Graphics program should use enhanced debugging for timeout management');
+        }
+        return actions;
+    }
+    /**
+     * Get execution mode distribution for sessions
+     */
+    getExecutionModeDistribution(sessions) {
+        const distribution = {
+            console: 0,
+            graphics: 0,
+            mixed: 0
+        };
+        sessions.forEach(session => {
+            distribution[session.executionMode] = (distribution[session.executionMode] || 0) + 1;
+        });
+        return distribution;
     }
     /**
      * Start the MCP server

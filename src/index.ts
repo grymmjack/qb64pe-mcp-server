@@ -2103,12 +2103,13 @@ Remember: QB64PE installation and PATH configuration is often the first hurdle f
       "inject_native_qb64pe_logging",
       {
         title: "Inject Native QB64PE Logging",
-        description: "Inject native QB64PE logging functions (_LOGINFO, _LOGERROR, etc.) into source code with proper $CONSOLE:ONLY directive for shell redirection",
+        description: "Inject native QB64PE logging functions (_LOGINFO, _LOGERROR, etc.) and ECHO functions into source code with proper $CONSOLE:ONLY directive for shell redirection. CRITICAL: In graphics modes (SCREEN 1,2,7,8,9,10,11,12,13, etc.), you MUST use the ECHO functions instead of PRINT/_PRINTSTRING for console output.",
         inputSchema: {
           sourceCode: z.string().describe("QB64PE source code to enhance with logging"),
           config: z.object({
             enableNativeLogging: z.boolean().optional().describe("Enable native logging functions (default: true)"),
             enableStructuredOutput: z.boolean().optional().describe("Enable structured output sections (default: true)"),
+            enableEchoOutput: z.boolean().optional().describe("Enable ECHO functions for simplified console output (default: true)"),
             consoleDirective: z.enum(['$CONSOLE', '$CONSOLE:ONLY']).optional().describe("Console directive to use (default: $CONSOLE:ONLY)"),
             logLevel: z.enum(['TRACE', 'INFO', 'WARN', 'ERROR']).optional().describe("Logging level (default: INFO)"),
             autoExitTimeout: z.number().optional().describe("Auto-exit timeout in seconds (default: 10)"),
@@ -2123,11 +2124,12 @@ Remember: QB64PE installation and PATH configuration is often the first hurdle f
           return {
             content: [{
               type: "text",
-              text: `# Enhanced QB64PE Code with Native Logging
+              text: `# Enhanced QB64PE Code with Native Logging & ECHO Functions
 
 ## Key Improvements
 - ✅ **$CONSOLE:ONLY directive** for proper shell redirection
 - ✅ **Native QB64PE logging functions** (_LOGINFO, _LOGERROR, etc.)
+- ✅ **ECHO functions** for simplified console output (no _DEST management)
 - ✅ **Structured output sections** for systematic debugging
 - ✅ **Auto-exit mechanism** for automation compatibility
 
@@ -2135,6 +2137,27 @@ Remember: QB64PE installation and PATH configuration is often the first hurdle f
 
 \`\`\`basic
 ${enhanced}
+\`\`\`
+
+## ECHO Functions Usage (MANDATORY for Graphics Modes)
+
+⚠️  **CRITICAL RULE**: In ANY graphics screen mode (SCREEN 1,2,7,8,9,10,11,12,13, etc.), you MUST use ECHO functions instead of PRINT or _PRINTSTRING for console output. Only use PRINT/_PRINTSTRING if user specifically requests it.
+
+### Simple Console Output (LLM-Friendly)
+\`\`\`basic
+SCREEN 13  ' Graphics mode - MUST use ECHO
+CALL ECHO("Initializing graphics mode...")
+CALL ECHO_INFO("Graphics setup complete")
+CALL ECHO_ERROR("Texture loading failed")
+CALL ECHO_WARN("Low video memory")
+CALL ECHO_DEBUG("Sprite count: " + STR$(spriteCount))
+\`\`\`
+
+### Text Mode Output
+\`\`\`basic
+SCREEN 0   ' Text mode - ECHO still recommended
+CALL ECHO("Processing data...")
+CALL ECHO_INFO("Analysis started")
 \`\`\`
 
 ## Usage Instructions
@@ -2185,13 +2208,14 @@ Auto-exiting in 10 seconds...
       "generate_advanced_debugging_template",
       {
         title: "Generate Advanced QB64PE Debugging Template",
-        description: "Generate a comprehensive debugging template with native logging, structured output, and automated execution monitoring",
+        description: "Generate a comprehensive debugging template with native logging, ECHO functions, structured output, and automated execution monitoring. CRITICAL: Template uses ECHO functions which are MANDATORY for graphics modes (SCREEN 1,2,7,8,9,10,11,12,13, etc.) instead of PRINT/_PRINTSTRING.",
         inputSchema: {
           programName: z.string().describe("Name of the program being debugged"),
           analysisSteps: z.array(z.string()).describe("List of analysis steps to include in the template"),
           config: z.object({
             enableNativeLogging: z.boolean().optional().describe("Enable native logging functions (default: true)"),
             enableStructuredOutput: z.boolean().optional().describe("Enable structured output sections (default: true)"),
+            enableEchoOutput: z.boolean().optional().describe("Enable ECHO functions for simplified console output (default: true)"),
             consoleDirective: z.enum(['$CONSOLE', '$CONSOLE:ONLY']).optional().describe("Console directive (default: $CONSOLE:ONLY)"),
             logLevel: z.enum(['TRACE', 'INFO', 'WARN', 'ERROR']).optional().describe("Logging level (default: INFO)"),
             autoExitTimeout: z.number().optional().describe("Auto-exit timeout (default: 10)")
@@ -2428,6 +2452,104 @@ These commands are specifically designed for automated QB64PE debugging workflow
             content: [{
               type: "text",
               text: `Error generating output capture commands: ${error instanceof Error ? error.message : 'Unknown error'}`
+            }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    // ECHO Helper Functions Tool
+    this.server.registerTool(
+      "generate_qb64pe_echo_functions",
+      {
+        title: "Generate QB64PE ECHO Functions",
+        description: "Generate ECHO helper functions for simplified console output without _DEST management. MANDATORY for graphics modes (SCREEN 1,2,7,8,9,10,11,12,13, etc.) - do NOT use PRINT/_PRINTSTRING in graphics modes unless specifically requested by user. These are QB64PE subroutines, NOT shell echo commands.",
+        inputSchema: {
+          config: z.object({
+            enableNativeLogging: z.boolean().optional().describe("Enable native logging integration (default: true)"),
+            enableStructuredOutput: z.boolean().optional().describe("Enable structured output sections (default: true)"),
+            consoleDirective: z.enum(['$CONSOLE', '$CONSOLE:ONLY']).optional().describe("Console directive to use (default: $CONSOLE:ONLY)"),
+            logLevel: z.enum(['TRACE', 'INFO', 'WARN', 'ERROR']).optional().describe("Logging level (default: INFO)")
+          }).optional().describe("ECHO configuration options")
+        }
+      },
+      async ({ config = {} }) => {
+        try {
+          const echoFunctions = this.loggingService.generateEchoFunctions(config);
+          
+          return {
+            content: [{
+              type: "text",
+              text: `# QB64PE ECHO Helper Functions
+
+## Overview
+These ECHO functions provide simplified console output for LLMs without requiring _DEST management.
+
+⚠️  **CRITICAL FOR GRAPHICS MODES**: In ANY graphics screen mode (SCREEN 1,2,7,8,9,10,11,12,13, etc.), you MUST use ECHO functions instead of PRINT or _PRINTSTRING for console output that needs to be captured by stdio redirection. Only use PRINT/_PRINTSTRING if the user specifically requests it.
+
+📝 **Important**: These are QB64PE ECHO subroutines, NOT shell echo commands. They work within your QB64PE program and are captured by stdio redirection.
+
+## Generated Functions
+\`\`\`basic
+${echoFunctions}
+\`\`\`
+
+## Usage Examples
+
+### Graphics Mode Console Output (MANDATORY)
+\`\`\`basic
+SCREEN 13  ' VGA 256-color graphics mode
+CALL ECHO("Initializing graphics...")
+CALL ECHO_INFO("Graphics mode set to 320x200x256")
+' Your graphics code here
+CALL ECHO("Rendering complete")
+\`\`\`
+
+### Basic Console Output
+\`\`\`basic
+CALL ECHO("Hello, World!")
+CALL ECHO("Processing step 1...")
+\`\`\`
+
+### Categorized Output
+\`\`\`basic
+CALL ECHO_INFO("Starting data processing")
+CALL ECHO_ERROR("File not found: " + filename$)
+CALL ECHO_WARN("Memory usage is high")
+CALL ECHO_DEBUG("Variable value: " + STR$(myVar))
+\`\`\`
+
+## Key Benefits for LLMs
+
+✅ **Graphics Mode Compatible** - Works in all screen modes  
+✅ **No _DEST Management** - Automatically handles console destination  
+✅ **Simplified API** - Just CALL ECHO(message) for output  
+✅ **Categorized Output** - INFO, ERROR, WARN, DEBUG variants  
+✅ **Native Logging Integration** - Works with QB64PE's built-in logging  
+✅ **Automation Friendly** - Perfect for generated code  
+✅ **Stdio Redirection** - Captured by shell output redirection  
+
+## Technical Details
+
+The ECHO functions automatically:
+1. Store current _DEST value
+2. Switch to _CONSOLE for output
+3. Print the message
+4. Restore original _DEST
+
+This eliminates the complexity of console management in LLM-generated QB64PE code, especially in graphics modes.
+
+## Integration with Enhanced Code
+
+When using with \`inject_native_qb64pe_logging\`, these functions are automatically included and integrated with the native logging system.`
+            }]
+          };
+        } catch (error) {
+          return {
+            content: [{
+              type: "text",
+              text: `Error generating ECHO functions: ${error instanceof Error ? error.message : 'Unknown error'}`
             }],
             isError: true
           };

@@ -53,6 +53,79 @@ const practices = await use_tool("get_qb64pe_debugging_best_practices");
 // Returns comprehensive debugging practices for QB64PE
 ```
 
+### 🔧 Native Logging Tools (NEW!)
+
+#### `inject_native_qb64pe_logging`
+**Purpose**: Add native QB64PE logging functions with proper console directives
+**When to use**: When you need structured output and shell redirection compatibility
+
+```typescript
+const enhanced = await use_tool("inject_native_qb64pe_logging", {
+  sourceCode: `PRINT "Hello"
+FOR i = 1 TO 10
+    PRINT i
+NEXT`,
+  config: {
+    consoleDirective: "$CONSOLE:ONLY",  // Critical for shell redirection!
+    enableNativeLogging: true,
+    enableStructuredOutput: true,
+    autoExitTimeout: 10
+  }
+});
+// Returns enhanced code with _LOGINFO, _LOGERROR functions and structured sections
+```
+
+#### `generate_advanced_debugging_template`
+**Purpose**: Create comprehensive debugging templates for complex analysis
+**When to use**: When starting a new debugging session or analysis program
+
+```typescript
+const template = await use_tool("generate_advanced_debugging_template", {
+  programName: "ZLIB Analyzer",
+  analysisSteps: [
+    "Header Validation",
+    "DEFLATE Parsing", 
+    "CRC32 Verification",
+    "Data Extraction"
+  ],
+  config: {
+    consoleDirective: "$CONSOLE:ONLY",
+    enableNativeLogging: true,
+    logLevel: "INFO"
+  }
+});
+// Returns complete QB64PE program with systematic debugging structure
+```
+
+#### `parse_qb64pe_structured_output`
+**Purpose**: Parse structured output from enhanced QB64PE programs
+**When to use**: After capturing output from enhanced QB64PE programs
+
+```typescript
+const analysis = await use_tool("parse_qb64pe_structured_output", {
+  output: `=== PROGRAM ANALYSIS ===
+Program: Test
+=== STEP 1: VALIDATION ===
+INFO: Validation completed
+=== RESULTS SUMMARY ===
+SUCCESS: All steps completed`
+});
+// Returns structured analysis with sections, logs, and execution status
+```
+
+#### `generate_output_capture_commands`
+**Purpose**: Generate cross-platform commands for capturing QB64PE output
+**When to use**: When you need to provide users with monitoring commands
+
+```typescript
+const commands = await use_tool("generate_output_capture_commands", {
+  programPath: "enhanced_analyzer.exe",
+  outputPath: "analysis_results.txt",
+  includeMonitoring: true
+});
+// Returns platform-specific commands for output capture and monitoring
+```
+
 ### 📋 Workflow Tools
 
 #### `analyze_qb64pe_execution_mode`

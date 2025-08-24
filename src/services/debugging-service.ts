@@ -207,10 +207,14 @@ export class QB64PEDebuggingService {
     const modifications: string[] = [];
     let code = sourceCode;
 
-    // Force console activation at the beginning
+    // Force console activation for shell redirection compatibility
     if (!code.includes('$CONSOLE')) {
-      code = `$CONSOLE\n${code}`;
-      modifications.push('Added $CONSOLE directive for console visibility');
+      code = `$CONSOLE:ONLY\n${code}`;
+      modifications.push('Added $CONSOLE:ONLY directive for shell redirection compatibility');
+    } else if (code.includes('$CONSOLE') && !code.includes('$CONSOLE:ONLY')) {
+      // Replace existing $CONSOLE with $CONSOLE:ONLY for better automation compatibility
+      code = code.replace(/\$CONSOLE(?!:)/g, '$CONSOLE:ONLY');
+      modifications.push('Updated $CONSOLE to $CONSOLE:ONLY for shell redirection compatibility');
     }
 
     // Add explicit console activation for Windows

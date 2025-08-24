@@ -32,6 +32,9 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const mcp_js_1 = require("@modelcontextprotocol/sdk/server/mcp.js");
 const stdio_js_1 = require("@modelcontextprotocol/sdk/server/stdio.js");
@@ -48,6 +51,7 @@ const screenshot_service_js_1 = require("./services/screenshot-service.js");
 const screenshot_watcher_service_js_1 = require("./services/screenshot-watcher-service.js");
 const feedback_service_js_1 = require("./services/feedback-service.js");
 const debugging_service_js_1 = require("./services/debugging-service.js");
+const logging_service_js_1 = __importDefault(require("./services/logging-service.js"));
 /**
  * Main MCP Server for QB64PE Development
  */
@@ -65,6 +69,7 @@ class QB64PEMCPServer {
     screenshotWatcher;
     feedbackService;
     debuggingService;
+    loggingService;
     constructor() {
         this.server = new mcp_js_1.McpServer({
             name: "qb64pe-mcp-server",
@@ -83,6 +88,7 @@ class QB64PEMCPServer {
         this.screenshotWatcher = new screenshot_watcher_service_js_1.ScreenshotWatcherService();
         this.feedbackService = new feedback_service_js_1.FeedbackService();
         this.debuggingService = new debugging_service_js_1.QB64PEDebuggingService();
+        this.loggingService = new logging_service_js_1.default();
         // Connect screenshot watcher to feedback service
         this.screenshotWatcher.on('analysis-complete', (analysisResult) => {
             this.handleAnalysisComplete(analysisResult);
@@ -1884,6 +1890,316 @@ Remember: QB64PE installation and PATH configuration is often the first hurdle f
                     content: [{
                             type: "text",
                             text: `Error getting LLM debugging guide: ${error instanceof Error ? error.message : 'Unknown error'}`
+                        }],
+                    isError: true
+                };
+            }
+        });
+        // Native QB64PE Logging Tools
+        this.server.registerTool("inject_native_qb64pe_logging", {
+            title: "Inject Native QB64PE Logging",
+            description: "Inject native QB64PE logging functions (_LOGINFO, _LOGERROR, etc.) into source code with proper $CONSOLE:ONLY directive for shell redirection",
+            inputSchema: {
+                sourceCode: zod_1.z.string().describe("QB64PE source code to enhance with logging"),
+                config: zod_1.z.object({
+                    enableNativeLogging: zod_1.z.boolean().optional().describe("Enable native logging functions (default: true)"),
+                    enableStructuredOutput: zod_1.z.boolean().optional().describe("Enable structured output sections (default: true)"),
+                    consoleDirective: zod_1.z.enum(['$CONSOLE', '$CONSOLE:ONLY']).optional().describe("Console directive to use (default: $CONSOLE:ONLY)"),
+                    logLevel: zod_1.z.enum(['TRACE', 'INFO', 'WARN', 'ERROR']).optional().describe("Logging level (default: INFO)"),
+                    autoExitTimeout: zod_1.z.number().optional().describe("Auto-exit timeout in seconds (default: 10)"),
+                    outputSections: zod_1.z.array(zod_1.z.string()).optional().describe("Custom output sections for structured debugging")
+                }).optional().describe("Logging configuration options")
+            }
+        }, async ({ sourceCode, config = {} }) => {
+            try {
+                const enhanced = this.loggingService.injectNativeLogging(sourceCode, config);
+                return {
+                    content: [{
+                            type: "text",
+                            text: `# Enhanced QB64PE Code with Native Logging
+
+## Key Improvements
+- ✅ **$CONSOLE:ONLY directive** for proper shell redirection
+- ✅ **Native QB64PE logging functions** (_LOGINFO, _LOGERROR, etc.)
+- ✅ **Structured output sections** for systematic debugging
+- ✅ **Auto-exit mechanism** for automation compatibility
+
+## Enhanced Code
+
+\`\`\`basic
+${enhanced}
+\`\`\`
+
+## Usage Instructions
+
+### Compilation and Execution
+\`\`\`bash
+# Compile the enhanced program
+qb64pe -c enhanced_program.bas
+
+# Run with output capture (works with $CONSOLE:ONLY)
+enhanced_program.exe > analysis_output.txt 2>&1
+
+# Monitor output in real-time
+powershell -Command "Get-Content -Path 'analysis_output.txt' -Wait -Tail 10"
+\`\`\`
+
+### Expected Output Format
+\`\`\`
+=== PROGRAM ANALYSIS ===
+INFO: Starting analysis...
+=== STEP 1: HEADER VALIDATION ===
+INFO: Header validation completed
+=== RESULTS SUMMARY ===
+SUCCESS: All steps completed
+Auto-exiting in 10 seconds...
+\`\`\`
+
+## Key Features Added
+- **Native Logging**: Uses QB64PE's built-in _LOGINFO, _LOGERROR functions
+- **Shell Redirection**: $CONSOLE:ONLY enables proper output capture
+- **Structured Sections**: Organized output for easy parsing
+- **Automation Ready**: Auto-exits to prevent hanging in automated workflows`
+                        }]
+                };
+            }
+            catch (error) {
+                return {
+                    content: [{
+                            type: "text",
+                            text: `Error injecting native logging: ${error instanceof Error ? error.message : 'Unknown error'}`
+                        }],
+                    isError: true
+                };
+            }
+        });
+        this.server.registerTool("generate_advanced_debugging_template", {
+            title: "Generate Advanced QB64PE Debugging Template",
+            description: "Generate a comprehensive debugging template with native logging, structured output, and automated execution monitoring",
+            inputSchema: {
+                programName: zod_1.z.string().describe("Name of the program being debugged"),
+                analysisSteps: zod_1.z.array(zod_1.z.string()).describe("List of analysis steps to include in the template"),
+                config: zod_1.z.object({
+                    enableNativeLogging: zod_1.z.boolean().optional().describe("Enable native logging functions (default: true)"),
+                    enableStructuredOutput: zod_1.z.boolean().optional().describe("Enable structured output sections (default: true)"),
+                    consoleDirective: zod_1.z.enum(['$CONSOLE', '$CONSOLE:ONLY']).optional().describe("Console directive (default: $CONSOLE:ONLY)"),
+                    logLevel: zod_1.z.enum(['TRACE', 'INFO', 'WARN', 'ERROR']).optional().describe("Logging level (default: INFO)"),
+                    autoExitTimeout: zod_1.z.number().optional().describe("Auto-exit timeout (default: 10)")
+                }).optional().describe("Template configuration options")
+            }
+        }, async ({ programName, analysisSteps, config = {} }) => {
+            try {
+                const template = this.loggingService.generateAdvancedDebuggingTemplate(programName, analysisSteps, config);
+                const outputPath = `${programName.toLowerCase().replace(/\s+/g, '_')}_debug_template.bas`;
+                const captureCommand = this.loggingService.generateOutputCaptureCommand(`${programName.toLowerCase().replace(/\s+/g, '_')}_debug_template.exe`);
+                return {
+                    content: [{
+                            type: "text",
+                            text: `# Advanced QB64PE Debugging Template
+
+## Generated Template for: ${programName}
+
+### Analysis Steps Included:
+${analysisSteps.map((step, i) => `${i + 1}. ${step}`).join('\n')}
+
+## Template Code
+
+**File**: \`${outputPath}\`
+
+\`\`\`basic
+${template}
+\`\`\`
+
+## Usage Workflow
+
+### 1. Save and Compile
+\`\`\`bash
+# Save the template
+echo '${template.replace(/'/g, "''").replace(/\$/g, '$$')}' > "${outputPath}"
+
+# Compile with QB64PE
+qb64pe -c "${outputPath}"
+\`\`\`
+
+### 2. Execute with Output Capture
+\`\`\`bash
+# Run with automated output capture
+${captureCommand}
+
+# Monitor real-time output
+${this.loggingService.generateFileMonitoringCommands('analysis_output.txt').windows}
+\`\`\`
+
+### 3. Parse Structured Output
+The template generates structured output that can be automatically parsed:
+
+\`\`\`
+=== PROGRAM INITIALIZATION ===
+Program: ${programName}
+Start Time: [timestamp]
+Debug Mode: 1
+
+=== STEP 1: [FIRST_STEP] ===
+INFO: Starting step 1: [first step]
+Processing [first step]...
+
+=== EXECUTION SUMMARY ===
+SUCCESS: All X steps completed
+Execution Time: X.XX seconds
+Auto-exiting in 10 seconds...
+\`\`\`
+
+## Template Features
+
+✅ **$CONSOLE:ONLY** - Enables shell output redirection  
+✅ **Native QB64PE Logging** - Uses _LOGINFO, _LOGERROR, etc.  
+✅ **Structured Sections** - Organized output for parsing  
+✅ **Error Handling** - Comprehensive error detection and logging  
+✅ **Auto-Exit** - Prevents hanging in automated workflows  
+✅ **Execution Timing** - Tracks performance metrics  
+✅ **Resource Cleanup** - Proper program termination
+
+This template is specifically designed for LLM-automated debugging workflows and systematic analysis.`
+                        }]
+                };
+            }
+            catch (error) {
+                return {
+                    content: [{
+                            type: "text",
+                            text: `Error generating debugging template: ${error instanceof Error ? error.message : 'Unknown error'}`
+                        }],
+                    isError: true
+                };
+            }
+        });
+        this.server.registerTool("parse_qb64pe_structured_output", {
+            title: "Parse QB64PE Structured Output",
+            description: "Parse structured output from QB64PE programs enhanced with native logging and organized sections",
+            inputSchema: {
+                output: zod_1.z.string().describe("Raw output from QB64PE program execution")
+            }
+        }, async ({ output }) => {
+            try {
+                const parsed = this.loggingService.parseStructuredOutput(output);
+                return {
+                    content: [{
+                            type: "text",
+                            text: JSON.stringify({
+                                analysis: "QB64PE Structured Output Analysis",
+                                summary: {
+                                    executionStatus: parsed.summary.success ? "SUCCESS" : "FAILED",
+                                    totalSteps: parsed.summary.totalSteps,
+                                    failedSteps: parsed.summary.failedSteps,
+                                    completionRate: parsed.summary.totalSteps > 0
+                                        ? `${Math.round(((parsed.summary.totalSteps - parsed.summary.failedSteps) / parsed.summary.totalSteps) * 100)}%`
+                                        : "N/A"
+                                },
+                                sections: parsed.sections,
+                                logs: parsed.logs,
+                                recommendations: parsed.summary.success
+                                    ? ["Program executed successfully", "All steps completed without errors"]
+                                    : [
+                                        "Program execution encountered errors",
+                                        `${parsed.summary.failedSteps} step(s) failed`,
+                                        "Review error logs for specific issues",
+                                        "Consider using enhanced error handling"
+                                    ]
+                            }, null, 2)
+                        }]
+                };
+            }
+            catch (error) {
+                return {
+                    content: [{
+                            type: "text",
+                            text: `Error parsing structured output: ${error instanceof Error ? error.message : 'Unknown error'}`
+                        }],
+                    isError: true
+                };
+            }
+        });
+        this.server.registerTool("generate_output_capture_commands", {
+            title: "Generate Output Capture Commands",
+            description: "Generate cross-platform commands for capturing and monitoring QB64PE program output",
+            inputSchema: {
+                programPath: zod_1.z.string().describe("Path to the QB64PE executable"),
+                outputPath: zod_1.z.string().optional().describe("Path for output file (default: analysis_output.txt)"),
+                includeMonitoring: zod_1.z.boolean().optional().describe("Include real-time monitoring commands (default: true)")
+            }
+        }, async ({ programPath, outputPath = 'analysis_output.txt', includeMonitoring = true }) => {
+            try {
+                const captureCommand = this.loggingService.generateOutputCaptureCommand(programPath, outputPath);
+                const monitoringCommands = includeMonitoring
+                    ? this.loggingService.generateFileMonitoringCommands(outputPath)
+                    : {};
+                return {
+                    content: [{
+                            type: "text",
+                            text: `# QB64PE Output Capture Commands
+
+## Primary Capture Command
+\`\`\`bash
+${captureCommand}
+\`\`\`
+
+## Real-time Monitoring Commands
+
+### Windows (PowerShell)
+\`\`\`powershell
+${monitoringCommands.windows || 'N/A'}
+\`\`\`
+
+### Windows (Batch - Continuous)
+\`\`\`batch
+${monitoringCommands.batch || 'N/A'}
+\`\`\`
+
+### Linux/macOS
+\`\`\`bash
+${monitoringCommands.linux || 'N/A'}
+\`\`\`
+
+## Complete Workflow Example
+
+### 1. Compile Program
+\`\`\`bash
+qb64pe -c your_program.bas
+\`\`\`
+
+### 2. Execute with Capture
+\`\`\`bash
+${captureCommand}
+\`\`\`
+
+### 3. Analyze Results
+\`\`\`bash
+# View captured output
+cat "${outputPath}"
+
+# Parse with MCP server
+# (Use parse_qb64pe_structured_output tool)
+\`\`\`
+
+## Key Benefits
+
+✅ **Shell Redirection Compatible** - Works with $CONSOLE:ONLY directive  
+✅ **Cross-Platform Support** - Commands for Windows, Linux, macOS  
+✅ **Real-time Monitoring** - Track execution progress  
+✅ **Automated Workflow** - Perfect for LLM-driven debugging  
+✅ **Error Capture** - Captures both stdout and stderr (2>&1)
+
+## Note for LLMs
+
+These commands are specifically designed for automated QB64PE debugging workflows. The $CONSOLE:ONLY directive in your QB64PE programs ensures proper output redirection compatibility.`
+                        }]
+                };
+            }
+            catch (error) {
+                return {
+                    content: [{
+                            type: "text",
+                            text: `Error generating output capture commands: ${error instanceof Error ? error.message : 'Unknown error'}`
                         }],
                     isError: true
                 };

@@ -82,7 +82,7 @@ export function registerKeywordTools(
     },
     async ({ prefix, limit = 10 }) => {
       try {
-        const suggestions = services.keywordsService.autocompleteKeyword(
+        const suggestions = services.keywordsService.getAutocomplete(
           prefix.toUpperCase(),
           limit,
         );
@@ -133,17 +133,17 @@ export function registerKeywordTools(
       description: "Search for keywords by name or description",
       inputSchema: {
         query: z.string().describe("Search query"),
-        searchInDescription: z
-          .boolean()
+        maxResults: z
+          .number()
           .optional()
-          .describe("Also search in descriptions"),
+          .describe("Maximum number of results to return (default: 20)"),
       },
     },
-    async ({ query, searchInDescription = false }) => {
+    async ({ query, maxResults = 20 }) => {
       try {
         const results = services.keywordsService.searchKeywords(
           query.toUpperCase(),
-          searchInDescription,
+          maxResults,
         );
         return createMCPResponse(results);
       } catch (error) {

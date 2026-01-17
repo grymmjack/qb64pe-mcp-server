@@ -686,4 +686,30 @@ export class KeywordsService {
       category.toLowerCase().includes(lowerQuery)
     );
   }
+
+  /**
+   * Search keywords by wiki category with optional filtering
+   */
+  public searchByWikiCategory(category: string, searchTerm?: string): KeywordInfo[] {
+    const keywordsInCategory = this.wikiCategoriesData[category] || [];
+    
+    if (!searchTerm) {
+      // Return all keywords in the category
+      return keywordsInCategory
+        .map(name => this.keywordsData.keywords[name])
+        .filter(Boolean);
+    }
+
+    // Filter by search term
+    const lowerSearchTerm = searchTerm.toLowerCase();
+    return keywordsInCategory
+      .map(name => this.keywordsData.keywords[name])
+      .filter(keyword => {
+        if (!keyword) return false;
+        const lowerName = keyword.name.toLowerCase();
+        const lowerDesc = keyword.description.toLowerCase();
+        return lowerName.includes(lowerSearchTerm) || 
+               lowerDesc.includes(lowerSearchTerm);
+      });
+  }
 }

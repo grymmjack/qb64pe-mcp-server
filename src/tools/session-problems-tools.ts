@@ -23,32 +23,11 @@ export function registerSessionProblemsTools(
         severity: z.enum(["critical", "high", "medium", "low"]).optional().describe("Problem severity"),
         title: z.string().optional().describe("Brief problem title"),
         description: z.string().optional().describe("Detailed problem description"),
-        context: z.object({
-          language: z.string().optional().describe("Programming language (e.g., QB64PE, TypeScript)"),
-          framework: z.string().optional().describe("Framework or library name"),
-          task: z.string().optional().describe("What task was being attempted"),
-          fileType: z.string().optional().describe("File type involved (e.g., .BAS, .BI, .BM)")
-        }).optional().describe("Problem context"),
-        problem: z.object({
-          attempted: z.string().optional().describe("What was attempted"),
-          error: z.string().optional().describe("Error message or symptom"),
-          rootCause: z.string().optional().describe("Root cause analysis")
-        }).optional().describe("Problem details"),
-        solution: z.object({
-          implemented: z.string().optional().describe("Solution that was implemented"),
-          preventionStrategy: z.string().optional().describe("How to prevent this in future")
-        }).optional().describe("Solution details"),
-        mcpImprovement: z.object({
-          toolNeeded: z.string().optional().describe("Name of new MCP tool needed"),
-          enhancementNeeded: z.string().optional().describe("Enhancement needed for existing tool"),
-          priority: z.enum(["high", "medium", "low"]).optional().describe("Priority for MCP improvement")
-        }).optional().describe("MCP improvement suggestions"),
-        metrics: z.object({
-          attemptsBeforeSolution: z.number().optional().describe("Number of attempts before solution"),
-          timeWasted: z.string().optional().describe("Estimated time wasted (e.g., '15 minutes')"),
-          toolsUsed: z.array(z.string()).optional().describe("MCP tools that were used"),
-          toolsShouldHaveUsed: z.array(z.string()).optional().describe("MCP tools that should have been used earlier")
-        }).optional().describe("Performance metrics")
+        context: z.record(z.any()).optional().describe("Problem context - flexible object for any contextual fields"),
+        problem: z.record(z.any()).optional().describe("Problem details - flexible object for error details, attempts, etc."),
+        solution: z.record(z.any()).optional().describe("Solution details - flexible object for implementation, prevention, etc."),
+        mcpImprovement: z.record(z.any()).optional().describe("MCP improvement suggestions - flexible object"),
+        metrics: z.record(z.any()).optional().describe("Performance metrics - flexible object")
       }
     },
     async (args: any) => {

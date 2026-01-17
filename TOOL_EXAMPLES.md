@@ -2,7 +2,7 @@
 
 Comprehensive examples of all tested tools with sample usage.
 
-Generated: 2026-01-17T19:23:06.586Z
+Generated: 2026-01-17T19:50:15.649Z
 
 ## Compatibility Tools
 
@@ -239,7 +239,7 @@ Generated: 2026-01-17T19:23:06.586Z
     "status": "not_started",
     "hasGraphics": false,
     "hasConsole": false,
-    "logFile": "/home/grymmjack/git/qb64pe-mcp-server/qb64pe-logs/execution_1768677786578.log"
+    "logFile": "/home/grymmjack/git/qb64pe-mcp-server/qb64pe-logs/execution_1768679415643.log"
  ...
 ```
 
@@ -558,7 +558,7 @@ Error getting graphics guide: services.screenshotService.getGraphicsGuide is not
 ```
 # QB64PE Installation Report
 
-**Generated:** 2026-01-17T19:23:06.569Z
+**Generated:** 2026-01-17T19:50:15.633Z
 **Platform:** linux
 
 ## Installation Status
@@ -953,7 +953,7 @@ Error generating output capture commands: services.loggingService.generateOutput
 ```
 ✅ **Problem Logged Successfully**
 
-**Problem ID:** problem-1768677786580-alowbb
+**Problem ID:** problem-1768679415645-q2dm0z
 **Title:** Test problem
 **Severity:** LOW
 **Category:** tooling
@@ -979,7 +979,7 @@ This problem has been recorded for MCP server improveme...
 ```
 # Session Problems Summary
 
-**Session ID:** session-2026-01-17-xhatby
+**Session ID:** session-2026-01-17-fyz40v
 **Total Problems:** 1
 
 ## By Severity

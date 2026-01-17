@@ -95,7 +95,7 @@ export class QB64PESyntaxService {
     
     // Graphics
     'CLS', 'COLOR', 'LOCATE', 'PSET', 'PRESET', 'LINE', 'CIRCLE', 'PAINT', 'DRAW', 'VIEW', 'WINDOW',
-    'SCREEN', 'PALETTE', 'POINT'
+    'SCREEN', 'PALETTE', 'POINT', 'POS', 'CSRLIN', 'STEP'
   ]);
 
   private readonly nonQB64Constructs: Array<{pattern: RegExp, message: string, suggestion: string}> = [
@@ -548,11 +548,28 @@ export class QB64PESyntaxService {
     warnings: SyntaxWarning[], 
     suggestions: string[]
   ): void {
-    // Check for implicit variable declarations
     const trimmedLine = line.trim().toUpperCase();
+    
+    // Check for reserved keyword conflicts in DIM statements
     if (trimmedLine.startsWith('DIM ')) {
-      // This is good - explicit declaration
-      return;
+      const dimPattern = /\bDIM\s+(?:SHARED\s+)?([A-Za-z][A-Za-z0-9_]*)/gi;
+      let match;
+      while ((match = dimPattern.exec(line)) !== null) {
+        const varName = match[1];
+        const varNameUpper = varName.toUpperCase();
+        
+        // Check if variable name conflicts with reserved keyword
+        if (this.qb64Keywords.has(varNameUpper)) {
+          warnings.push({
+            line: lineNum,
+            column: match.index + 1,
+            message: `Variable name '${varName}' conflicts with reserved QB64PE keyword`,
+            rule: 'reserved-keyword-conflict',
+            suggestion: `Rename to '${varName}_var', '${varName}_value', or 'my_${varName}' to avoid conflict`
+          });
+        }
+      }
+      return; // Good - explicit declaration, and we checked for conflicts
     }
 
     // Check for variables that appear to be used without declaration

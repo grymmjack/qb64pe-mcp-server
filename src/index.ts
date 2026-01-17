@@ -28,12 +28,130 @@ import { registerGraphicsTools } from "./tools/graphics-tools.js";
 import { registerDebuggingTools } from "./tools/debugging-tools.js";
 import { registerFeedbackTools } from "./tools/feedback-tools.js";
 import { ServiceContainer } from "./utils/tool-types.js";
+import { toolDiscoveryManager } from "./utils/tool-discovery.js";
+
+/**
+ * Enhanced MCP Server with automatic tool discovery
+ */
+class ToolDiscoveryMCPServer extends McpServer {
+  private hasLearnedTools = false;
+  private originalRegisterTool: any;
+
+  constructor(config: { name: string; version: string }) {
+    super(config);
+    
+    // Wrap the registerTool method to track tools and inject discovery
+    this.originalRegisterTool = this.registerTool.bind(this);
+    this.registerTool = this.wrapRegisterTool.bind(this) as any;
+  }
+
+  /**
+   * Wrapped registerTool that tracks tools and injects discovery on first call
+   */
+  private wrapRegisterTool(
+    name: string,
+    config: any,
+    handler: (args: any, extra: any) => Promise<any>
+  ): void {
+    // Register tool in discovery manager
+    const category = this.inferCategoryFromToolName(name);
+    toolDiscoveryManager.registerTool({
+      name,
+      title: config.title || name,
+      description: config.description || 'No description provided',
+      category,
+      inputSchema: JSON.stringify(config.inputSchema || {}, null, 2),
+    });
+
+    // Wrap the handler to inject tool discovery on first call
+    const wrappedHandler = async (args: any, extra: any) => {
+      // If this is the first tool call (any tool), provide tool summary
+      if (!toolDiscoveryManager.hasLearnedTools()) {
+        toolDiscoveryManager.markToolsAsLearned();
+        
+        const toolSummary = toolDiscoveryManager.getToolSummary();
+        
+        try {
+          // Get the actual tool result
+          const actualResult = await handler(args, extra);
+          
+          // Combine tool discovery with the actual result
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `🎓 **IMPORTANT: QB64PE MCP Server Tool Discovery**
+
+Before processing your request, you must review all available tools in this MCP server.
+This ensures you can make the most effective use of the capabilities available to you.
+
+${toolSummary}
+
+---
+
+📋 **Your Request Result:**
+
+`,
+              },
+              ...(actualResult.content || [actualResult]),
+            ],
+          };
+        } catch (error) {
+          // Even if the tool fails, still provide discovery info
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `🎓 **IMPORTANT: QB64PE MCP Server Tool Discovery**
+
+Before processing your request, you must review all available tools in this MCP server.
+
+${toolSummary}
+
+---
+
+⚠️ **Tool Error:** ${error instanceof Error ? error.message : 'Unknown error'}
+`,
+              },
+            ],
+          };
+        }
+      }
+
+      // Normal operation - just call the handler
+      return handler(args, extra);
+    };
+
+    // Call the original registerTool method
+    this.originalRegisterTool(name, config, wrappedHandler);
+  }
+
+  /**
+   * Infer category from tool name
+   */
+  private inferCategoryFromToolName(name: string): string {
+    const lowerName = name.toLowerCase();
+    
+    if (lowerName.includes('wiki')) return 'wiki';
+    if (lowerName.includes('keyword')) return 'keywords';
+    if (lowerName.includes('compile')) return 'compiler';
+    if (lowerName.includes('compatibility') || lowerName.includes('validate')) return 'compatibility';
+    if (lowerName.includes('execute') || lowerName.includes('run')) return 'execution';
+    if (lowerName.includes('install') || lowerName.includes('setup')) return 'installation';
+    if (lowerName.includes('port') || lowerName.includes('convert')) return 'porting';
+    if (lowerName.includes('graphic') || lowerName.includes('screenshot') || lowerName.includes('image')) return 'graphics';
+    if (lowerName.includes('debug')) return 'debugging';
+    if (lowerName.includes('feedback') || lowerName.includes('report')) return 'feedback';
+    
+    return 'other';
+  }
+}
 
 /**
  * Main MCP Server for QB64PE Development
  */
 class QB64PEMCPServer {
-  private server: McpServer;
+  private server: ToolDiscoveryMCPServer;
   private wikiService: QB64PEWikiService;
   private compilerService: QB64PECompilerService;
   private syntaxService: QB64PESyntaxService;
@@ -50,7 +168,7 @@ class QB64PEMCPServer {
   private validationService: ValidationService;
 
   constructor() {
-    this.server = new McpServer({
+    this.server = new ToolDiscoveryMCPServer({
       name: "qb64pe-mcp-server",
       version: "1.0.0",
     });

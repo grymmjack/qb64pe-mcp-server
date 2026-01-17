@@ -2,6 +2,19 @@
 
 A comprehensive Model Context Protocol (MCP) server that provides advanced QB64PE (QBasic 64 Phoenix Edition) programming assistance. This server enables AI assistants to search the QB64PE wiki, understand compiler options, provide debugging help, validate QB64PE-only syntax, handle cross-platform differences, **port QBasic programs to QB64PE**, and **provides advanced automated debugging capabilities with native logging**.
 
+## ✨ **New: Automatic Tool Discovery System**
+
+The MCP server now includes an **Automatic Tool Discovery System** that ensures LLMs are immediately aware of all available tools. On the very first tool call, the LLM receives comprehensive documentation of all 51 tools, organized by category, with usage guidelines and workflow recommendations. This solves the common problem of LLMs not knowing what tools are available.
+
+**Key Features:**
+- 🎓 Automatic on first interaction - no manual discovery needed
+- 📚 Complete tool catalog with descriptions and schemas
+- 🏷️ Organized by 10 functional categories
+- 📖 Includes usage guidelines and workflow patterns
+- 🔄 Zero configuration - works automatically
+
+See [TOOL_DISCOVERY_SYSTEM.md](TOOL_DISCOVERY_SYSTEM.md) for complete details.
+
 ## 🚀 **51 Tools & 5 Prompts Available!**
 
 This MCP server provides **51 comprehensive tools** and **5 intelligent prompts** for complete QB64PE development support, from installation detection to advanced debugging and porting assistance.

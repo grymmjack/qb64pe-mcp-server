@@ -381,6 +381,225 @@ INPUT "Press Enter to exit...", dummy$
   }
 
   /**
+   * Compile QB64PE code and return compilation result with errors and suggestions
+   * This enables autonomous compile-verify-fix loops
+   */
+  async compileAndVerify(
+    sourceFilePath: string,
+    qb64pePath?: string,
+    compilerFlags?: string[]
+  ): Promise<{
+    success: boolean;
+    output: string;
+    errors: Array<{ line?: number; message: string; severity: 'error' | 'warning' }>;
+    executablePath?: string;
+    suggestions: string[];
+  }> {
+    const { exec } = await import('child_process');
+    const { promisify } = await import('util');
+    const fs = await import('fs');
+    const path = await import('path');
+    const execAsync = promisify(exec);
+
+    const result: {
+      success: boolean;
+      output: string;
+      errors: Array<{ line?: number; message: string; severity: 'error' | 'warning' }>;
+      executablePath?: string;
+      suggestions: string[];
+    } = {
+      success: false,
+      output: '',
+      errors: [],
+      suggestions: [],
+    };
+
+    try {
+      // Determine QB64PE executable path
+      let qb64peExe = qb64pePath;
+      if (!qb64peExe) {
+        // Try to find QB64PE in common locations
+        const commonPaths = [
+          '/usr/local/bin/qb64pe',
+          '/usr/bin/qb64pe',
+          '/opt/qb64pe/qb64pe',
+          '/home/grymmjack/git/qb64pe/qb64pe',
+          'C:\\QB64pe\\qb64pe.exe',
+          'C:\\Program Files\\QB64pe\\qb64pe.exe',
+        ];
+
+        for (const testPath of commonPaths) {
+          if (fs.existsSync(testPath)) {
+            qb64peExe = testPath;
+            break;
+          }
+        }
+
+        // If still not found, try PATH
+        if (!qb64peExe) {
+          try {
+            const { stdout } = await execAsync('which qb64pe || where qb64pe');
+            qb64peExe = stdout.trim();
+          } catch {
+            result.errors.push({
+              message: 'QB64PE not found. Please specify qb64pePath or ensure QB64PE is in your PATH.',
+              severity: 'error',
+            });
+            result.suggestions.push('Install QB64PE or provide the path to the QB64PE executable');
+            result.suggestions.push('Use detect_qb64pe_installation tool to find QB64PE on your system');
+            return result;
+          }
+        }
+      }
+
+      // Validate source file exists
+      if (!fs.existsSync(sourceFilePath)) {
+        result.errors.push({
+          message: `Source file not found: ${sourceFilePath}`,
+          severity: 'error',
+        });
+        result.suggestions.push('Ensure the file path is correct and the file exists');
+        return result;
+      }
+
+      // Build compilation command
+      const flags = compilerFlags || ['-c', '-w']; // Compile without running, show warnings
+      const outputName = path.basename(sourceFilePath, path.extname(sourceFilePath));
+      const cmd = `"${qb64peExe}" ${flags.join(' ')} -o "${outputName}" "${sourceFilePath}"`;
+
+      // Execute compilation
+      try {
+        const { stdout, stderr } = await execAsync(cmd, { timeout: 30000 });
+        result.output = stdout + stderr;
+
+        // Parse compilation output for errors and warnings
+        this.parseCompilationOutput(result.output, result.errors, result.suggestions);
+
+        // Check if executable was created
+        const executableExt = process.platform === 'win32' ? '.exe' : '';
+        const executablePath = path.join(path.dirname(sourceFilePath), outputName + executableExt);
+
+        if (fs.existsSync(executablePath)) {
+          result.success = true;
+          result.executablePath = executablePath;
+          result.suggestions.push('Compilation successful! Executable created.');
+        } else if (result.errors.length === 0) {
+          result.errors.push({
+            message: 'Compilation completed but executable not found',
+            severity: 'warning',
+          });
+          result.suggestions.push('Check QB64PE output for additional information');
+        }
+      } catch (execError: any) {
+        result.output = execError.stdout + execError.stderr || execError.message;
+        this.parseCompilationOutput(result.output, result.errors, result.suggestions);
+
+        if (result.errors.length === 0) {
+          result.errors.push({
+            message: execError.message,
+            severity: 'error',
+          });
+        }
+      }
+    } catch (error: any) {
+      result.errors.push({
+        message: `Compilation error: ${error.message}`,
+        severity: 'error',
+      });
+    }
+
+    return result;
+  }
+
+  /**
+   * Parse QB64PE compilation output to extract errors and provide suggestions
+   */
+  private parseCompilationOutput(
+    output: string,
+    errors: Array<{ line?: number; message: string; severity: 'error' | 'warning' }>,
+    suggestions: string[]
+  ): void {
+    const lines = output.split('\n');
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+
+      // Parse error patterns: "Error on line X: message" or "Line X: Error: message"
+      const errorMatch = trimmed.match(/(?:error|line)\s+(?:on\s+)?(?:line\s+)?(\d+)[:\s]+(.+)/i);
+      if (errorMatch) {
+        errors.push({
+          line: parseInt(errorMatch[1], 10),
+          message: errorMatch[2].trim(),
+          severity: 'error',
+        });
+
+        // Provide context-specific suggestions
+        this.addErrorSuggestions(errorMatch[2].trim(), suggestions);
+        continue;
+      }
+
+      // Parse warning patterns
+      const warningMatch = trimmed.match(/warning[:\s]+(?:line\s+)?(\d+)?[:\s]*(.+)/i);
+      if (warningMatch) {
+        errors.push({
+          line: warningMatch[1] ? parseInt(warningMatch[1], 10) : undefined,
+          message: warningMatch[2].trim(),
+          severity: 'warning',
+        });
+        continue;
+      }
+
+      // Catch generic error indicators
+      if (trimmed.toLowerCase().includes('error') && trimmed.length < 200) {
+        errors.push({
+          message: trimmed,
+          severity: 'error',
+        });
+        this.addErrorSuggestions(trimmed, suggestions);
+      }
+    }
+
+    // Add general suggestions if errors were found
+    if (errors.length > 0) {
+      suggestions.push('Use validate_qb64pe_syntax tool to pre-check syntax before compiling');
+      suggestions.push('Review QB64PE wiki documentation for correct syntax');
+      suggestions.push('Check variable declarations and type compatibility');
+    }
+  }
+
+  /**
+   * Add context-specific suggestions based on error messages
+   */
+  private addErrorSuggestions(errorMessage: string, suggestions: string[]): void {
+    const lower = errorMessage.toLowerCase();
+
+    if (lower.includes('type') || lower.includes('mismatch')) {
+      suggestions.push('Check variable types and ensure they match in assignments and function calls');
+      suggestions.push('Use AS clause for explicit type declarations (e.g., DIM x AS INTEGER)');
+    }
+
+    if (lower.includes('dim') || lower.includes('undeclared')) {
+      suggestions.push('Ensure all variables are declared with DIM statement');
+      suggestions.push('Check variable scoping - use DIM SHARED for global variables');
+    }
+
+    if (lower.includes('sub') || lower.includes('function') || lower.includes('end')) {
+      suggestions.push('Verify SUB/FUNCTION blocks are properly closed with END SUB/END FUNCTION');
+      suggestions.push('Ensure SUB/FUNCTION definitions come after main program code');
+    }
+
+    if (lower.includes('syntax') || lower.includes('expected')) {
+      suggestions.push('Check for missing parentheses, commas, or other syntax elements');
+      suggestions.push('Verify statement syntax matches QB64PE documentation');
+    }
+
+    if (lower.includes('file') || lower.includes('include')) {
+      suggestions.push('Check that all $INCLUDE files exist and paths are correct');
+      suggestions.push('Ensure file paths use correct separators for your platform');
+    }
+  }
+
+  /**
    * Get platform-specific compilation notes
    */
   private getPlatformSpecificNotes(): string {

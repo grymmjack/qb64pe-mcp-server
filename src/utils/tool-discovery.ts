@@ -66,6 +66,38 @@ export class ToolDiscoveryManager {
 
 This MCP server provides comprehensive QB64PE development assistance with ${this.toolRegistry.size} tools organized into ${this.categories.size} categories.
 
+## 🧠 AGENT INTELLIGENCE RESOURCES
+
+**For LLMs/AI Agents:** This server includes comprehensive guidance for intelligent tool usage:
+
+### 📚 Available Resources (Use MCP Resource Access)
+- **qb64pe://agent/intelligence-guide** - Complete Agent Intelligence Guide
+  - Context recognition patterns (detect compilation errors, porting needs, etc.)
+  - Tool decision matrix (which tools to use for each scenario)
+  - Autonomous workflows (how to fix issues without asking permission)
+  - Training examples (good vs. bad agent behavior)
+  - Decision frameworks and flowcharts
+
+### 🎯 Available Prompts (Use MCP Prompt Access)
+- **analyze-compilation-error** - Autonomous compilation error analysis and fixing
+- **port-qbasic-to-qb64pe** - Automated QBasic/QuickBASIC porting workflow
+- **debug-qb64pe-issue** - Step-by-step debugging guidance
+- **review-qb64pe-code** - Comprehensive code review with best practices
+- **monitor-qb64pe-execution** - Execution monitoring for timeout-prone programs
+
+### ⚡ Key Intelligence Principles
+1. **Recognize Context** - Detect when user shows terminal errors with compilation failures
+2. **Autonomous Action** - Apply fixes WITHOUT asking permission
+3. **Tool Selection** - Use analyze-compilation-error prompt for compilation issues
+4. **Iterate** - Keep trying compile_and_verify_qb64pe until success (max 5 iterations)
+5. **Report Results** - Only show final outcome, not intermediate steps
+
+**💡 Quick Example:**
+User shows: "Compilation failed: Line 15: Type mismatch #qb64pe"
+You should: 1) Use analyze-compilation-error prompt 2) Apply fixes 3) Run compile_and_verify_qb64pe 4) Report success
+
+---
+
 ## IMPORTANT: Always Use Available Tools
 Before attempting any QB64PE-related task, review the tools available to you. These tools provide:
 - Accurate QB64PE syntax and documentation

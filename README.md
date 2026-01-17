@@ -15,9 +15,14 @@ The MCP server now includes an **Automatic Tool Discovery System** that ensures 
 
 See [TOOL_DISCOVERY_SYSTEM.md](TOOL_DISCOVERY_SYSTEM.md) for complete details.
 
-## 🚀 **51 Tools & 5 Prompts Available!**
+## 🚀 **52 Tools & 6 Prompts Available!**
 
-This MCP server provides **51 comprehensive tools** and **5 intelligent prompts** for complete QB64PE development support, from installation detection to advanced debugging and porting assistance.
+This MCP server provides **52 comprehensive tools** and **6 intelligent prompts** for complete QB64PE development support, from installation detection to advanced debugging and porting assistance.
+
+**🧠 NEW: Agent Intelligence System!** - See [HOW_AGENTS_LEARN.md](HOW_AGENTS_LEARN.md) for details on how AI agents automatically discover and intelligently use QB64PE MCP tools through:
+- **Automatic Tool Discovery** - Complete tool catalog on first call
+- **MCP Resources** - `qb64pe://agent/intelligence-guide` with context recognition, decision matrices, and autonomous workflows
+- **MCP Prompts** - `analyze-compilation-error` for autonomous compilation error fixing
 
 ---
 
@@ -53,12 +58,13 @@ This MCP server provides **51 comprehensive tools** and **5 intelligent prompts*
 | `get_qb64pe_page` | Retrieve detailed content from a specific QB64PE wiki page | [📖](./tool-docs/get_qb64pe_page.md) |
 | `get_qb64pe_wiki_categories` | Get all available QB64PE wiki keyword categories with keyword counts | [📖](./tool-docs/get_qb64pe_wiki_categories.md) |
 
-### 🛠️ **Compiler & Development (3 tools)**
+### 🛠️ **Compiler & Development (4 tools)**
 | Tool | Description | Docs |
 |------|-------------|------|
 | `get_compiler_options` | Get information about QB64PE compiler command-line options and flags | [📖](./tool-docs/get_compiler_options.md) |
 | `get_qb64pe_best_practices` | Get best practices and coding guidelines for QB64PE development | [📖](./tool-docs/get_qb64pe_best_practices.md) |
 | `get_qb64pe_graphics_guide` | Get comprehensive graphics statements guide designed for LLMs (includes _PUTIMAGE usage patterns) | [📖](./tool-docs/get_qb64pe_graphics_guide.md) |
+| `compile_and_verify_qb64pe` | **NEW!** Compile QB64PE code with automatic error analysis and suggestions - enables autonomous compile-verify-fix loops | [📖](./tool-docs/compile_and_verify_qb64pe.md) |
 
 ### ✅ **Syntax & Compatibility (3 tools)**
 | Tool | Description | Docs |
@@ -116,6 +122,7 @@ This MCP server provides **51 comprehensive tools** and **5 intelligent prompts*
 
 | Prompt | Description | Docs |
 |--------|-------------|------|
+| `analyze-compilation-error` | **NEW!** Autonomous compilation error analysis and fixing with iterative verify-fix loops | [📖](./prompt-docs/analyze-compilation-error.md) |
 | `review-qb64pe-code` | Review QB64PE code for best practices, syntax issues, and optimizations | [📖](./prompt-docs/review-qb64pe-code.md) |
 | `debug-qb64pe-issue` | Help debug QB64PE programs with step-by-step guidance | [📖](./prompt-docs/debug-qb64pe-issue.md) |
 | `monitor-qb64pe-execution` | Provide guidance for monitoring QB64PE program execution with timeout strategies | [📖](./prompt-docs/monitor-qb64pe-execution.md) |
@@ -198,6 +205,46 @@ Comprehensive guides in [`/docs/`](./docs/):
 ---
 
 ## 💡 **Example Workflows**
+
+### 🤖 **Autonomous Compile-Verify-Fix Loop** ⭐ NEW!
+```javascript
+// The agent autonomously fixes compilation errors without human intervention
+async function autonomousPorting(qbasicFile, outputFile) {
+  // 1. Port QBasic to QB64PE
+  const ported = await portQbasicToQb64pe({
+    sourceCode: await readFile(qbasicFile),
+    sourceDialect: "qbasic"
+  });
+  
+  await writeFile(outputFile, ported.convertedCode);
+  
+  // 2. Autonomous compilation loop - NO HUMAN INTERVENTION NEEDED
+  let iteration = 0;
+  while (iteration < 5) {
+    iteration++;
+    console.log(`Iteration ${iteration}: Compiling...`);
+    
+    // Compile and get detailed error analysis
+    const result = await compileAndVerifyQb64pe({
+      sourceFilePath: outputFile
+    });
+    
+    if (result.success) {
+      console.log("✅ Compilation successful!");
+      return { success: true, iterations: iteration };
+    }
+    
+    // Analyze errors and apply fixes autonomously
+    console.log(`Found ${result.errors.length} errors, fixing...`);
+    await applyAutomaticFixes(outputFile, result.errors, result.suggestions);
+  }
+  
+  throw new Error("Max iterations reached");
+}
+
+// BEFORE: Agent required 3+ human interventions to compile after each fix
+// AFTER: Agent compiles autonomously, iterates until success, 0 human interventions!
+```
 
 ### 🔄 **QBasic to QB64PE Porting**
 ```javascript
@@ -814,7 +861,24 @@ Comprehensive guide for monitoring QB64PE program execution, process management,
 
 ## Available Prompts
 
-### 1. `review-qb64pe-code`
+### 1. `analyze-compilation-error` ⭐ NEW!
+Autonomous template for analyzing and fixing QB64PE compilation errors.
+
+**Arguments:**
+- `errorOutput` (string): Terminal output containing compilation errors
+- `sourceFile` (string): Path to the QB64PE source file
+- `sourceCode` (string, optional): QB64PE source code if available
+
+**Provides autonomous guidance for:**
+- Error pattern recognition (syntax, type, declaration, structure errors)
+- Error-to-tool decision matrix mapping
+- Autonomous fix workflow (NO user confirmation required)
+- Iterative compile-verify-fix loops (up to 5 iterations)
+- Context-aware suggestions and fixes
+
+**Key Feature:** Emphasizes "Do NOT ask for user confirmation - act autonomously!"
+
+### 2. `review-qb64pe-code`
 Template for comprehensive QB64PE code review.
 
 **Arguments:**

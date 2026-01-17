@@ -43,6 +43,29 @@ export declare class QB64PECompilerService {
      */
     private getAdditionalDebuggingTips;
     /**
+     * Compile QB64PE code and return compilation result with errors and suggestions
+     * This enables autonomous compile-verify-fix loops
+     */
+    compileAndVerify(sourceFilePath: string, qb64pePath?: string, compilerFlags?: string[]): Promise<{
+        success: boolean;
+        output: string;
+        errors: Array<{
+            line?: number;
+            message: string;
+            severity: 'error' | 'warning';
+        }>;
+        executablePath?: string;
+        suggestions: string[];
+    }>;
+    /**
+     * Parse QB64PE compilation output to extract errors and provide suggestions
+     */
+    private parseCompilationOutput;
+    /**
+     * Add context-specific suggestions based on error messages
+     */
+    private addErrorSuggestions;
+    /**
      * Get platform-specific compilation notes
      */
     private getPlatformSpecificNotes;

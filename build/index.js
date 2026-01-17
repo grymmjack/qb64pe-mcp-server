@@ -1,4 +1,37 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -563,6 +596,43 @@ Use the MCP tools for automated detection and configuration assistance.`;
                 };
             }
         });
+        // Agent Intelligence Guide resource
+        this.server.registerResource("qb64pe-agent-intelligence", "qb64pe://agent/intelligence-guide", {
+            title: "QB64PE Agent Intelligence Guide",
+            description: "Comprehensive guide for agents on using QB64PE MCP tools intelligently, including context recognition, tool selection patterns, autonomous workflows, and decision frameworks",
+            mimeType: "text/markdown",
+        }, async (uri) => {
+            try {
+                const { readFile } = await Promise.resolve().then(() => __importStar(require('fs/promises')));
+                const { join } = await Promise.resolve().then(() => __importStar(require('path')));
+                const guideContent = await readFile(join(process.cwd(), 'AGENT_INTELLIGENCE_GUIDE.md'), 'utf-8');
+                return {
+                    contents: [
+                        {
+                            uri: uri.href,
+                            text: guideContent,
+                        },
+                    ],
+                };
+            }
+            catch (error) {
+                return {
+                    contents: [
+                        {
+                            uri: uri.href,
+                            text: `# Agent Intelligence Guide
+
+⚠️ Guide file not found. Key principles:
+- Recognize compilation context from terminal output
+- Use analyze-compilation-error prompt for compilation failures
+- Apply fixes autonomously without asking permission
+- Use compile_and_verify_qb64pe to verify changes
+- Iterate up to 5 times until compilation succeeds`,
+                        },
+                    ],
+                };
+            }
+        });
         // QB64PE porting documentation resource
         this.server.registerResource("qb64pe-porting", "qb64pe://porting/guide", {
             title: "QB64PE Porting Guide",
@@ -952,6 +1022,139 @@ ${preserveOriginal === "true" ? "Please preserve original comments and structure
 - Provide both automated conversion results and manual review guidance
 - Focus on QB64PE-specific compatibility issues
 - Suggest modern QB64PE features that could enhance the program`,
+                    },
+                },
+            ],
+        }));
+        // Compilation error analysis prompt - NEW!
+        this.server.registerPrompt("analyze-compilation-error", {
+            title: "Analyze QB64PE Compilation Error",
+            description: "Intelligent analysis of QB64PE compilation failures with autonomous fix guidance. Use when user shows terminal output from failed compilation.",
+            argsSchema: {
+                terminalOutput: zod_1.z.string().describe("Complete terminal output from failed QB64PE compilation"),
+                sourceFilePath: zod_1.z.string().describe("Absolute path to the .bas file that failed to compile"),
+                errorContext: zod_1.z.string().optional().describe("Additional context about what the user was trying to do"),
+            },
+        }, ({ terminalOutput, sourceFilePath, errorContext }) => ({
+            messages: [
+                {
+                    role: "user",
+                    content: {
+                        type: "text",
+                        text: `🚨 **QB64PE Compilation Failed - Autonomous Fix Required**
+
+You are an expert QB64PE developer tasked with AUTONOMOUSLY fixing compilation errors.
+
+## Terminal Output
+\`\`\`
+${terminalOutput}
+\`\`\`
+
+## Source File
+${sourceFilePath}
+
+${errorContext ? `## Context\n${errorContext}\n` : ""}
+
+## YOUR AUTONOMOUS ACTION PLAN
+
+You MUST execute this plan WITHOUT asking the user for permission:
+
+### Step 1: Analyze Errors
+- Call \`validate_qb64pe_syntax\` with the source code from ${sourceFilePath}
+- Parse terminal output for line numbers, error types, and messages
+- Identify error patterns (type mismatches, missing declarations, syntax errors, etc.)
+
+### Step 2: Map Errors to Fixes
+Use this decision matrix:
+
+**Type Errors** (Type mismatch, Cannot assign, incompatible types)
+→ Tool: \`validate_qb64pe_syntax\` + \`validate_qb64pe_compatibility\`
+→ Action: Fix variable types, add/correct AS clauses
+
+**Declaration Errors** (Variable not declared, DIM required, Undeclared)
+→ Tool: \`validate_qb64pe_syntax\`
+→ Action: Add DIM statements, check scoping
+
+**Structure Errors** (Expected END, Missing END, Unexpected END)
+→ Tool: \`validate_qb64pe_syntax\`
+→ Action: Close SUB/FUNCTION/IF/FOR blocks properly
+
+**Porting Errors** (Not supported, Legacy syntax, QBasic compatibility)
+→ Tool: \`port_qbasic_to_qb64pe\` or \`validate_qb64pe_compatibility\`
+→ Action: Modernize to QB64PE syntax
+
+### Step 3: Apply ALL Fixes
+- Edit the source file to fix ALL identified errors
+- Use line numbers from terminal output to target specific locations
+- Apply fixes systematically, starting with declaration errors
+
+### Step 4: Verify Compilation
+- Call \`compile_and_verify_qb64pe\` with sourceFilePath: "${sourceFilePath}"
+- Check result.success and result.errors
+- Parse result.suggestions for additional guidance
+
+### Step 5: Iterate Until Success
+- If result.success = false:
+  - Analyze result.errors for new/remaining issues
+  - Apply additional fixes
+  - Call \`compile_and_verify_qb64pe\` again
+  - REPEAT until result.success = true
+- Maximum 5 iterations
+
+### Step 6: Report Results
+- Report ONLY final outcome to user
+- Show executable path if successful
+- Explain what fixes were applied
+- Report iteration count
+
+## CRITICAL RULES
+
+❌ **NEVER** ask "Should I fix this?"
+✅ **ALWAYS** fix it automatically
+
+❌ **NEVER** say "You need to add..."
+✅ **ALWAYS** add it yourself and report what you did
+
+❌ **NEVER** stop after first fix
+✅ **ALWAYS** iterate until compilation succeeds
+
+❌ **NEVER** guess what's wrong
+✅ **ALWAYS** use \`validate_qb64pe_syntax\` to confirm
+
+## Available MCP Tools
+
+Use these tools in your autonomous workflow:
+- \`validate_qb64pe_syntax\` - Pre-analyze syntax issues
+- \`validate_qb64pe_compatibility\` - Check platform/type compatibility
+- \`compile_and_verify_qb64pe\` - Compile and get structured error feedback
+- \`port_qbasic_to_qb64pe\` - Re-port if porting-related issues detected
+- \`detect_qb64pe_installation\` - If "QB64PE not found" error
+
+## Expected Response Format
+
+\`\`\`markdown
+# Autonomous Compilation Fix
+
+## Error Analysis
+- Total errors: X
+- Error types: [list]
+- Root causes: [analysis]
+
+## Fixes Applied
+1. [Description of fix 1] (Line X)
+2. [Description of fix 2] (Line Y)
+3. [...]
+
+## Compilation Results
+- Iteration 1: [result]
+- Iteration 2: [result] (if needed)
+- Final: ✅ SUCCESS or ❌ FAILED
+
+## Summary
+[Brief summary of what was fixed and final outcome]
+\`\`\`
+
+**NOW: Execute the autonomous action plan. Do NOT wait for user confirmation.**`,
                     },
                 },
             ],

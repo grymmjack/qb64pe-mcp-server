@@ -335,4 +335,137 @@ Old session ID has been archived.`,
       };
     }
   );
+
+  /**
+   * Get unhandled problems for review
+   */
+  server.registerTool(
+    "get_unhandled_problems",
+    {
+      title: "Get Unhandled Problems",
+      description: "Get problems that haven't been addressed yet (status: new, acknowledged, or in-progress)",
+      inputSchema: {
+        priorityFilter: z.enum(["high-only", "all"]).optional().describe("Filter by MCP improvement priority")
+      }
+    },
+    async (args: any) => {
+      const priorityFilter = args.priorityFilter || "all";
+      const problems = priorityFilter === "high-only" 
+        ? services.sessionProblemsService.getActionableProblems()
+        : services.sessionProblemsService.getUnhandledProblems();
+
+      if (problems.length === 0) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: "✅ **No Unhandled Problems**\n\nAll logged problems have been addressed!",
+            },
+          ],
+        };
+      }
+
+      const problemsList = problems.map((p: any, i: number) => `
+## ${i + 1}. ${p.title} [${p.status.toUpperCase()}]
+
+**ID:** \`${p.id}\`
+**Severity:** ${p.severity} | **Category:** ${p.category}
+**Logged:** ${p.timestamp.toISOString()}
+
+### Problem
+- **Error:** ${p.problem.error}
+- **Root Cause:** ${p.problem.rootCause}
+
+### MCP Improvement Needed
+${p.mcpImprovement ? `
+- **Priority:** ${p.mcpImprovement.priority}
+${p.mcpImprovement.toolNeeded ? `- **New Tool:** ${p.mcpImprovement.toolNeeded}` : ''}
+${p.mcpImprovement.enhancementNeeded ? `- **Enhancement:** ${p.mcpImprovement.enhancementNeeded}` : ''}
+` : '_No MCP improvement specified_'}
+
+---
+`).join('\n');
+
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `# Unhandled Problems
+
+**Total:** ${problems.length} ${priorityFilter === "high-only" ? "(High Priority Only)" : ""}
+
+${problemsList}
+
+**Next Steps:**
+1. Review each problem
+2. Implement MCP improvements
+3. Mark as handled using \`update_problem_status\``,
+          },
+        ],
+      };
+    }
+  );
+
+  /**
+   * Update problem status
+   */
+  server.registerTool(
+    "update_problem_status",
+    {
+      title: "Update Problem Status",
+      description: "Mark a problem as acknowledged, in-progress, handled, or wont-fix",
+      inputSchema: {
+        problemId: z.string().describe("Problem ID to update"),
+        status: z.enum(["acknowledged", "in-progress", "handled", "wont-fix"]).describe("New status"),
+        handledBy: z.string().optional().describe("Who handled it (e.g., 'agent', 'manual-fix')"),
+        notes: z.string().optional().describe("Notes about how it was handled or why wont-fix")
+      }
+    },
+    async (args: any) => {
+      if (!args.problemId || !args.status) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: "❌ **Missing Required Fields**\n\nRequired: problemId, status",
+            },
+          ],
+        };
+      }
+
+      const updated = services.sessionProblemsService.updateProblemStatus(
+        args.problemId,
+        args.status,
+        args.handledBy,
+        args.notes
+      );
+
+      if (!updated) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `❌ **Problem Not Found**\n\nNo problem found with ID: ${args.problemId}`,
+            },
+          ],
+        };
+      }
+
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `✅ **Problem Status Updated**
+
+**Problem:** ${updated.title}
+**New Status:** ${updated.status}
+${updated.handledBy ? `**Handled By:** ${updated.handledBy}` : ''}
+${updated.handlingNotes ? `**Notes:** ${updated.handlingNotes}` : ''}
+
+This problem will no longer appear in unhandled problems list.`,
+          },
+        ],
+      };
+    }
+  );
 }

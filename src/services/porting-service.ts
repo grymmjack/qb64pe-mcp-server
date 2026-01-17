@@ -53,6 +53,7 @@ export class QB64PEPortingService {
     portedCode = this.convertKeywordCasing(portedCode);
     portedCode = this.removeForwardDeclarations(portedCode);
     portedCode = this.convertDefFnToFunctions(portedCode);
+    portedCode = this.fixDimStatements(portedCode);
     portedCode = this.convertGosubToFunctions(portedCode);
     portedCode = this.convertTypeDeclarations(portedCode);
     portedCode = this.convertArraySyntax(portedCode);
@@ -276,34 +277,146 @@ export class QB64PEPortingService {
 
   /**
    * Convert DEF FN statements to proper functions
+   * Handles both single-line and multi-line DEF FN...END DEF blocks
    */
   private convertDefFnToFunctions(code: string): string {
-    const defFnPattern = /^\s*DEF\s+(\w+)\s*\(([^)]*)\)\s*=\s*(.+)$/gmi;
-    const matches = Array.from(code.matchAll(defFnPattern));
-    
-    if (matches.length === 0) return code;
-
     let convertedCode = code;
     const functions: string[] = [];
 
-    for (const match of matches) {
-      const [fullMatch, fnName, parameters, expression] = match;
+    // Pattern 1: Multi-line DEF FN...END DEF blocks
+    const multilinePattern = /^\s*DEF\s+(FN)?(\w+[#!@$%&]?)\s*\(([^)]*)\)(.*?)^\s*END\s+DEF\s*$/gmis;
+    const multilineMatches = Array.from(convertedCode.matchAll(multilinePattern));
+    
+    for (const match of multilineMatches) {
+      const [fullMatch, fnPrefix, fnName, parameters, body] = match;
       
-      // Create proper function
-      const functionCode = `Function ${fnName} (${parameters})
-    ${fnName} = ${expression}
+      // Remove FN prefix if present and strip type suffix for function name
+      let cleanFnName = fnName.replace(/^FN/i, '');
+      const typeSuffix = cleanFnName.match(/[#!@$%&]$/)?.[0] || '';
+      cleanFnName = cleanFnName.replace(/[#!@$%&]$/, '');
+      
+      // Convert type suffix to AS declaration
+      const typeMap: { [key: string]: string } = {
+        '#': 'DOUBLE',
+        '!': 'SINGLE', 
+        '@': 'CURRENCY',
+        '$': 'STRING',
+        '%': 'INTEGER',
+        '&': 'LONG'
+      };
+      const asType = typeSuffix ? ` AS ${typeMap[typeSuffix]}` : '';
+      
+      // Process parameters - convert type suffixes to AS declarations
+      const processedParams = parameters.split(',').map((p: string) => {
+        const param = p.trim();
+        const paramSuffix = param.match(/[#!@$%&]$/)?.[0];
+        if (paramSuffix) {
+          const paramName = param.replace(/[#!@$%&]$/, '');
+          return `${paramName} AS ${typeMap[paramSuffix]}`;
+        }
+        return param;
+      }).join(', ');
+      
+      // Clean up body - remove leading/trailing whitespace from each line
+      const bodyLines = body.split('\n')
+        .map((line: string) => line.trim())
+        .filter((line: string) => line.length > 0);
+      
+      // Create proper function with proper indentation
+      const functionCode = `Function ${cleanFnName}(${processedParams})${asType}
+    ${bodyLines.join('\n    ')}
 End Function`;
 
-      functions.push(fnName);
+      functions.push(cleanFnName);
       
-      // Remove the DEF FN line
-      convertedCode = convertedCode.replace(fullMatch, '');
-      
-      // Add the function at the end
-      convertedCode += '\n\n' + functionCode;
+      // Replace the DEF FN block with the new function
+      convertedCode = convertedCode.replace(fullMatch, functionCode);
     }
 
-    this.transformations.push(`Converted ${functions.length} DEF FN statement(s) to proper functions: ${functions.join(', ')}`);
+    // Pattern 2: Single-line DEF FN statements (original pattern)
+    const singlelinePattern = /^\s*DEF\s+(FN)?(\w+[#!@$%&]?)\s*\(([^)]*)\)\s*=\s*(.+)$/gmi;
+    const singlelineMatches = Array.from(convertedCode.matchAll(singlelinePattern));
+    
+    for (const match of singlelineMatches) {
+      const [fullMatch, fnPrefix, fnName, parameters, expression] = match;
+      
+      // Remove FN prefix if present and strip type suffix
+      let cleanFnName = fnName.replace(/^FN/i, '');
+      const typeSuffix = cleanFnName.match(/[#!@$%&]$/)?.[0] || '';
+      cleanFnName = cleanFnName.replace(/[#!@$%&]$/, '');
+      
+      // Convert type suffix to AS declaration
+      const typeMap: { [key: string]: string } = {
+        '#': 'DOUBLE',
+        '!': 'SINGLE',
+        '@': 'CURRENCY', 
+        '$': 'STRING',
+        '%': 'INTEGER',
+        '&': 'LONG'
+      };
+      const asType = typeSuffix ? ` AS ${typeMap[typeSuffix]}` : '';
+      
+      // Process parameters
+      const processedParams = parameters.split(',').map((p: string) => {
+        const param = p.trim();
+        const paramSuffix = param.match(/[#!@$%&]$/)?.[0];
+        if (paramSuffix) {
+          const paramName = param.replace(/[#!@$%&]$/, '');
+          return `${paramName} AS ${typeMap[paramSuffix]}`;
+        }
+        return param;
+      }).join(', ');
+      
+      // Create proper function
+      const functionCode = `Function ${cleanFnName}(${processedParams})${asType}
+    ${cleanFnName} = ${expression}
+End Function`;
+
+      functions.push(cleanFnName);
+      
+      // Replace the DEF FN line
+      convertedCode = convertedCode.replace(fullMatch, functionCode);
+    }
+
+    // Remove FN prefix from function calls throughout the code
+    if (functions.length > 0) {
+      for (const fnName of functions) {
+        // Match FNname( but not as part of a larger identifier
+        const callPattern = new RegExp(`\\bFN${fnName}\\b`, 'gi');
+        convertedCode = convertedCode.replace(callPattern, fnName);
+      }
+      
+      this.transformations.push(`Converted ${functions.length} DEF FN statement(s) to proper functions: ${functions.join(', ')}`);
+      this.transformations.push('Removed FN prefix from function calls');
+    }
+
+    return convertedCode;
+  }
+
+  /**
+   * Fix DIM statements that mix type suffixes with AS declarations
+   * Example: DIM result# AS DOUBLE -> DIM result AS DOUBLE
+   */
+  private fixDimStatements(code: string): string {
+    let convertedCode = code;
+    let fixCount = 0;
+
+    // Pattern: DIM variable[#!@$%&] AS type
+    const dimPattern = /\b(DIM|REDIM)\s+(\w+)([#!@$%&])\s+AS\s+(\w+)/gi;
+    const matches = Array.from(convertedCode.matchAll(dimPattern));
+    
+    for (const match of matches) {
+      const [fullMatch, dimKeyword, varName, typeSuffix, asType] = match;
+      
+      // Remove the type suffix since AS declaration is used
+      const fixed = `${dimKeyword} ${varName} AS ${asType}`;
+      convertedCode = convertedCode.replace(fullMatch, fixed);
+      fixCount++;
+    }
+
+    if (fixCount > 0) {
+      this.transformations.push(`Fixed ${fixCount} DIM statement(s) mixing type suffixes with AS declarations`);
+    }
 
     return convertedCode;
   }

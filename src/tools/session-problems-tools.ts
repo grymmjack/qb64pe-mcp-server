@@ -19,129 +19,103 @@ export function registerSessionProblemsTools(
       title: "Log Session Problem",
       description: "Log a development problem encountered during the session for continuous improvement and MCP refinement",
       inputSchema: {
-        type: "object",
-        properties: {
-          category: {
-            type: "string",
-            enum: ["syntax", "compatibility", "workflow", "tooling", "architecture", "other"],
-            description: "Problem category"
-          },
-          severity: {
-            type: "string",
-            enum: ["critical", "high", "medium", "low"],
-            description: "Problem severity"
-          },
-          title: {
-            type: "string",
-            description: "Brief problem title"
-          },
-          description: {
-            type: "string",
-            description: "Detailed problem description"
-          },
-          context: {
-            type: "object",
-            properties: {
-              language: {
-                type: "string",
-                description: "Programming language (e.g., QB64PE, TypeScript)"
-              },
-              framework: {
-                type: "string",
-                description: "Framework or library name (optional)"
-              },
-              task: {
-                type: "string",
-                description: "What task was being attempted (optional)"
-              },
-              fileType: {
-                type: "string",
-                description: "File type involved (e.g., .BAS, .BI, .BM)"
-              }
-            },
-            required: ["language"]
-          },
-          problem: {
-            type: "object",
-            properties: {
-              attempted: {
-                type: "string",
-                description: "What was attempted"
-              },
-              error: {
-                type: "string",
-                description: "Error message or symptom"
-              },
-              rootCause: {
-                type: "string",
-                description: "Root cause analysis"
-              }
-            },
-            required: ["attempted", "error", "rootCause"]
-          },
-          solution: {
-            type: "object",
-            properties: {
-              implemented: {
-                type: "string",
-                description: "Solution that was implemented"
-              },
-              preventionStrategy: {
-                type: "string",
-                description: "How to prevent this in future"
-              }
-            },
-            required: ["implemented", "preventionStrategy"]
-          },
-          mcpImprovement: {
-            type: "object",
-            properties: {
-              toolNeeded: {
-                type: "string",
-                description: "Name of new MCP tool needed (optional)"
-              },
-              enhancementNeeded: {
-                type: "string",
-                description: "Enhancement needed for existing tool (optional)"
-              },
-              priority: {
-                type: "string",
-                enum: ["high", "medium", "low"],
-                description: "Priority for MCP improvement"
-              }
-            },
-            required: ["priority"]
-          },
-          metrics: {
-            type: "object",
-            properties: {
-              attemptsBeforeSolution: {
-                type: "number",
-                description: "Number of attempts before solution"
-              },
-              timeWasted: {
-                type: "string",
-                description: "Estimated time wasted (e.g., '15 minutes')"
-              },
-              toolsUsed: {
-                type: "array",
-                items: { type: "string" },
-                description: "MCP tools that were used"
-              },
-              toolsShouldHaveUsed: {
-                type: "array",
-                items: { type: "string" },
-                description: "MCP tools that should have been used earlier"
-              }
-            },
-            required: ["attemptsBeforeSolution"]
-          }
-        },
-        required: ["category", "severity", "title", "description", "context", "problem", "solution"]
+        category: z.enum(["syntax", "compatibility", "workflow", "tooling", "architecture", "other"]).optional().describe("Problem category"),
+        severity: z.enum(["critical", "high", "medium", "low"]).optional().describe("Problem severity"),
+        title: z.string().optional().describe("Brief problem title"),
+        description: z.string().optional().describe("Detailed problem description"),
+        context: z.object({
+          language: z.string().optional().describe("Programming language (e.g., QB64PE, TypeScript)"),
+          framework: z.string().optional().describe("Framework or library name"),
+          task: z.string().optional().describe("What task was being attempted"),
+          fileType: z.string().optional().describe("File type involved (e.g., .BAS, .BI, .BM)")
+        }).optional().describe("Problem context"),
+        problem: z.object({
+          attempted: z.string().optional().describe("What was attempted"),
+          error: z.string().optional().describe("Error message or symptom"),
+          rootCause: z.string().optional().describe("Root cause analysis")
+        }).optional().describe("Problem details"),
+        solution: z.object({
+          implemented: z.string().optional().describe("Solution that was implemented"),
+          preventionStrategy: z.string().optional().describe("How to prevent this in future")
+        }).optional().describe("Solution details"),
+        mcpImprovement: z.object({
+          toolNeeded: z.string().optional().describe("Name of new MCP tool needed"),
+          enhancementNeeded: z.string().optional().describe("Enhancement needed for existing tool"),
+          priority: z.enum(["high", "medium", "low"]).optional().describe("Priority for MCP improvement")
+        }).optional().describe("MCP improvement suggestions"),
+        metrics: z.object({
+          attemptsBeforeSolution: z.number().optional().describe("Number of attempts before solution"),
+          timeWasted: z.string().optional().describe("Estimated time wasted (e.g., '15 minutes')"),
+          toolsUsed: z.array(z.string()).optional().describe("MCP tools that were used"),
+          toolsShouldHaveUsed: z.array(z.string()).optional().describe("MCP tools that should have been used earlier")
+        }).optional().describe("Performance metrics")
       }
     },
     async (args: any) => {
-      const problemLogged = services.sessionProblemsService.logProblem(args);
+      // Validate that at minimum we have category, severity, title, and description
+      if (!args.category || !args.severity || !args.title || !args.description) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `❌ **Missing Required Fields**
+
+To log a session problem, you must provide at minimum:
+- **category**: One of: syntax, compatibility, workflow, tooling, architecture, other
+- **severity**: One of: critical, high, medium, low
+- **title**: Brief problem title
+- **description**: Detailed problem description
+
+**Recommended fields** for better tracking:
+- **context**: { language: "QB64PE", task: "what you were doing" }
+- **problem**: { attempted: "what you tried", error: "error message", rootCause: "why it failed" }
+- **solution**: { implemented: "what fixed it", preventionStrategy: "how to avoid" }
+
+**Example:**
+\`\`\`json
+{
+  "category": "syntax",
+  "severity": "medium",
+  "title": "MCP tool validation error",
+  "description": "Tool failed due to JSON schema validation issue",
+  "context": { "language": "TypeScript" },
+  "problem": {
+    "attempted": "Called log_session_problem with empty object",
+    "error": "keyValidator.._parse is not a function",
+    "rootCause": "Required fields were not provided"
+  },
+  "solution": {
+    "implemented": "Made fields optional and added validation",
+    "preventionStrategy": "Provide better error messages"
+  }
+}
+\`\`\``,
+            },
+          ],
+        };
+      }
+
+      // Set defaults for optional nested objects
+      const problemData = {
+        category: args.category,
+        severity: args.severity,
+        title: args.title,
+        description: args.description,
+        context: args.context || { language: "Unknown" },
+        problem: args.problem || {
+          attempted: "Not specified",
+          error: "Not specified",
+          rootCause: "Not specified"
+        },
+        solution: args.solution || {
+          implemented: "Not specified",
+          preventionStrategy: "Not specified"
+        },
+        mcpImprovement: args.mcpImprovement,
+        metrics: args.metrics
+      };
+
+      const problemLogged = services.sessionProblemsService.logProblem(problemData);
 
       return {
         content: [
@@ -179,14 +153,7 @@ Use \`get_session_problems_report\` to view all logged problems and recommendati
       title: "Get Session Problems Report",
       description: "Generate a comprehensive report of all problems logged during the current session",
       inputSchema: {
-        type: "object",
-        properties: {
-          format: {
-            type: "string",
-            enum: ["summary", "detailed", "markdown"],
-            description: "Report format (default: detailed)"
-          }
-        }
+        format: z.enum(["summary", "detailed", "markdown"]).optional().describe("Report format (default: detailed)")
       }
     },
     async (args: any) => {
@@ -304,10 +271,7 @@ ${problemsText}`,
     {
       title: "Get Session Problems Statistics",
       description: "Get statistical analysis of session problems",
-      inputSchema: {
-        type: "object",
-        properties: {}
-      }
+      inputSchema: {}
     },
     async () => {
       const stats = services.sessionProblemsService.getStatistics();
@@ -359,14 +323,7 @@ This indicates a need for better LLM training on tool usage prioritization.
       title: "Clear Session Problems",
       description: "Clear all logged session problems and start fresh (useful for starting a new session)",
       inputSchema: {
-        type: "object",
-        properties: {
-          confirm: {
-            type: "boolean",
-            description: "Must be true to confirm clearing"
-          }
-        },
-        required: ["confirm"]
+        confirm: z.boolean().describe("Must be true to confirm clearing")
       }
     },
     async (args: any) => {

@@ -4,6 +4,7 @@
  * MCP tools for validating .BI/.BM file structure according to QB64_GJ_LIB conventions
  */
 
+import { z } from "zod";
 import { ServiceContainer } from "../utils/tool-types.js";
 
 /**
@@ -14,26 +15,17 @@ export function registerFileStructureTools(
   services: ServiceContainer
 ): void {
   // Tool 1: Validate .BI file structure
-  server.tool(
+  server.registerTool(
     "validate_bi_file_structure",
-    "Validate QB64_GJ_LIB .BI (header/interface) file structure. Ensures file contains only TYPE definitions, CONST declarations, DIM SHARED variables, and optionally DECLARE statements. Detects SUB/FUNCTION implementations that should be in .BM files.",
     {
-      content: {
-        type: "string",
-        description: "Content of the .BI file to validate",
-      },
-      filename: {
-        type: "string",
-        description: "Filename for context (optional)",
+      title: "Validate QB64_GJ_LIB .BI File Structure",
+      description: "Validate QB64_GJ_LIB .BI (header/interface) file structure. Ensures file contains only TYPE definitions, CONST declarations, DIM SHARED variables, and optionally DECLARE statements. Detects SUB/FUNCTION implementations that should be in .BM files.",
+      inputSchema: {
+        content: z.string().describe("Content of the .BI file to validate"),
+        filename: z.string().optional().describe("Filename for context (optional)"),
       },
     },
-    async ({
-      content,
-      filename,
-    }: {
-      content: string;
-      filename?: string;
-    }) => {
+    async ({ content, filename }: { content: string; filename?: string }) => {
       const result = services.fileStructureService.validateBIFile(
         content
       );
@@ -112,26 +104,17 @@ export function registerFileStructureTools(
   );
 
   // Tool 2: Validate .BM file structure
-  server.tool(
+  server.registerTool(
     "validate_bm_file_structure",
-    "Validate QB64_GJ_LIB .BM (implementation) file structure. Ensures file contains ONLY SUB/FUNCTION implementations. Detects TYPE definitions, CONST declarations, and DIM SHARED statements that should be in .BI files. CRITICAL for avoiding 'Statement cannot be placed between SUB/FUNCTIONs' errors.",
     {
-      content: {
-        type: "string",
-        description: "Content of the .BM file to validate",
-      },
-      filename: {
-        type: "string",
-        description: "Filename for context (optional)",
+      title: "Validate QB64_GJ_LIB .BM File Structure",
+      description: "Validate QB64_GJ_LIB .BM (implementation) file structure. Ensures file contains ONLY SUB/FUNCTION implementations. Detects TYPE definitions, CONST declarations, and DIM SHARED statements that should be in .BI files. CRITICAL for avoiding 'Statement cannot be placed between SUB/FUNCTIONs' errors.",
+      inputSchema: {
+        content: z.string().describe("Content of the .BM file to validate"),
+        filename: z.string().optional().describe("Filename for context (optional)"),
       },
     },
-    async ({
-      content,
-      filename,
-    }: {
-      content: string;
-      filename?: string;
-    }) => {
+    async ({ content, filename }: { content: string; filename?: string }) => {
       const result = services.fileStructureService.validateBMFile(
         content
       );
@@ -198,32 +181,18 @@ export function registerFileStructureTools(
   );
 
   // Tool 3: Validate QB64_GJ_LIB file pair
-  server.tool(
+  server.registerTool(
     "validate_qb64_gj_lib_file_pair",
-    "Validate a matched .BI/.BM file pair for QB64_GJ_LIB architecture compliance. Checks both files and ensures proper separation of declarations (.BI) and implementations (.BM). Essential before compilation to avoid structural errors.",
     {
-      biContent: {
-        type: "string",
-        description: "Content of the .BI file",
-      },
-      bmContent: {
-        type: "string",
-        description: "Content of the .BM file",
-      },
-      libraryName: {
-        type: "string",
-        description: "Name of the library (for context)",
+      title: "Validate QB64_GJ_LIB File Pair",
+      description: "Validate a matched .BI/.BM file pair for QB64_GJ_LIB architecture compliance. Checks both files and ensures proper separation of declarations (.BI) and implementations (.BM). Essential before compilation to avoid structural errors.",
+      inputSchema: {
+        biContent: z.string().describe("Content of the .BI file"),
+        bmContent: z.string().describe("Content of the .BM file"),
+        libraryName: z.string().optional().describe("Name of the library (for context)"),
       },
     },
-    async ({
-      biContent,
-      bmContent,
-      libraryName,
-    }: {
-      biContent: string;
-      bmContent: string;
-      libraryName?: string;
-    }) => {
+    async ({ biContent, bmContent, libraryName }: { biContent: string; bmContent: string; libraryName?: string }) => {
       const result =
         services.fileStructureService.followsGJLibConventions(
           biContent,
@@ -282,26 +251,17 @@ export function registerFileStructureTools(
   );
 
   // Tool 4: Quick structure check
-  server.tool(
+  server.registerTool(
     "quick_check_qb64_file_structure",
-    "Quick check of any QB64PE file structure. Auto-detects .BI or .BM and validates accordingly. Use this before compiling to catch common structural errors early.",
     {
-      filename: {
-        type: "string",
-        description: "Filename (with .BI or .BM extension)",
-      },
-      content: {
-        type: "string",
-        description: "File content to validate",
+      title: "Quick Check QB64PE File Structure",
+      description: "Quick check of any QB64PE file structure. Auto-detects .BI or .BM and validates accordingly. Use this before compiling to catch common structural errors early.",
+      inputSchema: {
+        filename: z.string().describe("Filename (with .BI or .BM extension)"),
+        content: z.string().describe("File content to validate"),
       },
     },
-    async ({
-      filename,
-      content,
-    }: {
-      filename: string;
-      content: string;
-    }) => {
+    async ({ filename, content }: { filename: string; content: string }) => {
       const result = services.fileStructureService.validateFile(
         filename,
         content

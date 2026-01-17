@@ -20,6 +20,8 @@ const feedback_service_js_1 = require("./services/feedback-service.js");
 const debugging_service_js_1 = require("./services/debugging-service.js");
 const logging_service_js_1 = __importDefault(require("./services/logging-service.js"));
 const validation_service_js_1 = require("./services/validation-service.js");
+const session_problems_service_js_1 = require("./services/session-problems-service.js");
+const file_structure_service_js_1 = require("./services/file-structure-service.js");
 // Import tool registration modules
 const wiki_tools_js_1 = require("./tools/wiki-tools.js");
 const keyword_tools_js_1 = require("./tools/keyword-tools.js");
@@ -31,6 +33,8 @@ const porting_tools_js_1 = require("./tools/porting-tools.js");
 const graphics_tools_js_1 = require("./tools/graphics-tools.js");
 const debugging_tools_js_1 = require("./tools/debugging-tools.js");
 const feedback_tools_js_1 = require("./tools/feedback-tools.js");
+const session_problems_tools_js_1 = require("./tools/session-problems-tools.js");
+const file_structure_tools_js_1 = require("./tools/file-structure-tools.js");
 const tool_discovery_js_1 = require("./utils/tool-discovery.js");
 /**
  * Enhanced MCP Server with automatic tool discovery
@@ -162,6 +166,8 @@ class QB64PEMCPServer {
     debuggingService;
     loggingService;
     validationService;
+    sessionProblemsService;
+    fileStructureService;
     constructor() {
         this.server = new ToolDiscoveryMCPServer({
             name: "qb64pe-mcp-server",
@@ -182,6 +188,8 @@ class QB64PEMCPServer {
         this.debuggingService = new debugging_service_js_1.QB64PEDebuggingService();
         this.loggingService = new logging_service_js_1.default();
         this.validationService = new validation_service_js_1.ValidationService();
+        this.sessionProblemsService = new session_problems_service_js_1.SessionProblemsService();
+        this.fileStructureService = new file_structure_service_js_1.FileStructureService();
         // Connect screenshot watcher to feedback service
         this.screenshotWatcher.on("analysis-complete", (analysisResult) => {
             // Screenshot analysis completed - feedback can be generated via feedback service
@@ -216,6 +224,8 @@ class QB64PEMCPServer {
             debuggingService: this.debuggingService,
             loggingService: this.loggingService,
             validationService: this.validationService,
+            sessionProblemsService: this.sessionProblemsService,
+            fileStructureService: this.fileStructureService,
         };
         // Register all tools by category
         (0, wiki_tools_js_1.registerWikiTools)(this.server, services);
@@ -228,6 +238,8 @@ class QB64PEMCPServer {
         (0, graphics_tools_js_1.registerGraphicsTools)(this.server, services);
         (0, debugging_tools_js_1.registerDebuggingTools)(this.server, services);
         (0, feedback_tools_js_1.registerFeedbackTools)(this.server, services);
+        (0, session_problems_tools_js_1.registerSessionProblemsTools)(this.server, services);
+        (0, file_structure_tools_js_1.registerFileStructureTools)(this.server, services);
     }
     async setupResources() {
         // QB64PE wiki base resource

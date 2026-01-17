@@ -30,4 +30,6 @@ export interface ServiceContainer {
   debuggingService: any;
   loggingService: any;
   validationService: any;
+  sessionProblemsService: any;
+  fileStructureService: any;
 }

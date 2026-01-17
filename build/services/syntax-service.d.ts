@@ -1,4 +1,5 @@
 import { KeywordInfo } from './keywords-service';
+import { QB64PE_SYNTAX_PATTERNS, QB64PE_REPOSITORY_PATTERNS } from '../constants/syntax-patterns';
 export interface SyntaxValidationResult {
     isValid: boolean;
     errors: SyntaxError[];
@@ -92,6 +93,10 @@ export declare class QB64PESyntaxService {
     /**
      * Check variable declarations
      */
+    /**
+     * Check for reserved keyword conflicts in variable declarations
+     * Now uses comprehensive QB64PE_RESERVED_WORDS list from MCP keyword database
+     */
     private checkVariableDeclarations;
     /**
      * Check for unclosed structures
@@ -141,5 +146,31 @@ export declare class QB64PESyntaxService {
      * Calculate syntax quality score
      */
     private calculateSyntaxScore;
+    /**
+     * Get syntax help for QB64PE constructs using TextMate grammar information
+     */
+    getSyntaxHelp(identifier: string): string | null;
+    /**
+     * Validate code syntax using TextMate grammar patterns (basic validation)
+     */
+    validateSyntaxBasic(code: string): {
+        valid: boolean;
+        errors: string[];
+    };
+    /**
+     * Get syntax highlighting information for code
+     */
+    getSyntaxHighlighting(code: string): Array<{
+        text: string;
+        scope: string;
+    }>;
+    /**
+     * Get available syntax patterns from TextMate grammar
+     */
+    getSyntaxPatterns(): typeof QB64PE_SYNTAX_PATTERNS;
+    /**
+     * Get repository patterns from TextMate grammar
+     */
+    getRepositoryPatterns(): typeof QB64PE_REPOSITORY_PATTERNS;
 }
 //# sourceMappingURL=syntax-service.d.ts.map

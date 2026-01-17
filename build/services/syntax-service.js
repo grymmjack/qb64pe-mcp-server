@@ -2,6 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.QB64PESyntaxService = void 0;
 const keywords_service_1 = require("./keywords-service");
+const reserved_words_1 = require("../constants/reserved-words");
+const syntax_patterns_1 = require("../constants/syntax-patterns");
 /**
  * Service for QB64PE syntax validation and analysis
  */
@@ -36,7 +38,7 @@ class QB64PESyntaxService {
         'DATE$', 'TIME$', 'TIMER',
         // Graphics
         'CLS', 'COLOR', 'LOCATE', 'PSET', 'PRESET', 'LINE', 'CIRCLE', 'PAINT', 'DRAW', 'VIEW', 'WINDOW',
-        'SCREEN', 'PALETTE', 'POINT'
+        'SCREEN', 'PALETTE', 'POINT', 'POS', 'CSRLIN', 'STEP'
     ]);
     nonQB64Constructs = [
         {
@@ -168,7 +170,7 @@ class QB64PESyntaxService {
         // Define compatibility patterns based on the JSON rules
         const patterns = [
             {
-                pattern: /FUNCTION\s+(\w+)\s*\([^)]*\)\s+AS\s+(\w+)/gi,
+                pattern: /FUNCTION\s+(\w+)\s*\([^)]*\)\s+AS\s+(INTEGER|LONG|SINGLE|DOUBLE|STRING|_BYTE|_INTEGER64|_FLOAT|_UNSIGNED)\b/gi,
                 severity: 'error',
                 category: 'function_return_types',
                 message: 'Function return types must use type sigils, not AS clauses',
@@ -176,6 +178,17 @@ class QB64PESyntaxService {
                 examples: {
                     incorrect: 'FUNCTION name(params) AS INTEGER',
                     correct: 'FUNCTION name%(params)'
+                }
+            },
+            {
+                pattern: /FUNCTION\s+(\w+)\s*\([^)]*\)\s+AS\s+([A-Z][A-Z0-9_]*(?<!INTEGER|LONG|SINGLE|DOUBLE|STRING|_BYTE|_INTEGER64|_FLOAT|_UNSIGNED))\b/gi,
+                severity: 'error',
+                category: 'function_return_types',
+                message: 'QB64PE does not support User-Defined Types (UDTs) as FUNCTION return values',
+                suggestion: 'Use SUB with BYREF parameter instead: SUB {name}({params}, result AS {type})',
+                examples: {
+                    incorrect: 'FUNCTION get_data() AS MyType',
+                    correct: 'SUB get_data(result AS MyType)\n  \' populate result\nEND SUB'
                 }
             },
             {
@@ -433,20 +446,38 @@ class QB64PESyntaxService {
     /**
      * Check variable declarations
      */
+    /**
+     * Check for reserved keyword conflicts in variable declarations
+     * Now uses comprehensive QB64PE_RESERVED_WORDS list from MCP keyword database
+     */
     checkVariableDeclarations(line, lineNum, warnings, suggestions) {
-        // Check for implicit variable declarations
         const trimmedLine = line.trim().toUpperCase();
+        // Check for reserved keyword conflicts in DIM statements
         if (trimmedLine.startsWith('DIM ')) {
-            // This is good - explicit declaration
-            return;
+            const dimPattern = /\bDIM\s+(?:SHARED\s+)?([A-Za-z][A-Za-z0-9_]*)/gi;
+            let match;
+            while ((match = dimPattern.exec(line)) !== null) {
+                const varName = match[1];
+                // Use the comprehensive reserved words check from MCP keyword database
+                if ((0, reserved_words_1.isReservedWord)(varName)) {
+                    warnings.push({
+                        line: lineNum,
+                        column: match.index + 1,
+                        message: `Variable name '${varName}' conflicts with reserved QB64PE keyword`,
+                        rule: 'reserved-keyword-conflict',
+                        suggestion: `Rename to '${varName}_var', '${varName}_value', or 'my_${varName}' to avoid conflict`
+                    });
+                }
+            }
+            return; // Good - explicit declaration, and we checked for conflicts
         }
         // Check for variables that appear to be used without declaration
         const variablePattern = /(\b[A-Za-z][A-Za-z0-9]*[$%!#&]?)\s*=/;
         const match = variablePattern.exec(line);
         if (match) {
             const varName = match[1];
-            // Skip if it's a known keyword
-            if (!this.qb64Keywords.has(varName.toUpperCase())) {
+            // Skip if it's a known keyword (use the comprehensive list)
+            if (!(0, reserved_words_1.isReservedWord)(varName) && !this.qb64Keywords.has(varName.toUpperCase())) {
                 warnings.push({
                     line: lineNum,
                     column: match.index + 1,
@@ -749,6 +780,36 @@ class QB64PESyntaxService {
         }
         // Ensure score is between 0 and 100
         return Math.max(0, Math.min(100, score));
+    }
+    /**
+     * Get syntax help for QB64PE constructs using TextMate grammar information
+     */
+    getSyntaxHelp(identifier) {
+        return (0, syntax_patterns_1.getSyntaxHelp)(identifier);
+    }
+    /**
+     * Validate code syntax using TextMate grammar patterns (basic validation)
+     */
+    validateSyntaxBasic(code) {
+        return (0, syntax_patterns_1.validateSyntax)(code);
+    }
+    /**
+     * Get syntax highlighting information for code
+     */
+    getSyntaxHighlighting(code) {
+        return (0, syntax_patterns_1.getSyntaxHighlighting)(code);
+    }
+    /**
+     * Get available syntax patterns from TextMate grammar
+     */
+    getSyntaxPatterns() {
+        return syntax_patterns_1.QB64PE_SYNTAX_PATTERNS;
+    }
+    /**
+     * Get repository patterns from TextMate grammar
+     */
+    getRepositoryPatterns() {
+        return syntax_patterns_1.QB64PE_REPOSITORY_PATTERNS;
     }
 }
 exports.QB64PESyntaxService = QB64PESyntaxService;

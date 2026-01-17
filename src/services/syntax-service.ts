@@ -1,4 +1,6 @@
 import { KeywordsService, KeywordInfo } from './keywords-service';
+import { QB64PE_RESERVED_WORDS, isReservedWord } from '../constants/reserved-words';
+import { QB64PE_SYNTAX_PATTERNS, QB64PE_REPOSITORY_PATTERNS, getSyntaxHelp, validateSyntax, getSyntaxHighlighting } from '../constants/syntax-patterns';
 
 export interface SyntaxValidationResult {
   isValid: boolean;
@@ -266,7 +268,7 @@ export class QB64PESyntaxService {
     // Define compatibility patterns based on the JSON rules
     const patterns = [
       {
-        pattern: /FUNCTION\s+(\w+)\s*\([^)]*\)\s+AS\s+(\w+)/gi,
+        pattern: /FUNCTION\s+(\w+)\s*\([^)]*\)\s+AS\s+(INTEGER|LONG|SINGLE|DOUBLE|STRING|_BYTE|_INTEGER64|_FLOAT|_UNSIGNED)\b/gi,
         severity: 'error' as const,
         category: 'function_return_types',
         message: 'Function return types must use type sigils, not AS clauses',
@@ -274,6 +276,17 @@ export class QB64PESyntaxService {
         examples: {
           incorrect: 'FUNCTION name(params) AS INTEGER',
           correct: 'FUNCTION name%(params)'
+        }
+      },
+      {
+        pattern: /FUNCTION\s+(\w+)\s*\([^)]*\)\s+AS\s+([A-Z][A-Z0-9_]*(?<!INTEGER|LONG|SINGLE|DOUBLE|STRING|_BYTE|_INTEGER64|_FLOAT|_UNSIGNED))\b/gi,
+        severity: 'error' as const,
+        category: 'function_return_types',
+        message: 'QB64PE does not support User-Defined Types (UDTs) as FUNCTION return values',
+        suggestion: 'Use SUB with BYREF parameter instead: SUB {name}({params}, result AS {type})',
+        examples: {
+          incorrect: 'FUNCTION get_data() AS MyType',
+          correct: 'SUB get_data(result AS MyType)\n  \' populate result\nEND SUB'
         }
       },
       {
@@ -542,6 +555,10 @@ export class QB64PESyntaxService {
   /**
    * Check variable declarations
    */
+  /**
+   * Check for reserved keyword conflicts in variable declarations
+   * Now uses comprehensive QB64PE_RESERVED_WORDS list from MCP keyword database
+   */
   private checkVariableDeclarations(
     line: string, 
     lineNum: number, 
@@ -556,10 +573,9 @@ export class QB64PESyntaxService {
       let match;
       while ((match = dimPattern.exec(line)) !== null) {
         const varName = match[1];
-        const varNameUpper = varName.toUpperCase();
         
-        // Check if variable name conflicts with reserved keyword
-        if (this.qb64Keywords.has(varNameUpper)) {
+        // Use the comprehensive reserved words check from MCP keyword database
+        if (isReservedWord(varName)) {
           warnings.push({
             line: lineNum,
             column: match.index + 1,
@@ -577,8 +593,8 @@ export class QB64PESyntaxService {
     const match = variablePattern.exec(line);
     if (match) {
       const varName = match[1];
-      // Skip if it's a known keyword
-      if (!this.qb64Keywords.has(varName.toUpperCase())) {
+      // Skip if it's a known keyword (use the comprehensive list)
+      if (!isReservedWord(varName) && !this.qb64Keywords.has(varName.toUpperCase())) {
         warnings.push({
           line: lineNum,
           column: match.index + 1,
@@ -920,5 +936,40 @@ export class QB64PESyntaxService {
 
     // Ensure score is between 0 and 100
     return Math.max(0, Math.min(100, score));
+  }
+
+  /**
+   * Get syntax help for QB64PE constructs using TextMate grammar information
+   */
+  getSyntaxHelp(identifier: string): string | null {
+    return getSyntaxHelp(identifier);
+  }
+
+  /**
+   * Validate code syntax using TextMate grammar patterns (basic validation)
+   */
+  validateSyntaxBasic(code: string): { valid: boolean; errors: string[] } {
+    return validateSyntax(code);
+  }
+
+  /**
+   * Get syntax highlighting information for code
+   */
+  getSyntaxHighlighting(code: string): Array<{ text: string; scope: string }> {
+    return getSyntaxHighlighting(code);
+  }
+
+  /**
+   * Get available syntax patterns from TextMate grammar
+   */
+  getSyntaxPatterns(): typeof QB64PE_SYNTAX_PATTERNS {
+    return QB64PE_SYNTAX_PATTERNS;
+  }
+
+  /**
+   * Get repository patterns from TextMate grammar
+   */
+  getRepositoryPatterns(): typeof QB64PE_REPOSITORY_PATTERNS {
+    return QB64PE_REPOSITORY_PATTERNS;
   }
 }

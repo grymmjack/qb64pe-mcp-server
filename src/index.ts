@@ -15,6 +15,8 @@ import { FeedbackService } from "./services/feedback-service.js";
 import { QB64PEDebuggingService } from "./services/debugging-service.js";
 import QB64PELoggingService from "./services/logging-service.js";
 import { ValidationService } from "./services/validation-service.js";
+import { SessionProblemsService } from "./services/session-problems-service.js";
+import { FileStructureService } from "./services/file-structure-service.js";
 
 // Import tool registration modules
 import { registerWikiTools } from "./tools/wiki-tools.js";
@@ -27,6 +29,8 @@ import { registerPortingTools } from "./tools/porting-tools.js";
 import { registerGraphicsTools } from "./tools/graphics-tools.js";
 import { registerDebuggingTools } from "./tools/debugging-tools.js";
 import { registerFeedbackTools } from "./tools/feedback-tools.js";
+import { registerSessionProblemsTools } from "./tools/session-problems-tools.js";
+import { registerFileStructureTools } from "./tools/file-structure-tools.js";
 import { ServiceContainer } from "./utils/tool-types.js";
 import { toolDiscoveryManager } from "./utils/tool-discovery.js";
 
@@ -166,6 +170,8 @@ class QB64PEMCPServer {
   private debuggingService: QB64PEDebuggingService;
   private loggingService: QB64PELoggingService;
   private validationService: ValidationService;
+  private sessionProblemsService: SessionProblemsService;
+  private fileStructureService: FileStructureService;
 
   constructor() {
     this.server = new ToolDiscoveryMCPServer({
@@ -188,6 +194,8 @@ class QB64PEMCPServer {
     this.debuggingService = new QB64PEDebuggingService();
     this.loggingService = new QB64PELoggingService();
     this.validationService = new ValidationService();
+    this.sessionProblemsService = new SessionProblemsService();
+    this.fileStructureService = new FileStructureService();
 
     // Connect screenshot watcher to feedback service
     this.screenshotWatcher.on("analysis-complete", (analysisResult: any) => {
@@ -227,6 +235,8 @@ class QB64PEMCPServer {
       debuggingService: this.debuggingService,
       loggingService: this.loggingService,
       validationService: this.validationService,
+      sessionProblemsService: this.sessionProblemsService,
+      fileStructureService: this.fileStructureService,
     };
 
     // Register all tools by category
@@ -240,6 +250,8 @@ class QB64PEMCPServer {
     registerGraphicsTools(this.server, services);
     registerDebuggingTools(this.server, services);
     registerFeedbackTools(this.server, services);
+    registerSessionProblemsTools(this.server, services);
+    registerFileStructureTools(this.server, services);
   }
 
   private async setupResources(): Promise<void> {

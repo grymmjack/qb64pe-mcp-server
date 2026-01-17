@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Comprehensive Autonomous Test Suite for ALL QB64PE MCP Tools
- * Tests all 55+ tools across 10 categories
+ * Tests all 52+ tools across 12 categories
  */
 
 import { spawn } from 'child_process';
@@ -13,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 console.log('🚀 QB64PE MCP Server - Comprehensive Autonomous Test Suite\n');
-console.log('Testing all 55+ tools across 10 categories...\n');
+console.log('Testing all 52+ tools across 12 categories...\n');
 
 const serverPath = join(__dirname, 'build', 'index.js');
 const mcpProcess = spawn('node', [serverPath], {

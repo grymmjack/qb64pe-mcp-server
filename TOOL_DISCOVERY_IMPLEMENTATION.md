@@ -35,7 +35,7 @@ When ANY tool is called for the first time:
 
 ✅ **Zero Configuration** - Works automatically without any setup
 ✅ **Transparent** - No changes needed to existing tool registration code
-✅ **Complete** - Provides documentation for all 51 tools
+✅ **Complete** - Provides documentation for all 52 tools
 ✅ **Organized** - Tools grouped into 10 functional categories
 ✅ **Informative** - Includes schemas, descriptions, and usage guidelines
 ✅ **Non-Intrusive** - Original tool results are still returned
@@ -74,7 +74,7 @@ When ANY tool is called for the first time:
 
 ## Tool Categories
 
-The system organizes tools into 10 categories:
+The system organizes tools into 12 categories:
 1. **wiki** - Documentation and reference materials
 2. **keywords** - Keyword and syntax information
 3. **compiler** - Compilation and options
@@ -109,7 +109,7 @@ Before processing your request, you must review all available tools...
 # QB64PE MCP Server - Complete Tool Reference
 
 This MCP server provides comprehensive QB64PE development assistance 
-with 51 tools organized into 10 categories.
+with 52 tools organized into 12 categories.
 
 ## Tool Categories Overview
 

@@ -29,7 +29,7 @@ The QB64PE MCP Server now automatically ensures that LLMs learn about all availa
 - Inefficient workflows
 - Poor quality responses
 
-**After:** LLMs automatically learn about all 51 tools on first use:
+**After:** LLMs automatically learn about all 52 tools on first use:
 - Complete tool catalog
 - Organized by category
 - With usage guidelines
@@ -55,7 +55,7 @@ The QB64PE MCP Server now automatically ensures that LLMs learn about all availa
 
 ✅ **Automatic** - Works on first tool call, no setup
 ✅ **Transparent** - No changes to existing tool code
-✅ **Complete** - Documents all 51 tools
+✅ **Complete** - Documents all 52 tools
 ✅ **Organized** - 10 functional categories
 ✅ **Efficient** - Only on first call
 ✅ **Non-Intrusive** - Original results preserved
@@ -125,7 +125,7 @@ Before processing your request, you must review all available tools...
 # QB64PE MCP Server - Complete Tool Reference
 
 This MCP server provides comprehensive QB64PE development assistance 
-with 51 tools organized into 10 categories.
+with 52 tools organized into 12 categories.
 
 ## Tool Categories Overview
 
@@ -133,7 +133,7 @@ with 51 tools organized into 10 categories.
 Access QB64PE documentation, tutorials, and reference materials
 Tools: 3
 
-[... complete catalog of all 51 tools with descriptions ...]
+[... complete catalog of all 52 tools with descriptions ...]
 
 ## Usage Guidelines
 

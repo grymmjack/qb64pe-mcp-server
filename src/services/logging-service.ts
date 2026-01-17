@@ -44,7 +44,7 @@ export class QB64PELoggingService {
         enableNativeLogging: true,
         enableStructuredOutput: true,
         enableEchoOutput: true, // Enable simplified console output
-        consoleDirective: '$CONSOLE:ONLY', // Critical for shell redirection
+        consoleDirective: '$CONSOLE:ONLY', // For text-only programs; use $CONSOLE for graphics
         logLevel: 'INFO',
         autoExitTimeout: 10,
         outputSections: [

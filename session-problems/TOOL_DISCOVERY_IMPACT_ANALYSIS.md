@@ -46,7 +46,7 @@ First Tool Call (ANY tool):
   ↓
 Automatic Injection:
   "🎓 QB64PE MCP Server - Complete Tool Reference
-   51 tools available in 10 categories:
+   52 tools available in 12 categories:
    
    - validate_qb64pe_syntax
    - search_qb64pe_wiki
@@ -92,7 +92,7 @@ For a typical QB64PE development task:
 
 ### 3. **Category Organization (Easy Discovery)**
 
-Tools organized into 10 categories:
+Tools organized into 12 categories:
 
 ```
 ### Compatibility Tools

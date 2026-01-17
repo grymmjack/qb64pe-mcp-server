@@ -2,7 +2,7 @@
 
 ## Overview
 
-The QB64PE MCP Server exposes **51 tools** organized into **10 functional categories** through the Model Context Protocol (MCP). External systems (like Claude Desktop, AI assistants, or other MCP clients) can call these tools to get QB64PE programming assistance.
+The QB64PE MCP Server exposes **52 tools** organized into **12 functional categories** through the Model Context Protocol (MCP). External systems (like Claude Desktop, AI assistants, or other MCP clients) can call these tools to get QB64PE programming assistance.
 
 ## How MCP Works
 

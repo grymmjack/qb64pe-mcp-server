@@ -122,7 +122,7 @@ Before processing your request, you must review all available tools...
 # QB64PE MCP Server - Complete Tool Reference
 
 This MCP server provides comprehensive QB64PE development assistance 
-with 30+ tools organized into 10 categories.
+with 52 tools organized into 12 categories.
 
 ## Tool Categories Overview
 

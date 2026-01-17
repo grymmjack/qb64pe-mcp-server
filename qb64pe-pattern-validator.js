@@ -18,25 +18,18 @@ class QB64PEPatternValidator {
 
     /**
      * CRITICAL RULE #1: Console Mode Strategy Validation
-     * Prefer $CONSOLE over $CONSOLE:ONLY for MCP debugging
+     * $CONSOLE:ONLY for text-only, $CONSOLE + ECHO for graphics programs
      */
     validateModeCompatibility(code) {
         const issues = [];
         const hasConsoleOnly = code.includes('$CONSOLE:ONLY');
         const hasConsole = code.includes('$CONSOLE');
+        const hasGraphicsFunctions = this.graphicsFunctions.some(func => 
+            code.toUpperCase().includes(func)
+        );
         
-        // Prefer $CONSOLE over $CONSOLE:ONLY for MCP debugging
+        // If using $CONSOLE:ONLY, validate no graphics functions
         if (hasConsoleOnly) {
-            issues.push({
-                type: 'MODE_STRATEGY',
-                rule: 'Console Strategy',
-                line: 'N/A',
-                message: 'Consider using $CONSOLE instead of $CONSOLE:ONLY for better MCP debugging',
-                fix: 'Replace $CONSOLE:ONLY with $CONSOLE to enable _ECHO + graphics',
-                severity: 'WARNING'
-            });
-            
-            // If using $CONSOLE:ONLY, validate no graphics functions
             const lines = code.split('\n');
             lines.forEach((line, index) => {
                 this.graphicsFunctions.forEach(func => {
@@ -46,7 +39,7 @@ class QB64PEPatternValidator {
                             rule: 'Console Mode Compatibility',
                             line: index + 1,
                             message: `Graphics function "${func}" is ILLEGAL in $CONSOLE:ONLY mode`,
-                            fix: `Remove ${func} or change to $CONSOLE directive`,
+                            fix: `Use $CONSOLE directive with ECHO functions instead of $CONSOLE:ONLY`,
                             severity: 'ERROR'
                         });
                     }
@@ -54,14 +47,14 @@ class QB64PEPatternValidator {
             });
         }
         
-        // Check for _ECHO usage (preferred for MCP output)
-        if (hasConsole && !code.includes('_ECHO')) {
+        // Check for ECHO SUB usage (custom functions for console output)
+        if (hasConsole && !code.includes('SUB ECHO')) {
             issues.push({
                 type: 'MCP_OUTPUT',
                 rule: 'MCP Output Strategy',
                 line: 'N/A',
-                message: 'Consider using _ECHO for MCP-compatible debug output',
-                fix: 'Use _ECHO instead of PRINT for structured MCP output',
+                message: 'Consider using ECHO functions for MCP-compatible debug output',
+                fix: 'Add ECHO subroutines (SUB ECHO, ECHO_INFO, etc.) for structured console output',
                 severity: 'INFO'
             });
         }

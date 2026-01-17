@@ -4,7 +4,7 @@ A comprehensive Model Context Protocol (MCP) server that provides advanced QB64P
 
 ## ✨ **New: Automatic Tool Discovery System**
 
-The MCP server now includes an **Automatic Tool Discovery System** that ensures LLMs are immediately aware of all available tools. On the very first tool call, the LLM receives comprehensive documentation of all 51 tools, organized by category, with usage guidelines and workflow recommendations. This solves the common problem of LLMs not knowing what tools are available.
+The MCP server now includes an **Automatic Tool Discovery System** that ensures LLMs are immediately aware of all available tools. On the very first tool call, the LLM receives comprehensive documentation of all 52 tools, organized by category, with usage guidelines and workflow recommendations. This solves the common problem of LLMs not knowing what tools are available.
 
 **Key Features:**
 - 🎓 Automatic on first interaction - no manual discovery needed
@@ -116,6 +116,24 @@ This MCP server provides **52 comprehensive tools** and **6 intelligent prompts*
 | `get_qb64pe_installation_guidance` | Get user-friendly guidance for QB64PE installation and PATH configuration | [📖](./tool-docs/get_qb64pe_installation_guidance.md) |
 | `get_programming_feedback_history` | Get history of programming feedback generated from screenshot analyses | [📖](./tool-docs/get_programming_feedback_history.md) |
 
+### 📝 **Session Problems & Development Tracking (6 tools)**
+| Tool | Description | Docs |
+|------|-------------|------|
+| `log_session_problem` | Log development problems encountered during sessions for continuous improvement | [📖](./tool-docs/log_session_problem.md) |
+| `update_session_problem_status` | Update status of a logged session problem | [📖](./tool-docs/update_session_problem_status.md) |
+| `get_session_problems_report` | Generate comprehensive analysis report of all logged session problems | [📖](./tool-docs/get_session_problems_report.md) |
+| `get_session_problems_statistics` | Get statistical analysis of session problems by category and severity | [📖](./tool-docs/get_session_problems_statistics.md) |
+| `clear_session_problems` | Clear all logged session problems to start fresh | [📖](./tool-docs/clear_session_problems.md) |
+| `export_session_problems` | Export session problems to JSON file for external analysis | [📖](./tool-docs/export_session_problems.md) |
+
+### 📚 **File Structure Validation (4 tools)**
+| Tool | Description | Docs |
+|------|-------------|------|
+| `validate_bi_file_structure` | Validate QB64_GJ_LIB .BI file structure (declarations only, no implementations) | [📖](./tool-docs/validate_bi_file_structure.md) |
+| `validate_bm_file_structure` | Validate QB64_GJ_LIB .BM file structure (implementations only, no declarations) | [📖](./tool-docs/validate_bm_file_structure.md) |
+| `validate_bi_bm_pair` | Validate matched .BI/.BM file pair for QB64_GJ_LIB compliance | [📖](./tool-docs/validate_bi_bm_pair.md) |
+| `quick_check_qb64_file_structure` | Quick validation of any QB64PE file structure (auto-detects .BI or .BM) | [📖](./tool-docs/quick_check_qb64_file_structure.md) |
+
 ---
 
 ## 🎯 **Prompts Quick Reference**
@@ -133,15 +151,19 @@ This MCP server provides **52 comprehensive tools** and **6 intelligent prompts*
 
 ## 🚀 **Key Features**
 
-### 🔍 **Critical Discovery: $CONSOLE:ONLY vs $CONSOLE**
+### 🔍 **Critical Discovery: $CONSOLE Directive Strategy**
 ```basic
-' ❌ OLD WAY - Creates separate console window (no shell redirection)
-$CONSOLE
+' For TEXT-ONLY programs (no graphics):
+$CONSOLE:ONLY  ' Console-only mode, enables shell redirection
 
-' ✅ NEW WAY - Enables shell output redirection for automation
-$CONSOLE:ONLY
+' For GRAPHICS programs (SCREEN modes, _NEWIMAGE):
+$CONSOLE       ' Dual console+graphics, use ECHO functions for output
+' ECHO functions handle _DEST management automatically
 ```
-**Impact**: Enables automated output capture: `program.exe > output.txt 2>&1`
+**Impact**: 
+- `$CONSOLE:ONLY`: Text-only programs, optimal for stdio redirection
+- `$CONSOLE` + ECHO: Graphics programs, ECHO functions enable automated output capture
+- Both work with: `program.exe > output.txt 2>&1`
 
 ### 📊 **Real-World Success: Advanced Debugging System**
 ```
@@ -281,7 +303,7 @@ async function autonomousPorting(qbasicFile, outputFile) {
 
 ---
 
-**🎉 GETTING THERE! 51 Tools & 5 Prompts - Your Complete QB64PE Development Companion! 🚀**
+**🎉 Complete QB64PE Development Suite! 52 Tools & 6 Prompts - Your Comprehensive Development Companion! 🚀**
 - **`enhance_qb64pe_code_for_debugging`** - Apply comprehensive debugging enhancements with console management, flow control, resource tracking, and graphics context fixes
 - **`get_qb64pe_debugging_best_practices`** - Get debugging best practices specifically for QB64PE development
 - **`get_llm_debugging_guide`** - Get LLM-specific debugging guidance with timeout strategies and automation workflows

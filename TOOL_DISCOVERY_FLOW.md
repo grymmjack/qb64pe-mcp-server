@@ -35,7 +35,7 @@
 │     ┌─────────────────────────────────────────────┐       │
 │     │  ToolDiscoveryManager.getToolSummary()      │       │
 │     │  - All 51 tools                             │       │
-│     │  - 10 categories                            │       │
+│     │  - 12 categories                            │       │
 │     │  - Descriptions, schemas                    │       │
 │     │  - Usage guidelines                         │       │
 │     └─────────────────────────────────────────────┘       │
@@ -57,7 +57,7 @@
 │  ════════════════════════════════════════════════          │
 │  # QB64PE MCP Server - Complete Tool Reference             │
 │                                                             │
-│  51 tools in 10 categories:                                │
+│  52 tools in 12 categories:                                │
 │  - Wiki (3 tools)                                          │
 │  - Keywords (4 tools)                                      │
 │  - Compiler (3 tools)                                      │

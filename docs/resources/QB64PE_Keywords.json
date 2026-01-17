@@ -199,7 +199,7 @@
     "_MOUSEY": "(function) returns the current vertical position of the mouse cursor.",
     "_NEGATE": "(logical operator) returns True when a boolean evaluation is False and vice-versa.",
     "_NEWIMAGE": "(function) creates a designated size program SCREEN or page image and returns a handle value.",
-    "$NOPREFIX": "(metacommand) (deprecated) allows QB64-specific keywords to be used without the underscore prefix.",
+    "$NOPREFIX": "(metacommand) (DEPRECATED in v4.0.0+) Previously allowed QB64-specific keywords to be used without the underscore prefix. QB64-PE now auto-converts code with $NOPREFIX. Use underscore prefixes for all QB64 keywords (_RGB32, _NEWIMAGE, etc.).",
     "_NOTIFYPOPUP": "(statement) Shows a system notification popup.",
     "_NUMLOCK (function)": "returns -1 when Num Lock is on",
     "_NUMLOCK": "(statement) sets Num Lock key state",

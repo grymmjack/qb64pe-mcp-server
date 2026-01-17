@@ -718,7 +718,7 @@ ${d.rules.map((rule) => `- ${rule}`).join("\n")}
 - **QB64PE:** \`Put (x, y), array&(), PSet\`
 
 ### 6. Modern QB64PE Features
-- Add \`$NoPrefix\` for modern syntax
+- Use proper underscore prefixes for QB64PE keywords (_RGB32, _NEWIMAGE, etc.)
 - Add \`$Resize:Smooth\` for graphics programs
 - Use \`Title\` for window titles
 - Replace \`END\` with \`System 0\`

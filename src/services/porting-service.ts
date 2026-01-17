@@ -45,6 +45,9 @@ export class QB64PEPortingService {
 
     let portedCode = sourceCode;
 
+    // Remove deprecated $NOPREFIX if present
+    portedCode = this.removeNoPrefixMetacommand(portedCode);
+
     // Apply transformations in order
     portedCode = this.addQB64PEMetacommands(portedCode, opts);
     portedCode = this.convertKeywordCasing(portedCode);
@@ -95,9 +98,9 @@ export class QB64PEPortingService {
 
     const metacommands: string[] = [];
     
-    // Add $NoPrefix for modern QB64PE syntax
-    metacommands.push('$NoPrefix');
-    this.transformations.push('Added $NoPrefix metacommand for modern QB64PE syntax');
+    // Note: $NoPrefix is deprecated in QB64-PE v4.0.0+
+    // QB64-PE now auto-converts code with $NoPrefix
+    // All QB64 keywords should use underscore prefix (_RGB32, _NEWIMAGE, etc.)
     
     // Add graphics enhancements for graphics programs
     if (hasGraphics) {
@@ -689,5 +692,33 @@ End Function`;
     };
 
     return rules[dialect] || ['Basic BASIC to QB64PE conversion rules'];
+  }
+
+  /**
+   * Remove deprecated $NOPREFIX metacommand
+   * $NOPREFIX was deprecated in QB64-PE v4.0.0
+   * QB64-PE auto-converts code with $NOPREFIX
+   * All QB64 keywords should use underscore prefix
+   */
+  private removeNoPrefixMetacommand(code: string): string {
+    const lines = code.split('\n');
+    const filteredLines: string[] = [];
+    let removed = false;
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      // Check for $NOPREFIX in various cases
+      if (trimmed.toUpperCase().startsWith('$NOPREFIX') || 
+          trimmed.toUpperCase() === '$NOPREFIX' ||
+          trimmed.toUpperCase().startsWith('$NOPREFIX ')) {
+        removed = true;
+        this.transformations.push('Removed deprecated $NOPREFIX metacommand');
+        this.warnings.push('$NOPREFIX is deprecated in QB64-PE v4.0.0+ - QB64 keywords should use underscore prefix');
+        continue; // Skip this line
+      }
+      filteredLines.push(line);
+    }
+
+    return filteredLines.join('\n');
   }
 }

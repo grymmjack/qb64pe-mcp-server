@@ -270,21 +270,9 @@ SCREEN _NEWIMAGE(1280, 720, 32)  ' HD 16:9`
    * Add code structure suggestions
    */
   private addCodeStructureSuggestions(suggestions: FeedbackSuggestion[], analysis: any, programCode: string): void {
-    // Check for modern QB64PE features
-    if (!programCode.includes('$NOPREFIX')) {
-      suggestions.push({
-        type: 'improvement',
-        priority: 'medium',
-        category: 'code_structure',
-        title: 'Use Modern QB64PE Features',
-        description: 'Consider using $NOPREFIX for cleaner code',
-        reasoning: '$NOPREFIX allows using QB64PE commands without underscores',
-        expectedResult: 'Cleaner, more readable code',
-        codeExample: `$NOPREFIX
-Screen NewImage(800, 600, 32)
-Circle (400, 300), 100, RGB32(255, 0, 0)`
-      });
-    }
+    // Note: $NOPREFIX was deprecated in QB64-PE v4.0.0
+    // Modern QB64PE code should use underscore prefixes for all QB64 keywords
+    // Example: _RGB32(), _NEWIMAGE(), _DISPLAY(), etc.
 
     // Check for proper variable declarations
     if (!programCode.includes('DIM') && programCode.includes('=')) {

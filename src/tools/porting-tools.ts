@@ -45,7 +45,7 @@ export function registerPortingTools(
           .boolean()
           .optional()
           .describe(
-            "Add modern QB64PE features like $NoPrefix, $Resize:Smooth (default: true)",
+            "Add modern QB64PE features like $Resize:Smooth, $VersionInfo (default: true)",
           ),
         preserveComments: z
           .boolean()

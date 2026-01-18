@@ -221,6 +221,52 @@ describe('Graphics Tools', () => {
       expect(createMCPResponse).toHaveBeenCalled();
     });
 
+    it('should correctly set fullyAutomated when both monitoring and watching', async () => {
+      registerGraphicsTools(mockServer, services);
+      const handler = registeredTools.get('get_automation_status');
+      expect(handler).toBeDefined();
+      
+      const mockMonitoringStatus = { isMonitoring: true };
+      const mockWatcherStatus = { isWatching: true };
+      const mockFiles = ['/file1.png', '/file2.png'];
+      
+      mockScreenshotService.getMonitoringStatus.mockReturnValue(mockMonitoringStatus);
+      mockScreenshotWatcher.getStatus.mockReturnValue(mockWatcherStatus);
+      mockScreenshotService.getScreenshotFiles.mockReturnValue(mockFiles);
+      
+      const result = await handler!({});
+      
+      expect(createMCPResponse).toHaveBeenCalledWith(
+        expect.objectContaining({
+          overall: expect.objectContaining({
+            fullyAutomated: true,
+            capturingScreenshots: true,
+            analyzingScreenshots: true
+          })
+        })
+      );
+    });
+
+    it('should handle empty screenshot files', async () => {
+      registerGraphicsTools(mockServer, services);
+      const handler = registeredTools.get('get_automation_status');
+      expect(handler).toBeDefined();
+      
+      mockScreenshotService.getMonitoringStatus.mockReturnValue({ isMonitoring: false });
+      mockScreenshotWatcher.getStatus.mockReturnValue({ isWatching: false });
+      mockScreenshotService.getScreenshotFiles.mockReturnValue([]);
+      
+      const result = await handler!({});
+      
+      expect(createMCPResponse).toHaveBeenCalledWith(
+        expect.objectContaining({
+          screenshot: expect.objectContaining({
+            latestFile: null
+          })
+        })
+      );
+    });
+
     it('should handle status errors', async () => {
       registerGraphicsTools(mockServer, services);
       const handler = registeredTools.get('get_automation_status');
@@ -396,6 +442,57 @@ describe('Graphics Tools', () => {
       
       expect(mockScreenshotWatcher.getAnalysisHistory).toHaveBeenCalledWith(10);
       expect(createMCPResponse).toHaveBeenCalled();
+    });
+
+    it('should calculate summary statistics correctly', async () => {
+      registerGraphicsTools(mockServer, services);
+      const handler = registeredTools.get('get_screenshot_analysis_history');
+      expect(handler).toBeDefined();
+      
+      const mockHistory = [
+        { timestamp: '2024-01-01', success: true },
+        { timestamp: '2024-01-02', success: false },
+        { timestamp: '2024-01-03', success: true }
+      ];
+      const mockScreenshots = [{ path: '/shot1.png' }];
+      const mockStatus = { isWatching: true };
+      
+      mockScreenshotWatcher.getAnalysisHistory.mockReturnValue(mockHistory);
+      mockScreenshotWatcher.getRecentScreenshots.mockReturnValue(mockScreenshots);
+      mockScreenshotWatcher.getStatus.mockReturnValue(mockStatus);
+      
+      const result = await handler!({ limit: 10 });
+      
+      // Verify createMCPResponse was called with proper structure
+      expect(createMCPResponse).toHaveBeenCalledWith(
+        expect.objectContaining({
+          summary: expect.objectContaining({
+            totalAnalyses: 3,
+            successful: 2,
+            failed: 1
+          })
+        })
+      );
+    });
+
+    it('should handle empty history with null lastAnalysis', async () => {
+      registerGraphicsTools(mockServer, services);
+      const handler = registeredTools.get('get_screenshot_analysis_history');
+      expect(handler).toBeDefined();
+      
+      mockScreenshotWatcher.getAnalysisHistory.mockReturnValue([]);
+      mockScreenshotWatcher.getRecentScreenshots.mockReturnValue([]);
+      mockScreenshotWatcher.getStatus.mockReturnValue({ isWatching: false });
+      
+      const result = await handler!({});
+      
+      expect(createMCPResponse).toHaveBeenCalledWith(
+        expect.objectContaining({
+          summary: expect.objectContaining({
+            lastAnalysis: null
+          })
+        })
+      );
     });
 
     it('should handle history errors', async () => {

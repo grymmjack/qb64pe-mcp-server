@@ -61,6 +61,31 @@ describe("ValidationService", () => {
       });
       expect(result.warnings[0]).toContain("non-printable");
     });
+
+    it("should reject null code value", () => {
+      const result = validator.validateCode(null as any);
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain("Code must be provided");
+    });
+
+    it("should handle encoding check errors gracefully", () => {
+      // Create a string that might cause encoding validation issues
+      const mockValidator = new ValidationService();
+      const originalTest = RegExp.prototype.test;
+      
+      // Mock RegExp.test to throw an error
+      RegExp.prototype.test = function() {
+        throw new Error("Encoding test failed");
+      };
+      
+      try {
+        const result = mockValidator.validateCode('PRINT "test"', { checkEncoding: true });
+        expect(result.warnings).toContain("Unable to validate encoding");
+      } finally {
+        // Restore original method
+        RegExp.prototype.test = originalTest;
+      }
+    });
   });
 
   describe("validatePath", () => {
@@ -78,6 +103,29 @@ describe("ValidationService", () => {
 
       it("should reject reserved Windows names", () => {
         const result = validator.validatePath("C:\\QB64pe\\CON.bas");
+        expect(result.isValid).toBe(false);
+        expect(result.errors[0]).toContain("reserved Windows name");
+      });
+
+      it("should validate explicitly set Windows platform", () => {
+        const result = validator.validatePath("C:\\test\\file.bas", {
+          platform: "windows",
+        });
+        expect(result.isValid).toBe(true);
+      });
+
+      it("should validate UNC paths", () => {
+        const result = validator.validatePath("\\\\server\\share\\file.bas");
+        expect(result.isValid).toBe(true);
+      });
+
+      it("should handle empty path segments gracefully", () => {
+        const result = validator.validatePath("C:");
+        expect(result.isValid).toBe(true);
+      });
+
+      it("should check reserved names with various extensions", () => {
+        const result = validator.validatePath("C:\\path\\COM1");
         expect(result.isValid).toBe(false);
         expect(result.errors[0]).toContain("reserved Windows name");
       });
@@ -103,6 +151,33 @@ describe("ValidationService", () => {
         expect(result.isValid).toBe(false);
         expect(result.errors[0]).toContain("Relative paths are not allowed");
       });
+
+      it("should reject Unix path with null characters", () => {
+        const result = validator.validatePath("/usr/local/test\x00file.bas");
+        expect(result.isValid).toBe(false);
+        expect(result.errors[0]).toContain("null characters");
+      });
+
+      it("should warn about very long Unix path", () => {
+        const longPath = "/usr/local/" + "a".repeat(3500) + "/test.bas";
+        const result = validator.validatePath(longPath);
+        expect(result.isValid).toBe(true);
+        expect(result.warnings[0]).toContain("very long");
+      });
+
+      it("should warn about very long Windows path", () => {
+        const longPath = "C:\\" + "a".repeat(220) + "\\test.bas";
+        const result = validator.validatePath(longPath);
+        expect(result.isValid).toBe(true);
+        expect(result.warnings[0]).toContain("very long");
+      });
+
+      it("should validate explicitly set Unix platform", () => {
+        const result = validator.validatePath("/home/test/file.bas", {
+          platform: "unix",
+        });
+        expect(result.isValid).toBe(true);
+      });
     });
 
     it("should reject undefined path", () => {
@@ -115,6 +190,12 @@ describe("ValidationService", () => {
       const result = validator.validatePath("   ");
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain("Path cannot be empty");
+    });
+
+    it("should reject null path", () => {
+      const result = validator.validatePath(null as any);
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain("Path must be provided");
     });
 
     it("should validate file extensions", () => {
@@ -158,6 +239,12 @@ describe("ValidationService", () => {
       expect(result.errors[0]).toContain("must be a string");
     });
 
+    it("should reject null value", () => {
+      const result = validator.validateRequiredString(null, "filename");
+      expect(result.isValid).toBe(false);
+      expect(result.errors[0]).toContain("is required");
+    });
+
     it("should reject string below minimum length", () => {
       const result = validator.validateRequiredString("ab", "filename", {
         minLength: 5,
@@ -183,6 +270,12 @@ describe("ValidationService", () => {
     it("should accept valid number", () => {
       const result = validator.validateNumber(42, "lineNumber");
       expect(result.isValid).toBe(true);
+    });
+
+    it("should reject null value", () => {
+      const result = validator.validateNumber(null, "lineNumber");
+      expect(result.isValid).toBe(false);
+      expect(result.errors[0]).toContain("is required");
     });
 
     it("should reject undefined value", () => {
@@ -271,6 +364,25 @@ describe("ValidationService", () => {
       expect(result.isValid).toBe(false);
       expect(result.errors.length).toBeGreaterThan(0);
     });
+
+    it("should collect warnings from item validator", () => {
+      const itemValidator = (item: any) => {
+        return {
+          isValid: true,
+          errors: [],
+          warnings: [`Item warning for ${item}`],
+        };
+      };
+
+      const result = validator.validateArray(["a", "b", "c"], "items", {
+        itemValidator,
+      });
+      expect(result.isValid).toBe(true);
+      expect(result.warnings.length).toBe(3);
+      expect(result.warnings[0]).toContain("items[0]");
+      expect(result.warnings[1]).toContain("items[1]");
+      expect(result.warnings[2]).toContain("items[2]");
+    });
   });
 
   describe("validateEnum", () => {
@@ -283,6 +395,16 @@ describe("ValidationService", () => {
       expect(result.isValid).toBe(true);
     });
 
+
+    it("should reject null value", () => {
+      const result = validator.validateEnum(null, "platform", [
+        "windows",
+        "linux",
+        "macos",
+      ]);
+      expect(result.isValid).toBe(false);
+      expect(result.errors[0]).toContain("is required");
+    });
     it("should reject invalid choice", () => {
       const result = validator.validateEnum("android", "platform", [
         "windows",

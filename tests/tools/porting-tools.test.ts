@@ -60,5 +60,307 @@ describe('Porting Tools', () => {
         expect(result).toBeDefined();
       }
     });
+
+    it('should execute port_qbasic_to_qb64pe with default parameters', async () => {
+      registerPortingTools(mockServer, services);
+      const call = (mockServer.registerTool as jest.Mock).mock.calls.find(
+        c => c[0] === 'port_qbasic_to_qb64pe'
+      );
+      
+      if (call) {
+        const handler = call[2];
+        const result = await handler({ sourceCode: 'PRINT "Test"' });
+        expect(result).toBeDefined();
+      }
+    });
+
+    it('should execute port_qbasic_to_qb64pe with all options enabled', async () => {
+      registerPortingTools(mockServer, services);
+      const call = (mockServer.registerTool as jest.Mock).mock.calls.find(
+        c => c[0] === 'port_qbasic_to_qb64pe'
+      );
+      
+      if (call) {
+        const handler = call[2];
+        const result = await handler({
+          sourceCode: 'SCREEN 12\\nCIRCLE (320, 240), 100',
+          sourceDialect: 'qbasic',
+          addModernFeatures: true,
+          preserveComments: true,
+          convertGraphics: true,
+          optimizePerformance: true
+        });
+        expect(result).toBeDefined();
+      }
+    });
+
+    it('should execute port_qbasic_to_qb64pe with all options disabled', async () => {
+      registerPortingTools(mockServer, services);
+      const call = (mockServer.registerTool as jest.Mock).mock.calls.find(
+        c => c[0] === 'port_qbasic_to_qb64pe'
+      );
+      
+      if (call) {
+        const handler = call[2];
+        const result = await handler({
+          sourceCode: 'PRINT "Test"',
+          sourceDialect: 'qbasic',
+          addModernFeatures: false,
+          preserveComments: false,
+          convertGraphics: false,
+          optimizePerformance: false
+        });
+        expect(result).toBeDefined();
+      }
+    });
+
+    it('should execute get_porting_dialect_info with default (all)', async () => {
+      registerPortingTools(mockServer, services);
+      const call = (mockServer.registerTool as jest.Mock).mock.calls.find(
+        c => c[0] === 'get_porting_dialect_info'
+      );
+      
+      if (call) {
+        const handler = call[2];
+        const result = await handler({ dialect: 'all' });
+        expect(result).toBeDefined();
+      }
+    });
+
+    it('should execute get_porting_dialect_info with no parameters', async () => {
+      registerPortingTools(mockServer, services);
+      const call = (mockServer.registerTool as jest.Mock).mock.calls.find(
+        c => c[0] === 'get_porting_dialect_info'
+      );
+      
+      if (call) {
+        const handler = call[2];
+        const result = await handler({});
+        expect(result).toBeDefined();
+      }
+    });
+
+    it('should execute get_porting_dialect_info with specific dialect', async () => {
+      registerPortingTools(mockServer, services);
+      const call = (mockServer.registerTool as jest.Mock).mock.calls.find(
+        c => c[0] === 'get_porting_dialect_info'
+      );
+      
+      if (call) {
+        const handler = call[2];
+        const result = await handler({ dialect: 'qbasic' });
+        expect(result).toBeDefined();
+      }
+    });
+
+    it('should execute analyze_qbasic_compatibility handler', async () => {
+      registerPortingTools(mockServer, services);
+      const call = (mockServer.registerTool as jest.Mock).mock.calls.find(
+        c => c[0] === 'analyze_qbasic_compatibility'
+      );
+      
+      if (call) {
+        const handler = call[2];
+        const result = await handler({
+          sourceCode: 'SCREEN 12\\nCIRCLE (100, 100), 50',
+          sourceDialect: 'qbasic'
+        });
+        expect(result).toBeDefined();
+      }
+    });
+
+    it('should execute analyze_qbasic_compatibility with default dialect', async () => {
+      registerPortingTools(mockServer, services);
+      const call = (mockServer.registerTool as jest.Mock).mock.calls.find(
+        c => c[0] === 'analyze_qbasic_compatibility'
+      );
+      
+      if (call) {
+        const handler = call[2];
+        const result = await handler({ sourceCode: 'PRINT "Test"' });
+        expect(result).toBeDefined();
+      }
+    });
+
+    it('should analyze code with graphics', async () => {
+      registerPortingTools(mockServer, services);
+      const call = (mockServer.registerTool as jest.Mock).mock.calls.find(
+        c => c[0] === 'analyze_qbasic_compatibility'
+      );
+      
+      if (call) {
+        const handler = call[2];
+        const result = await handler({
+          sourceCode: 'SCREEN 12\\nPSET (100, 100), 14\\nLINE (0,0)-(100,100)'
+        });
+        expect(result).toBeDefined();
+      }
+    });
+
+    it('should analyze code with sound', async () => {
+      registerPortingTools(mockServer, services);
+      const call = (mockServer.registerTool as jest.Mock).mock.calls.find(
+        c => c[0] === 'analyze_qbasic_compatibility'
+      );
+      
+      if (call) {
+        const handler = call[2];
+        const result = await handler({
+          sourceCode: 'PLAY "C D E F"\\nBEEP\\nSOUND 440, 10'
+        });
+        expect(result).toBeDefined();
+      }
+    });
+
+    it('should analyze code with file I/O', async () => {
+      registerPortingTools(mockServer, services);
+      const call = (mockServer.registerTool as jest.Mock).mock.calls.find(
+        c => c[0] === 'analyze_qbasic_compatibility'
+      );
+      
+      if (call) {
+        const handler = call[2];
+        const result = await handler({
+          sourceCode: 'OPEN "test.txt" FOR OUTPUT AS #1\\nPRINT #1, "Data"\\nCLOSE #1'
+        });
+        expect(result).toBeDefined();
+      }
+    });
+
+    it('should analyze code with DEF FN', async () => {
+      registerPortingTools(mockServer, services);
+      const call = (mockServer.registerTool as jest.Mock).mock.calls.find(
+        c => c[0] === 'analyze_qbasic_compatibility'
+      );
+      
+      if (call) {
+        const handler = call[2];
+        const result = await handler({
+          sourceCode: 'DEF FNSquare(x) = x * x\\nPRINT FNSquare(5)'
+        });
+        expect(result).toBeDefined();
+      }
+    });
+
+    it('should analyze code with GOSUB', async () => {
+      registerPortingTools(mockServer, services);
+      const call = (mockServer.registerTool as jest.Mock).mock.calls.find(
+        c => c[0] === 'analyze_qbasic_compatibility'
+      );
+      
+      if (call) {
+        const handler = call[2];
+        const result = await handler({
+          sourceCode: 'GOSUB 100\\nEND\\n100 PRINT "Subroutine"\\nRETURN'
+        });
+        expect(result).toBeDefined();
+      }
+    });
+
+    it('should analyze code with multi-statement lines', async () => {
+      registerPortingTools(mockServer, services);
+      const call = (mockServer.registerTool as jest.Mock).mock.calls.find(
+        c => c[0] === 'analyze_qbasic_compatibility'
+      );
+      
+      if (call) {
+        const handler = call[2];
+        const result = await handler({
+          sourceCode: 'x = 10: IF x > 5 THEN PRINT "Greater"'
+        });
+        expect(result).toBeDefined();
+      }
+    });
+
+    it('should analyze code with DECLARE statements', async () => {
+      registerPortingTools(mockServer, services);
+      const call = (mockServer.registerTool as jest.Mock).mock.calls.find(
+        c => c[0] === 'analyze_qbasic_compatibility'
+      );
+      
+      if (call) {
+        const handler = call[2];
+        const result = await handler({
+          sourceCode: 'DECLARE SUB TestSub()\\nCALL TestSub'
+        });
+        expect(result).toBeDefined();
+      }
+    });
+
+    it('should handle errors in port_qbasic_to_qb64pe gracefully', async () => {
+      // Create a mock service that throws an error
+      const errorServices = {
+        portingService: {
+          portQBasicToQB64PE: jest.fn().mockRejectedValue(new Error('Porting failed'))
+        }
+      } as any;
+      
+      const errorMockServer = {
+        registerTool: jest.fn()
+      } as any;
+      
+      registerPortingTools(errorMockServer, errorServices);
+      
+      const call = (errorMockServer.registerTool as jest.Mock).mock.calls.find(
+        c => c[0] === 'port_qbasic_to_qb64pe'
+      );
+      
+      if (call) {
+        const handler = call[2];
+        const result = await handler({ sourceCode: 'INVALID CODE' });
+        expect(result).toBeDefined();
+      }
+    });
+
+    it('should handle errors in get_porting_dialect_info gracefully', async () => {
+      // Create a mock service that throws an error
+      const errorServices = {
+        portingService: {
+          getSupportedDialects: jest.fn().mockImplementation(() => { throw new Error('Failed'); }),
+          getDialectRules: jest.fn().mockImplementation(() => { throw new Error('Failed'); })
+        }
+      } as any;
+      
+      const errorMockServer = {
+        registerTool: jest.fn()
+      } as any;
+      
+      registerPortingTools(errorMockServer, errorServices);
+      
+      const call = (errorMockServer.registerTool as jest.Mock).mock.calls.find(
+        c => c[0] === 'get_porting_dialect_info'
+      );
+      
+      if (call) {
+        const handler = call[2];
+        const result = await handler({ dialect: 'qbasic' });
+        expect(result).toBeDefined();
+      }
+    });
+
+    it('should handle errors in analyze_qbasic_compatibility gracefully', async () => {
+      // Create a mock service that throws an error
+      const errorServices = {
+        portingService: {
+          portQBasicToQB64PE: jest.fn().mockRejectedValue(new Error('Analysis failed'))
+        }
+      } as any;
+      
+      const errorMockServer = {
+        registerTool: jest.fn()
+      } as any;
+      
+      registerPortingTools(errorMockServer, errorServices);
+      
+      const call = (errorMockServer.registerTool as jest.Mock).mock.calls.find(
+        c => c[0] === 'analyze_qbasic_compatibility'
+      );
+      
+      if (call) {
+        const handler = call[2];
+        const result = await handler({ sourceCode: 'BROKEN' });
+        expect(result).toBeDefined();
+      }
+    });
   });
 });

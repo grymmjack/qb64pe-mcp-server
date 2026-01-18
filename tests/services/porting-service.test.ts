@@ -287,13 +287,46 @@ END SUB
       const result = await service.portQBasicToQB64PE(code);
       expect(result.portedCode).toContain('Function');
       expect(result.portedCode).toContain('As DOUBLE');
+      expect(result.portedCode).toContain('As STRING');
+    });
+
+    it('should handle function parameters without type suffixes', async () => {
+      const code = 'DEF FNTest(a, b)\n  FNTest = a + b\nEND DEF';
+      const result = await service.portQBasicToQB64PE(code);
+      expect(result.portedCode).toContain('Function');
+      // Parameters without suffixes should remain as-is
+      expect(result.portedCode).toMatch(/FnTest\s*\(\s*a\s*,\s*b\s*\)/i);
     });
 
     it('should convert PUT/GET array syntax', async () => {
       const code = 'PUT (100, 100), array';
       const result = await service.portQBasicToQB64PE(code);
-      // PUT/GET conversion requires specific format with coordinates and array
-      expect(result.portedCode).toBeDefined();
+      expect(result.portedCode).toContain('Put (100, 100), array()');
+      expect(result.transformations.some(t => t.includes('array syntax'))).toBe(true);
+    });
+
+    it('should convert GET array syntax', async () => {
+      const code = 'GET (50, 75), mydata';
+      const result = await service.portQBasicToQB64PE(code);
+      expect(result.portedCode).toContain('Get (50, 75), mydata()');
+      expect(result.transformations.some(t => t.includes('array syntax'))).toBe(true);
+    });
+
+    it('should handle GET/PUT with coordinates and array with rest parameters', async () => {
+      const code = 'GET (10, 20)-(100, 200), myarray, XOR';
+      const result = await service.portQBasicToQB64PE(code);
+      expect(result.portedCode).toContain('myarray()');
+      expect(result.portedCode).toContain(', XOR');
+      expect(result.errors.length).toBe(0);
+    });
+
+    it('should convert string functions casing', async () => {
+      const code = 'x$ = LTRIM$(y$) + RTRIM$(z$) + UCASE$(a$)';
+      const result = await service.portQBasicToQB64PE(code);
+      expect(result.portedCode).toContain('LTrim');
+      expect(result.portedCode).toContain('RTrim');
+      expect(result.portedCode).toContain('UCase');
+      expect(result.transformations.some(t => t.includes('string function'))).toBe(true);
     });
 
     it('should handle timing function conversions', async () => {

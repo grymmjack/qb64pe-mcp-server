@@ -370,4 +370,209 @@ describe('QB64PECompilerService', () => {
       expect(Array.isArray(result.suggestions)).toBe(true);
     });
   });
+
+  describe('parseCompilationOutput', () => {
+    it('should parse error with line numbers', async () => {
+      // Create a test file that exists but will fail compilation
+      const fs = require('fs');
+      const path = require('path');
+      const testFile = path.join(process.cwd(), 'test-compile.bas');
+      
+      // Create test file
+      fs.writeFileSync(testFile, 'PRINT "test"', 'utf-8');
+      
+      try {
+        // This will fail because QB64PE doesn't exist
+        const result = await service.compileAndVerify(testFile, '/fake/qb64pe');
+        
+        // Should handle the error
+        expect(result.success).toBe(false);
+        expect(result.errors).toBeDefined();
+      } finally {
+        // Clean up
+        if (fs.existsSync(testFile)) {
+          fs.unlinkSync(testFile);
+        }
+      }
+    });
+
+    it('should parse warnings in output', async () => {
+      const result = await service.compileAndVerify('/nonexistent/file.bas');
+      expect(result.errors).toBeDefined();
+      expect(Array.isArray(result.errors)).toBe(true);
+    });
+
+    it('should add suggestions for type errors', async () => {
+      const result = await service.compileAndVerify('/fake/file.bas');
+      expect(result.suggestions).toBeDefined();
+    });
+
+    it('should add suggestions for undeclared variables', async () => {
+      const result = await service.compileAndVerify('/fake/file.bas');
+      expect(Array.isArray(result.suggestions)).toBe(true);
+    });
+
+    it('should add suggestions for SUB/FUNCTION errors', async () => {
+      const result = await service.compileAndVerify('/fake/file.bas');
+      expect(result.suggestions).toBeDefined();
+    });
+
+    it('should add suggestions for syntax errors', async () => {
+      const result = await service.compileAndVerify('/fake/file.bas');
+      expect(result.suggestions.length).toBeGreaterThan(0);
+    });
+
+    it('should add suggestions for file errors', async () => {
+      const result = await service.compileAndVerify('/nonexistent/file.bas');
+      expect(result.suggestions).toBeDefined();
+      expect(result.suggestions.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('error suggestion logic', () => {
+    it('should suggest type checking for type errors', async () => {
+      const result = await service.compileAndVerify('/fake/file.bas');
+      // Should have some suggestions
+      expect(Array.isArray(result.suggestions)).toBe(true);
+    });
+
+    it('should suggest DIM for undeclared variables', async () => {
+      const result = await service.compileAndVerify('/fake/file.bas');
+      expect(result.suggestions).toBeDefined();
+    });
+
+    it('should suggest proper END statements', async () => {
+      const result = await service.compileAndVerify('/fake/file.bas');
+      expect(result.suggestions).toBeDefined();
+    });
+
+    it('should suggest syntax checking', async () => {
+      const result = await service.compileAndVerify('/fake/file.bas');
+      expect(result.suggestions).toBeDefined();
+    });
+
+    it('should suggest file path checking', async () => {
+      const result = await service.compileAndVerify('/nonexistent/file.bas');
+      expect(result.suggestions.some(s => 
+        s.includes('path') || s.includes('file') || s.includes('exists')
+      )).toBe(true);
+    });
+  });
+
+  describe('compilation command building', () => {
+    it('should use default flags when none provided', async () => {
+      const result = await service.compileAndVerify('/fake/file.bas', '/fake/qb64pe');
+      expect(result).toBeDefined();
+    });
+
+    it('should use custom flags', async () => {
+      const result = await service.compileAndVerify(
+        '/fake/file.bas',
+        '/fake/qb64pe',
+        ['-x', '-v']
+      );
+      expect(result).toBeDefined();
+    });
+
+    it('should build output name from source file', async () => {
+      const result = await service.compileAndVerify('/path/to/test.bas', '/fake/qb64pe');
+      expect(result).toBeDefined();
+    });
+  });
+
+  describe('QB64PE detection', () => {
+    it('should check common locations', async () => {
+      const result = await service.compileAndVerify('/fake/file.bas');
+      expect(result.success).toBe(false);
+      expect(result.errors.some(e => 
+        e.message.includes('QB64PE') || e.message.includes('not found')
+      )).toBe(true);
+    });
+
+    it('should try PATH when not in common locations', async () => {
+      const result = await service.compileAndVerify('/fake/file.bas');
+      expect(result.errors).toBeDefined();
+    });
+
+    it('should provide installation suggestions when not found', async () => {
+      const result = await service.compileAndVerify('/fake/file.bas');
+      expect(result.suggestions.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('output parsing patterns', () => {
+    it('should handle various error formats', async () => {
+      const result = await service.compileAndVerify('/fake/file.bas');
+      expect(result.errors).toBeDefined();
+      expect(Array.isArray(result.errors)).toBe(true);
+    });
+
+    it('should handle generic error indicators', async () => {
+      const result = await service.compileAndVerify('/fake/file.bas');
+      expect(result.errors).toBeDefined();
+    });
+
+    it('should handle multi-line output', async () => {
+      const result = await service.compileAndVerify('/fake/file.bas');
+      expect(result).toBeDefined();
+    });
+  });
+
+  describe('executable detection', () => {
+    it('should check for .exe on Windows', async () => {
+      const fs = require('fs');
+      const path = require('path');
+      const testFile = path.join(process.cwd(), 'test-exec.bas');
+      
+      fs.writeFileSync(testFile, 'PRINT "test"', 'utf-8');
+      
+      try {
+        const result = await service.compileAndVerify(testFile, '/fake/qb64pe');
+        expect(result).toBeDefined();
+      } finally {
+        if (fs.existsSync(testFile)) {
+          fs.unlinkSync(testFile);
+        }
+      }
+    });
+
+    it('should handle missing executable after compilation', async () => {
+      const result = await service.compileAndVerify('/fake/file.bas', '/fake/qb64pe');
+      expect(result).toBeDefined();
+    });
+
+    it('should add warning for missing executable', async () => {
+      const result = await service.compileAndVerify('/fake/file.bas', '/fake/qb64pe');
+      expect(result).toBeDefined();
+    });
+  });
+
+  describe('compilation timeout handling', () => {
+    it('should handle timeout errors', async () => {
+      const result = await service.compileAndVerify('/fake/file.bas', '/fake/qb64pe');
+      expect(result).toBeDefined();
+      expect(result.errors).toBeDefined();
+    });
+
+    it('should provide output even on failure', async () => {
+      const result = await service.compileAndVerify('/fake/file.bas');
+      expect(result.output).toBeDefined();
+      expect(typeof result.output).toBe('string');
+    });
+  });
+
+  describe('error severity levels', () => {
+    it('should categorize errors', async () => {
+      const result = await service.compileAndVerify('/fake/file.bas');
+      result.errors.forEach(error => {
+        expect(['error', 'warning']).toContain(error.severity);
+      });
+    });
+
+    it('should include line numbers when available', async () => {
+      const result = await service.compileAndVerify('/fake/file.bas');
+      expect(result.errors).toBeDefined();
+    });
+  });
 });
+

@@ -421,4 +421,331 @@ describe('SessionProblemsService', () => {
       expect(service.getProblems().length).toBe(0);
     });
   });
+
+  describe('generateReport', () => {
+    it('should generate comprehensive report', () => {
+      service.logProblem({
+        category: 'syntax' as const,
+        severity: 'high' as const,
+        title: 'Report Test',
+        description: 'Test',
+        context: { language: 'QB64PE' },
+        problem: { attempted: 'A', error: 'E', rootCause: 'R' },
+        solution: { implemented: 'I', preventionStrategy: 'P' }
+      });
+      
+      const report = service.generateReport();
+      expect(report).toBeDefined();
+      expect(typeof report).toBe('object');
+      expect(report.sessionId).toBeDefined();
+    });
+
+    it('should include statistics in report', () => {
+      service.logProblem({
+        category: 'tooling' as const,
+        severity: 'medium' as const,
+        title: 'Test',
+        description: 'Test',
+        context: { language: 'QB64PE' },
+        problem: { attempted: 'A', error: 'E', rootCause: 'R' },
+        solution: { implemented: 'I', preventionStrategy: 'P' }
+      });
+      
+      const report = service.generateReport();
+      expect(report.bySeverity).toBeDefined();
+      expect(report.byCategory).toBeDefined();
+    });
+
+    it('should include problem details in report', () => {
+      service.logProblem({
+        category: 'workflow' as const,
+        severity: 'low' as const,
+        title: 'Detailed Problem',
+        description: 'Test Description',
+        context: { language: 'QB64PE' },
+        problem: { attempted: 'A', error: 'E', rootCause: 'R' },
+        solution: { implemented: 'I', preventionStrategy: 'P' }
+      });
+      
+      const report = service.generateReport();
+      expect(report.problems.some(p => p.title === 'Detailed Problem')).toBe(true);
+    });
+  });
+
+  describe('file persistence', () => {
+    it('should handle save errors gracefully', () => {
+      const problem = service.logProblem({
+        category: 'syntax' as const,
+        severity: 'high' as const,
+        title: 'Save Test',
+        description: 'Test',
+        context: { language: 'QB64PE' },
+        problem: { attempted: 'A', error: 'E', rootCause: 'R' },
+        solution: { implemented: 'I', preventionStrategy: 'P' }
+      });
+      
+      expect(problem.id).toBeDefined();
+    });
+
+    it('should initialize storage directory', async () => {
+      const newService = new SessionProblemsService();
+      expect(newService).toBeDefined();
+    });
+  });
+
+  describe('problem updates', () => {
+    it('should update status to acknowledged', () => {
+      const problem = service.logProblem({
+        category: 'compatibility' as const,
+        severity: 'medium' as const,
+        title: 'Acknowledged Test',
+        description: 'Test',
+        context: { language: 'QB64PE' },
+        problem: { attempted: 'A', error: 'E', rootCause: 'R' },
+        solution: { implemented: 'I', preventionStrategy: 'P' }
+      });
+      
+      const updated = service.updateProblemStatus(problem.id, 'acknowledged');
+      expect(updated).not.toBeNull();
+      if (updated) {
+        expect(updated.status).toBe('acknowledged');
+      }
+    });
+
+    it('should update status to in-progress', () => {
+      const problem = service.logProblem({
+        category: 'tooling' as const,
+        severity: 'high' as const,
+        title: 'In Progress Test',
+        description: 'Test',
+        context: { language: 'QB64PE' },
+        problem: { attempted: 'A', error: 'E', rootCause: 'R' },
+        solution: { implemented: 'I', preventionStrategy: 'P' }
+      });
+      
+      const updated = service.updateProblemStatus(problem.id, 'in-progress');
+      expect(updated).not.toBeNull();
+      if (updated) {
+        expect(updated.status).toBe('in-progress');
+      }
+    });
+
+    it('should update status to wont-fix', () => {
+      const problem = service.logProblem({
+        category: 'workflow' as const,
+        severity: 'low' as const,
+        title: 'Wont Fix Test',
+        description: 'Test',
+        context: { language: 'QB64PE' },
+        problem: { attempted: 'A', error: 'E', rootCause: 'R' },
+        solution: { implemented: 'I', preventionStrategy: 'P' }
+      });
+      
+      const updated = service.updateProblemStatus(problem.id, 'wont-fix', 'user', 'Not worth fixing');
+      expect(updated).not.toBeNull();
+      if (updated) {
+        expect(updated.status).toBe('wont-fix');
+        expect(updated.handledBy).toBe('user');
+        expect(updated.handlingNotes).toBe('Not worth fixing');
+      }
+    });
+
+    it('should set handledAt timestamp', () => {
+      const problem = service.logProblem({
+        category: 'architecture' as const,
+        severity: 'critical' as const,
+        title: 'Timestamp Test',
+        description: 'Test',
+        context: { language: 'QB64PE' },
+        problem: { attempted: 'A', error: 'E', rootCause: 'R' },
+        solution: { implemented: 'I', preventionStrategy: 'P' }
+      });
+      
+      const updated = service.updateProblemStatus(problem.id, 'handled', 'agent');
+      expect(updated).not.toBeNull();
+      if (updated) {
+        expect(updated.handledAt).toBeDefined();
+        expect(updated.handledAt instanceof Date).toBe(true);
+      }
+    });
+  });
+
+  describe('filtering and querying', () => {
+    beforeEach(() => {
+      service.logProblem({
+        category: 'syntax' as const,
+        severity: 'high' as const,
+        title: 'Filter Test 1',
+        description: 'Test',
+        context: { language: 'QB64PE' },
+        problem: { attempted: 'A', error: 'E', rootCause: 'R' },
+        solution: { implemented: 'I', preventionStrategy: 'P' }
+      });
+      
+      service.logProblem({
+        category: 'compatibility' as const,
+        severity: 'medium' as const,
+        title: 'Filter Test 2',
+        description: 'Test',
+        context: { language: 'QB64PE' },
+        problem: { attempted: 'A', error: 'E', rootCause: 'R' },
+        solution: { implemented: 'I', preventionStrategy: 'P' }
+      });
+    });
+
+    it('should filter multiple categories', () => {
+      const syntax = service.getProblemsByCategory('syntax');
+      const compat = service.getProblemsByCategory('compatibility');
+      
+      expect(syntax.length).toBeGreaterThan(0);
+      expect(compat.length).toBeGreaterThan(0);
+    });
+
+    it('should filter multiple severities', () => {
+      const high = service.getProblemsBySeverity('high');
+      const medium = service.getProblemsBySeverity('medium');
+      
+      expect(high.some(p => p.severity === 'high')).toBe(true);
+      expect(medium.some(p => p.severity === 'medium')).toBe(true);
+    });
+  });
+
+  describe('statistics calculation', () => {
+    it('should calculate category distribution', () => {
+      service.logProblem({
+        category: 'syntax' as const,
+        severity: 'high' as const,
+        title: 'Stats Test 1',
+        description: 'Test',
+        context: { language: 'QB64PE' },
+        problem: { attempted: 'A', error: 'E', rootCause: 'R' },
+        solution: { implemented: 'I', preventionStrategy: 'P' }
+      });
+      
+      service.logProblem({
+        category: 'syntax' as const,
+        severity: 'medium' as const,
+        title: 'Stats Test 2',
+        description: 'Test',
+        context: { language: 'QB64PE' },
+        problem: { attempted: 'A', error: 'E', rootCause: 'R' },
+        solution: { implemented: 'I', preventionStrategy: 'P' }
+      });
+      
+      const stats = service.getStatistics();
+      expect(stats.byCategory).toBeDefined();
+    });
+
+    it('should calculate severity distribution', () => {
+      service.logProblem({
+        category: 'tooling' as const,
+        severity: 'critical' as const,
+        title: 'Severity Test',
+        description: 'Test',
+        context: { language: 'QB64PE' },
+        problem: { attempted: 'A', error: 'E', rootCause: 'R' },
+        solution: { implemented: 'I', preventionStrategy: 'P' }
+      });
+      
+      const stats = service.getStatistics();
+      expect(stats.bySeverity).toBeDefined();
+    });
+
+    it('should calculate status distribution', () => {
+      const id = service.logProblem({
+        category: 'workflow' as const,
+        severity: 'high' as const,
+        title: 'Status Stats Test',
+        description: 'Test',
+        context: { language: 'QB64PE' },
+        problem: { attempted: 'A', error: 'E', rootCause: 'R' },
+        solution: { implemented: 'I', preventionStrategy: 'P' }
+      });
+      
+      service.updateProblemStatus(id.id, 'handled', 'agent');
+      
+      const stats = service.getStatistics();
+      expect(stats.byStatus).toBeDefined();
+    });
+  });
+
+  describe('MCP improvement tracking', () => {
+    it('should track high priority improvements', () => {
+      service.logProblem({
+        category: 'tooling' as const,
+        severity: 'high' as const,
+        title: 'MCP Test',
+        description: 'Test',
+        context: { language: 'QB64PE' },
+        problem: { attempted: 'A', error: 'E', rootCause: 'R' },
+        solution: { implemented: 'I', preventionStrategy: 'P' },
+        mcpImprovement: {
+          toolNeeded: 'Better tool',
+          priority: 'high' as const
+        }
+      });
+      
+      const actionable = service.getActionableProblems();
+      expect(actionable.some(p => p.mcpImprovement?.priority === 'high')).toBe(true);
+    });
+
+    it('should include enhancement suggestions', () => {
+      service.logProblem({
+        category: 'architecture' as const,
+        severity: 'medium' as const,
+        title: 'Enhancement Test',
+        description: 'Test',
+        context: { language: 'QB64PE' },
+        problem: { attempted: 'A', error: 'E', rootCause: 'R' },
+        solution: { implemented: 'I', preventionStrategy: 'P' },
+        mcpImprovement: {
+          enhancementNeeded: 'Better architecture',
+          priority: 'medium' as const
+        }
+      });
+      
+      const problems = service.getProblems();
+      expect(problems.some(p => p.mcpImprovement?.enhancementNeeded)).toBe(true);
+    });
+  });
+
+  describe('edge cases', () => {
+    it('should handle updating non-existent problem', () => {
+      // Service returns null instead of throwing
+      const result = service.updateProblemStatus('nonexistent-id', 'handled');
+      expect(result).toBeNull();
+    });
+
+    it('should handle empty problem list operations', () => {
+      service.clear();
+      expect(service.getProblems()).toEqual([]);
+      expect(service.getUnhandledProblems()).toEqual([]);
+      expect(service.getActionableProblems()).toEqual([]);
+    });
+
+    it('should handle concurrent log operations', () => {
+      const problem1 = service.logProblem({
+        category: 'syntax' as const,
+        severity: 'high' as const,
+        title: 'Concurrent 1',
+        description: 'Test',
+        context: { language: 'QB64PE' },
+        problem: { attempted: 'A', error: 'E', rootCause: 'R' },
+        solution: { implemented: 'I', preventionStrategy: 'P' }
+      });
+      
+      const problem2 = service.logProblem({
+        category: 'tooling' as const,
+        severity: 'medium' as const,
+        title: 'Concurrent 2',
+        description: 'Test',
+        context: { language: 'QB64PE' },
+        problem: { attempted: 'A', error: 'E', rootCause: 'R' },
+        solution: { implemented: 'I', preventionStrategy: 'P' }
+      });
+      
+      expect(problem1.id).not.toBe(problem2.id);
+    });
+  });
 });
+

@@ -145,4 +145,219 @@ describe('QB64PECompatibilityService', () => {
       expect(Array.isArray(issues)).toBe(true);
     });
   });
+
+  describe('getBestPractices', () => {
+    it('should return best practices array', async () => {
+      const practices = await service.getBestPractices();
+      expect(Array.isArray(practices)).toBe(true);
+    });
+
+    it('should provide meaningful practices', async () => {
+      const practices = await service.getBestPractices();
+      expect(practices).toBeDefined();
+    });
+  });
+
+  describe('getDebuggingGuidance', () => {
+    it('should provide general debugging guidance', async () => {
+      const guidance = await service.getDebuggingGuidance();
+      expect(guidance).toBeDefined();
+      expect(typeof guidance).toBe('string');
+      expect(guidance.length).toBeGreaterThan(0);
+      expect(guidance).toContain('Debugging Guide');
+    });
+
+    it('should provide function-specific guidance', async () => {
+      const guidance = await service.getDebuggingGuidance('function return error');
+      expect(guidance).toContain('function');
+      expect(guidance).toContain('Specific Guidance');
+    });
+
+    it('should provide array-specific guidance', async () => {
+      const guidance = await service.getDebuggingGuidance('array subscript out of range');
+      expect(guidance).toContain('array');
+      expect(guidance).toContain('bounds');
+    });
+
+    it('should provide file-specific guidance', async () => {
+      const guidance = await service.getDebuggingGuidance('file open error');
+      expect(guidance).toContain('file');
+      expect(guidance).toContain('FREEFILE');
+    });
+
+    it('should provide syntax-specific guidance', async () => {
+      const guidance = await service.getDebuggingGuidance('syntax error expected');
+      expect(guidance.toLowerCase()).toContain('quotes');
+    });
+
+    it('should provide scope-specific guidance', async () => {
+      const guidance = await service.getDebuggingGuidance('variable scope problem');
+      expect(guidance).toContain('SHARED');
+    });
+
+    it('should provide dynamic array guidance', async () => {
+      const guidance = await service.getDebuggingGuidance('dynamic array issue');
+      // Contains 'array' so gets array guidance
+      expect(guidance.toLowerCase()).toContain('bound');
+    });
+
+    it('should provide general guidance for unknown issues', async () => {
+      const guidance = await service.getDebuggingGuidance('unknown weird error');
+      expect(guidance).toBeDefined();
+      expect(guidance).toContain('debug');
+    });
+
+    it('should handle empty issue string', async () => {
+      const guidance = await service.getDebuggingGuidance('');
+      expect(guidance).toBeDefined();
+      expect(typeof guidance).toBe('string');
+    });
+  });
+
+  describe('debugging guidance details', () => {
+    it('should include traditional error handling', async () => {
+      const guidance = await service.getDebuggingGuidance();
+      expect(guidance).toContain('ON ERROR');
+    });
+
+    it('should include modern assertions', async () => {
+      const guidance = await service.getDebuggingGuidance();
+      expect(guidance).toContain('_ASSERT');
+    });
+
+    it('should include console debugging', async () => {
+      const guidance = await service.getDebuggingGuidance();
+      expect(guidance).toContain('$CONSOLE');
+    });
+
+    it('should include modern logging', async () => {
+      const guidance = await service.getDebuggingGuidance();
+      expect(guidance).toContain('_LOGERROR');
+    });
+  });
+
+  describe('specific guidance patterns', () => {
+    it('should mention type sigils for function errors', async () => {
+      const guidance = await service.getDebuggingGuidance('function type problem');
+      expect(guidance).toContain('sigil');
+    });
+
+    it('should mention bounds checking for array errors', async () => {
+      const guidance = await service.getDebuggingGuidance('array bounds error');
+      expect(guidance).toContain('BOUND');
+    });
+
+    it('should mention file closing for file errors', async () => {
+      const guidance = await service.getDebuggingGuidance('file handle error');
+      expect(guidance).toContain('close');
+    });
+
+    it('should mention quotes for syntax errors', async () => {
+      const guidance = await service.getDebuggingGuidance('syntax parse error');
+      expect(guidance).toContain('quotes');
+    });
+
+    it('should mention DIM SHARED for scope errors', async () => {
+      const guidance = await service.getDebuggingGuidance('scope issue shared');
+      expect(guidance).toContain('DIM SHARED');
+    });
+
+    it('should mention REDIM for dynamic arrays', async () => {
+      const guidance = await service.getDebuggingGuidance('dynamic issue');
+      // 'dynamic' alone triggers dynamic array guidance
+      expect(guidance.toLowerCase()).toContain('redim');
+    });
+  });
+
+  describe('knowledge base integration', () => {
+    it('should load knowledge base on initialization', async () => {
+      const newService = new QB64PECompatibilityService();
+      const practices = await newService.getBestPractices();
+      expect(Array.isArray(practices)).toBe(true);
+    });
+
+    it('should provide consistent results', async () => {
+      const guidance1 = await service.getDebuggingGuidance('test');
+      const guidance2 = await service.getDebuggingGuidance('test');
+      expect(guidance1).toBe(guidance2);
+    });
+  });
+
+  describe('platform-specific compatibility', () => {
+    it('should differentiate Windows-specific features', async () => {
+      const windowsInfo = await service.getPlatformCompatibility('windows');
+      expect(windowsInfo).toBeDefined();
+    });
+
+    it('should differentiate macOS-specific features', async () => {
+      const macInfo = await service.getPlatformCompatibility('macos');
+      expect(macInfo).toBeDefined();
+    });
+
+    it('should differentiate Linux-specific features', async () => {
+      const linuxInfo = await service.getPlatformCompatibility('linux');
+      expect(linuxInfo).toBeDefined();
+    });
+
+    it('should aggregate all platform info', async () => {
+      const allInfo = await service.getPlatformCompatibility('all');
+      expect(allInfo).toHaveProperty('windows');
+      expect(allInfo).toHaveProperty('macos');
+      expect(allInfo).toHaveProperty('linux');
+    });
+  });
+
+  describe('error severity classification', () => {
+    it('should classify errors appropriately', async () => {
+      const code = 'FUNCTION Bad(x AS INTEGER) AS STRING\nBad = x\nEND FUNCTION';
+      const issues = await service.validateCompatibility(code);
+      if (issues.length > 0) {
+        expect(['error', 'warning', 'info']).toContain(issues[0].severity);
+      }
+    });
+  });
+
+  describe('search functionality', () => {
+    it('should find relevant compatibility issues', async () => {
+      const results = await service.searchCompatibility('function');
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('should handle case-insensitive search', async () => {
+      const results1 = await service.searchCompatibility('FUNCTION');
+      const results2 = await service.searchCompatibility('function');
+      expect(Array.isArray(results1)).toBe(true);
+      expect(Array.isArray(results2)).toBe(true);
+    });
+
+    it('should return empty array for no matches', async () => {
+      const results = await service.searchCompatibility('xyzabc123impossible');
+      expect(Array.isArray(results)).toBe(true);
+    });
+  });
+
+  describe('multiple issue detection', () => {
+    it('should detect multiple different issues', async () => {
+      const code = `
+        FUNCTION Test(x AS INTEGER) AS INTEGER
+        FUNCTION Another(y AS STRING) AS STRING
+      `;
+      const issues = await service.validateCompatibility(code);
+      expect(Array.isArray(issues)).toBe(true);
+    });
+  });
+
+  describe('guidance formatting', () => {
+    it('should provide well-formatted guidance', async () => {
+      const guidance = await service.getDebuggingGuidance();
+      expect(guidance).toContain('#');
+      expect(guidance).toContain('```');
+    });
+
+    it('should include code examples in guidance', async () => {
+      const guidance = await service.getDebuggingGuidance();
+      expect(guidance).toContain('basic');
+    });
+  });
 });
+

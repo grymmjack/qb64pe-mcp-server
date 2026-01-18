@@ -12,7 +12,7 @@
     "test:coverage": "jest --coverage",
     "test:verbose": "jest --verbose",
     "start:server": "node tools/dev-static-server.js",
-    "analyze:graphics": "node test-enhanced-graphics-analysis.js",
+    "analyze:graphics": "node tests/integration/test-enhanced-graphics-analysis.js",
     "server:health": "curl -s http://localhost:5173/health || echo 'Server not running'"
   },
   "keywords": [

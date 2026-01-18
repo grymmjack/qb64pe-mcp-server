@@ -126,16 +126,16 @@ export function getSyntaxHelp(identifier: string): string | null {
     return "'" + identifier + "' appears to be a string function or variable (ends with $)";
   }
 
-  if (upperId.startsWith('_')) {
-    return "'" + identifier + "' appears to be a QB64PE-specific function or constant (starts with _)";
-  }
-
   if (upperId.match(/^GL[A-Z]/)) {
     return "'" + identifier + "' appears to be an OpenGL function";
   }
 
   if (upperId.match(/^_[A-Z]+$/)) {
     return "'" + identifier + "' appears to be a QB64PE system constant or function";
+  }
+
+  if (upperId.startsWith('_')) {
+    return "'" + identifier + "' appears to be a QB64PE-specific function or constant (starts with _)";
   }
 
   return null;
@@ -179,32 +179,37 @@ export function getSyntaxHighlighting(code: string): Array<{ text: string; scope
   const lines = code.split('\n');
   for (const line of lines) {
     let remaining = line;
+    let position = 0;
 
-    // Check for comments (REM or ')
-    const commentMatch = remaining.match(/^(.*?)(\bREM\b|').*$/i);
-    if (commentMatch) {
-      if (commentMatch[1]) {
-        tokens.push({ text: commentMatch[1], scope: 'source.QB64PE' });
+    while (position < remaining.length) {
+      const rest = remaining.substring(position);
+
+      // Check for strings first (they take precedence)
+      const stringMatch = rest.match(/^([^"']*)"([^"]*)"/);
+      if (stringMatch && stringMatch.index === 0) {
+        if (stringMatch[1]) {
+          tokens.push({ text: stringMatch[1], scope: 'source.QB64PE' });
+        }
+        tokens.push({ text: '"' + stringMatch[2] + '"', scope: 'string.quoted.double.QB64PE' });
+        position += stringMatch[0].length;
+        continue;
       }
-      tokens.push({ text: remaining.substring(commentMatch[1].length), scope: 'comment.line.QB64PE' });
-      continue;
+
+      // Check for comments (REM or ')
+      const commentMatch = rest.match(/^(.*?)(\bREM\b|')/i);
+      if (commentMatch && (commentMatch.index === 0 || commentMatch[1].length === 0 || rest[0] === "'" || /\bREM\b/i.test(rest.substring(0, 10)))) {
+        const beforeComment = commentMatch[1] || '';
+        if (beforeComment) {
+          tokens.push({ text: beforeComment, scope: 'source.QB64PE' });
+        }
+        tokens.push({ text: rest.substring(beforeComment.length), scope: 'comment.line.QB64PE' });
+        break; // Comments consume rest of line
+      }
+
+      // No special patterns, consume the rest as source
+      tokens.push({ text: rest, scope: 'source.QB64PE' });
+      break;
     }
-
-    // Check for strings
-    const stringMatch = remaining.match(/^([^"]*)"([^"]*)"?(.*)$/);
-    if (stringMatch) {
-      if (stringMatch[1]) {
-        tokens.push({ text: stringMatch[1], scope: 'source.QB64PE' });
-      }
-      tokens.push({ text: '"' + stringMatch[2] + '"', scope: 'string.quoted.double.QB64PE' });
-      if (stringMatch[3]) {
-        tokens.push({ text: stringMatch[3], scope: 'source.QB64PE' });
-      }
-      continue;
-    }
-
-    // Default to source code
-    tokens.push({ text: remaining, scope: 'source.QB64PE' });
   }
 
   return tokens;

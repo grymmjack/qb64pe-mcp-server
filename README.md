@@ -1,5 +1,13 @@
 # QB64PE MCP Server
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/grymmjack/qb64pe-mcp-server)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
+[![MCP SDK](https://img.shields.io/badge/MCP%20SDK-1.0.0-purple.svg)](https://github.com/modelcontextprotocol/sdk)
+[![Tools](https://img.shields.io/badge/tools-52-orange.svg)](#-tools-quick-reference)
+[![Prompts](https://img.shields.io/badge/prompts-6-orange.svg)](#-prompts-quick-reference)
+
 A comprehensive Model Context Protocol (MCP) server that provides advanced QB64PE (QBasic 64 Phoenix Edition) programming assistance. This server enables AI assistants to search the QB64PE wiki, understand compiler options, provide debugging help, validate QB64PE-only syntax, handle cross-platform differences, **port QBasic programs to QB64PE**, and **provides advanced automated debugging capabilities with native logging**.
 
 ## ✨ **New: Automatic Tool Discovery System**

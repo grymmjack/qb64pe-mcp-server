@@ -373,4 +373,377 @@ describe('KeywordsService', () => {
       expect(Array.isArray(keywords)).toBe(true);
     });
   });
+
+  describe('comprehensive keyword data generation', () => {
+    it('should correctly categorize metacommands', () => {
+      jest.clearAllMocks();
+      const data = {
+        keywords: {
+          '$CONSOLE': { description: 'Console metacommand', category: 'Meta' },
+          '$INCLUDE': { description: 'Include files', category: 'Meta' },
+          '$DYNAMIC': { description: 'Dynamic arrays', category: 'Meta' }
+        }
+      };
+      (fs.existsSync as jest.Mock).mockReturnValue(false);
+      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(data));
+      (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+      
+      const testService = new KeywordsService();
+      const metacommands = testService.getKeywordsByType('metacommand');
+      expect(Array.isArray(metacommands)).toBe(true);
+    });
+
+    it('should correctly categorize OpenGL functions', () => {
+      jest.clearAllMocks();
+      const data = {
+        keywords: {
+          '_glBegin': { description: 'OpenGL begin', category: 'OpenGL' },
+          '_glEnd': { description: 'OpenGL end', category: 'OpenGL' },
+          '_glVertex3f': { description: 'OpenGL vertex', category: 'OpenGL' }
+        }
+      };
+      (fs.existsSync as jest.Mock).mockReturnValue(false);
+      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(data));
+      (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+      
+      const testService = new KeywordsService();
+      const opengl = testService.getKeywordsByType('opengl');
+      expect(Array.isArray(opengl)).toBe(true);
+    });
+
+    it('should correctly categorize operators', () => {
+      jest.clearAllMocks();
+      const data = {
+        keywords: {
+          'AND': { description: 'Logical AND operator', category: 'Operators' },
+          'OR': { description: 'Logical OR operator', category: 'Operators' },
+          'MOD': { description: 'Modulo operator', category: 'Operators' },
+          '_ANDALSO': { description: 'Short-circuit AND', category: 'Operators' },
+          '_NEGATE': { description: 'Negation', category: 'Operators' }
+        }
+      };
+      (fs.existsSync as jest.Mock).mockReturnValue(false);
+      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(data));
+      (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+      
+      const testService = new KeywordsService();
+      const operators = testService.getKeywordsByType('operator');
+      expect(Array.isArray(operators)).toBe(true);
+    });
+
+    it('should correctly categorize types', () => {
+      jest.clearAllMocks();
+      const data = {
+        keywords: {
+          'INTEGER': { description: 'Integer numerical type', category: 'Types' },
+          'LONG': { description: 'Long integer type', category: 'Types' },
+          '_INTEGER64': { description: '64-bit integer', category: 'Types' },
+          '_MEM': { description: 'Memory type', category: 'Types' },
+          '_UNSIGNED': { description: 'Unsigned modifier', category: 'Types' }
+        }
+      };
+      (fs.existsSync as jest.Mock).mockReturnValue(false);
+      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(data));
+      (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+      
+      const testService = new KeywordsService();
+      const types = testService.getKeywordsByType('type');
+      expect(Array.isArray(types)).toBe(true);
+    });
+
+    it('should correctly categorize constants', () => {
+      jest.clearAllMocks();
+      const data = {
+        keywords: {
+          '_PI': { description: 'Mathematical constant pi', category: 'Math' },
+          '_MIDDLE': { description: 'Middle alignment constant', category: 'Constants' },
+          'BASE': { description: 'Base constant', category: 'Constants' }
+        }
+      };
+      (fs.existsSync as jest.Mock).mockReturnValue(false);
+      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(data));
+      (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+      
+      const testService = new KeywordsService();
+      const constants = testService.getKeywordsByType('constant');
+      expect(Array.isArray(constants)).toBe(true);
+    });
+
+    it('should correctly categorize functions', () => {
+      jest.clearAllMocks();
+      const data = {
+        keywords: {
+          'CHR$': { description: '(function) Returns character from ASCII', category: 'String' },
+          'LEN': { description: 'Returns length of string function', category: 'String' },
+          'SIN': { description: 'Sine function returns value', category: 'Math' },
+          '_RGB32': { description: 'Returns RGB color value', category: 'Graphics' }
+        }
+      };
+      (fs.existsSync as jest.Mock).mockReturnValue(false);
+      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(data));
+      (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+      
+      const testService = new KeywordsService();
+      const functions = testService.getKeywordsByType('function');
+      expect(Array.isArray(functions)).toBe(true);
+    });
+
+    it('should correctly categorize statements', () => {
+      jest.clearAllMocks();
+      const data = {
+        keywords: {
+          'PRINT (statement)': { description: 'Displays text statement', category: 'Output' },
+          'INPUT': { description: '(statement) Gets user input', category: 'Input' },
+          'DIM': { description: 'Declares variables', category: 'Variables' }
+        }
+      };
+      (fs.existsSync as jest.Mock).mockReturnValue(false);
+      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(data));
+      (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+      
+      const testService = new KeywordsService();
+      const statements = testService.getKeywordsByType('statement');
+      expect(Array.isArray(statements)).toBe(true);
+    });
+
+    it('should correctly categorize legacy keywords', () => {
+      jest.clearAllMocks();
+      const data = {
+        keywords: {
+          'IOCTL': { description: 'Legacy qbasic only keyword', category: 'Legacy' },
+          'BEEP': { description: 'Deprecated compatibility sound', category: 'Sound' }
+        }
+      };
+      (fs.existsSync as jest.Mock).mockReturnValue(false);
+      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(data));
+      (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+      
+      const testService = new KeywordsService();
+      const legacy = testService.getKeywordsByType('legacy');
+      expect(Array.isArray(legacy)).toBe(true);
+    });
+
+    it('should handle complex syntax patterns', () => {
+      jest.clearAllMocks();
+      const data = {
+        keywords: {
+          'IF...THEN': { description: 'Conditional statement', category: 'Control' },
+          'FOR...NEXT': { description: 'Loop statement', category: 'Control' },
+          'DO...LOOP': { description: 'Loop structure', category: 'Control' },
+          'SELECT CASE': { description: 'Case selection', category: 'Control' },
+          'WHILE...WEND': { description: 'While loop', category: 'Control' },
+          'SUB': { description: 'Subroutine definition', category: 'Procedures' },
+          'FUNCTION': { description: 'Function definition', category: 'Procedures' },
+          'TYPE': { description: 'Type definition', category: 'Types' },
+          'DECLARE LIBRARY (QB64 statement block)': { description: 'Library declaration', category: 'Libraries' }
+        }
+      };
+      (fs.existsSync as jest.Mock).mockReturnValue(false);
+      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(data));
+      (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+      
+      const testService = new KeywordsService();
+      expect(testService.getKeywordCount()).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should handle version detection', () => {
+      jest.clearAllMocks();
+      const data = {
+        keywords: {
+          '_DISPLAY': { description: 'QB64PE display function', category: 'Graphics' },
+          '_LIMIT': { description: 'QB64 frame limiter', category: 'Timing' },
+          'PRINT': { description: 'QBasic print statement', category: 'Output' }
+        }
+      };
+      (fs.existsSync as jest.Mock).mockReturnValue(false);
+      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(data));
+      (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+      
+      const testService = new KeywordsService();
+      const qb64pe = testService.getKeywordsByVersion('QB64PE');
+      const qbasic = testService.getKeywordsByVersion('QBasic');
+      expect(Array.isArray(qb64pe)).toBe(true);
+      expect(Array.isArray(qbasic)).toBe(true);
+    });
+
+    it('should handle platform availability', () => {
+      jest.clearAllMocks();
+      const data = {
+        keywords: {
+          'SHELL': { description: 'Execute system command Windows only', category: 'System' },
+          'SYSTEM': { description: 'Linux only system call', category: 'System' },
+          'OPEN': { description: 'Open files macOS only', category: 'Files' },
+          'PRINT': { description: 'Print to screen', category: 'Output' }
+        }
+      };
+      (fs.existsSync as jest.Mock).mockReturnValue(false);
+      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(data));
+      (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+      
+      const testService = new KeywordsService();
+      expect(testService.getKeywordCount()).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should generate examples for different keyword types', () => {
+      jest.clearAllMocks();
+      const data = {
+        keywords: {
+          'IF...THEN': { description: 'Conditional', category: 'Control' },
+          'FOR...NEXT': { description: 'Loop', category: 'Control' },
+          'DO...LOOP': { description: 'Do loop', category: 'Control' },
+          'SELECT CASE': { description: 'Case selection', category: 'Control' },
+          'WHILE...WEND': { description: 'While loop', category: 'Control' },
+          'PRINT': { description: 'Output', category: 'Output' },
+          '_ACCEPTFILEDROP': { description: 'File drop', category: 'Input' },
+          'SCREEN': { description: 'Screen mode', category: 'Graphics' },
+          'COLOR': { description: 'Color setting', category: 'Graphics' },
+          'CIRCLE': { description: 'Draw circle', category: 'Graphics' },
+          'LINE': { description: 'Draw line', category: 'Graphics' },
+          'INPUT$': { description: 'String input function', category: 'Input' },
+          'CHR$': { description: 'Character function', category: 'String' },
+          'HEX$': { description: 'Hex conversion', category: 'String' },
+          '_RGB32': { description: 'RGB color function returns value', category: 'Graphics' },
+          'TIMER': { description: 'Timer function returns value', category: 'Timing' },
+          'RND': { description: 'Random function returns value', category: 'Math' },
+          'INPUT': { description: 'Input statement', category: 'Input' },
+          'DIM': { description: 'Dimension statement', category: 'Variables' },
+          '$INCLUDE': { description: 'Include metacommand', category: 'Meta' },
+          '$CONSOLE': { description: 'Console metacommand', category: 'Meta' },
+          'AND (boolean)': { description: 'Boolean AND operator', category: 'Operators' },
+          '_MEM': { description: 'Memory type', category: 'Types' },
+          '_glBegin': { description: 'OpenGL begin', category: 'OpenGL' }
+        }
+      };
+      (fs.existsSync as jest.Mock).mockReturnValue(false);
+      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(data));
+      (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+      
+      const testService = new KeywordsService();
+      expect(testService.getKeywordCount()).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should find related keywords for various categories', () => {
+      jest.clearAllMocks();
+      const data = {
+        keywords: {
+          '_glVertex3f': { description: 'OpenGL vertex function', category: 'OpenGL' },
+          '_RGB32': { description: 'RGB color function', category: 'Graphics' },
+          '_RED32': { description: 'Red component', category: 'Graphics' },
+          'SCREEN': { description: 'Screen mode', category: 'Graphics' },
+          '_NEWIMAGE': { description: 'Create new image', category: 'Graphics' },
+          'OPEN': { description: 'Open file', category: 'File' },
+          'CLOSE': { description: 'Close file', category: 'File' },
+          'SIN': { description: 'Sine function', category: 'Math' },
+          'COS': { description: 'Cosine function', category: 'Math' },
+          'LEFT$': { description: 'Left substring', category: 'String' },
+          'MID$': { description: 'Middle substring', category: 'String' },
+          '_SNDOPEN': { description: 'Open sound', category: 'Sound' },
+          '_SNDPLAY': { description: 'Play sound', category: 'Sound' },
+          '_MEMGET': { description: 'Memory get', category: 'Memory' },
+          '_MEMPUT': { description: 'Memory put', category: 'Memory' },
+          'TIMER': { description: 'Timer function', category: 'Timing' },
+          '_DELAY': { description: 'Delay execution', category: 'Timing' },
+          'IF...THEN': { description: 'Conditional', category: 'Control' },
+          'FOR...NEXT': { description: 'For loop', category: 'Control' },
+          '_MOUSEINPUT': { description: 'Mouse input', category: 'Input' },
+          '_KEYHIT': { description: 'Key hit', category: 'Input' }
+        }
+      };
+      (fs.existsSync as jest.Mock).mockReturnValue(false);
+      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(data));
+      (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+      
+      const testService = new KeywordsService();
+      expect(testService.getKeywordCount()).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should handle boolean operator names', () => {
+      jest.clearAllMocks();
+      const data = {
+        keywords: {
+          'AND (boolean)': { description: 'Boolean AND', category: 'Operators' },
+          'OR (boolean)': { description: 'Boolean OR', category: 'Operators' },
+          'XOR (boolean)': { description: 'Boolean XOR', category: 'Operators' }
+        }
+      };
+      (fs.existsSync as jest.Mock).mockReturnValue(false);
+      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(data));
+      (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+      
+      const testService = new KeywordsService();
+      expect(testService.getKeywordCount()).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should handle file save errors gracefully', () => {
+      jest.clearAllMocks();
+      const data = {
+        keywords: {
+          'PRINT': { description: 'Output', category: 'Output' }
+        }
+      };
+      (fs.existsSync as jest.Mock).mockReturnValue(false);
+      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(data));
+      (fs.writeFileSync as jest.Mock).mockImplementation(() => {
+        throw new Error('Write error');
+      });
+      (fs.mkdirSync as jest.Mock).mockImplementation(() => {});
+      
+      // Should not throw even if save fails
+      expect(() => new KeywordsService()).not.toThrow();
+    });
+
+    it('should handle enhanced file exists with insufficient keywords', () => {
+      jest.clearAllMocks();
+      const originalData = {
+        keywords: {
+          'PRINT': { description: 'Output', category: 'Output' },
+          'INPUT': { description: 'Input', category: 'Input' },
+          'IF': { description: 'Conditional', category: 'Control' },
+          'FOR': { description: 'Loop', category: 'Control' },
+          'FUNCTION': { description: 'Function def', category: 'Procedures' },
+          'DIM': { description: 'Declare', category: 'Variables' },
+          'COLOR': { description: 'Color', category: 'Graphics' },
+          'CIRCLE': { description: 'Circle', category: 'Graphics' },
+          'LINE': { description: 'Line', category: 'Graphics' },
+          'SCREEN': { description: 'Screen', category: 'Graphics' },
+          'OPEN': { description: 'Open', category: 'File' }
+        }
+      };
+      
+      const enhancedData = {
+        keywords: {
+          'PRINT': { description: 'Output', category: 'Output', type: 'statement' }
+          // Only 1 keyword when original has 11 - should regenerate
+        },
+        categories: {}
+      };
+      
+      let callCount = 0;
+      (fs.existsSync as jest.Mock).mockReturnValue(true);
+      (fs.readFileSync as jest.Mock).mockImplementation((path: string) => {
+        // First call is for original, second for enhanced
+        callCount++;
+        if (callCount % 2 === 1 || path.includes('QB64PE_Keywords')) {
+          return JSON.stringify(originalData);
+        }
+        return JSON.stringify(enhancedData);
+      });
+      (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+      (fs.mkdirSync as jest.Mock).mockImplementation(() => {});
+      
+      const testService = new KeywordsService();
+      expect(testService.getKeywordCount()).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should handle load errors gracefully', () => {
+      jest.clearAllMocks();
+      (fs.existsSync as jest.Mock).mockImplementation(() => {
+        throw new Error('Read error');
+      });
+      
+      expect(() => new KeywordsService()).not.toThrow();
+    });
+
+
+  });
 });

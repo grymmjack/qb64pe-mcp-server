@@ -7,17 +7,17 @@ A comprehensive Model Context Protocol (MCP) server that provides advanced QB64P
 The MCP server now includes an **Automatic Tool Discovery System** that ensures LLMs are immediately aware of all available tools. On the very first tool call, the LLM receives comprehensive documentation of all 52 tools, organized by category, with usage guidelines and workflow recommendations. This solves the common problem of LLMs not knowing what tools are available.
 
 **Key Features:**
-- 🎓 Automatic on first interaction - no manual discovery needed
-- 📚 Complete tool catalog with descriptions and schemas
-- 🏷️ Organized by 10 functional categories
-- 📖 Includes usage guidelines and workflow patterns
-- 🔄 Zero configuration - works automatically
+-  Automatic on first interaction - no manual discovery needed
+- [Guide] Complete tool catalog with descriptions and schemas
+-  Organized by 10 functional categories
+- [Docs] Includes usage guidelines and workflow patterns
+- [Port] Zero configuration - works automatically
 
-## 🚀 **52 Tools & 6 Prompts Available!**
+## [Debug] **52 Tools & 6 Prompts Available!**
 
 This MCP server provides **52 comprehensive tools** and **6 intelligent prompts** for complete QB64PE development support, from installation detection to advanced debugging and porting assistance.
 
-**🧠 NEW: Agent Intelligence System!** - See [HOW_AGENTS_LEARN.md](docs/guides/HOW_AGENTS_LEARN.md) for details on how AI agents automatically discover and intelligently use QB64PE MCP tools through:
+**[AI] NEW: Agent Intelligence System!** - See [HOW_AGENTS_LEARN.md](docs/guides/HOW_AGENTS_LEARN.md) for details on how AI agents automatically discover and intelligently use QB64PE MCP tools through:
 - **Automatic Tool Discovery** - Complete tool catalog on first call
 - **MCP Resources** - `qb64pe://agent/intelligence-guide` with context recognition, decision matrices, and autonomous workflows
 - **MCP Prompts** - `analyze-compilation-error` for autonomous compilation error fixing
@@ -93,150 +93,150 @@ qb64pe-mcp-server/
 
 ---
 
-## �📋 **Tools Quick Reference**
+## �[Tools] **Tools Quick Reference**
 
-<details open>
-<summary><strong>🚀 Advanced Debugging & Automation (12 tools)</strong></summary>
+<details>
+<summary><strong>[Debug] Advanced Debugging & Automation (12 tools)</strong></summary>
 
 | Tool | Description | Docs |
 |------|-------------|------|
-| `enhance_qb64pe_code_for_debugging` | Apply comprehensive debugging enhancements with console management, flow control, and resource tracking | [📖](docs/tools/enhance_qb64pe_code_for_debugging.md) |
-| `get_qb64pe_debugging_best_practices` | Get debugging best practices specifically for QB64PE development | [📖](docs/tools/get_qb64pe_debugging_best_practices.md) |
-| `get_llm_debugging_guide` | Get LLM-specific debugging guidance with timeout strategies and automation workflows | [📖](docs/tools/get_llm_debugging_guide.md) |
-| `inject_native_qb64pe_logging` | Inject native QB64PE logging functions (_LOGINFO, _LOGERROR, etc.) with $CONSOLE:ONLY directive | [📖](docs/tools/inject_native_qb64pe_logging.md) |
-| `generate_advanced_debugging_template` | Create comprehensive debugging templates with native logging and structured output | [📖](docs/tools/generate_advanced_debugging_template.md) |
-| `generate_qb64pe_echo_functions` | Generate ECHO helper functions for simplified console output (mandatory for graphics modes) | [📖](docs/tools/generate_qb64pe_echo_functions.md) |
-| `parse_qb64pe_structured_output` | Parse structured output from enhanced QB64PE programs with section analysis | [📖](docs/tools/parse_qb64pe_structured_output.md) |
-| `generate_output_capture_commands` | Generate cross-platform commands for capturing and monitoring QB64PE program output | [📖](docs/tools/generate_output_capture_commands.md) |
-| `get_debugging_help` | Get help with debugging QB64PE programs using PRINT statements, $CONSOLE, etc. | [📖](docs/tools/get_debugging_help.md) |
-| `get_execution_monitoring_guidance` | Get comprehensive guidance for monitoring QB64PE program execution with LLM timeout strategies | [📖](docs/tools/get_execution_monitoring_guidance.md) |
-| `generate_monitoring_template` | Generate QB64PE code template with built-in logging, screenshots, and execution monitoring | [📖](docs/tools/generate_monitoring_template.md) |
-| `generate_console_formatting_template` | Generate QB64PE template with enhanced console output formatting for better terminal parsing | [📖](docs/tools/generate_console_formatting_template.md) |
+| `enhance_qb64pe_code_for_debugging` | Apply comprehensive debugging enhancements with console management, flow control, and resource tracking | [[Docs]](docs/tools/enhance_qb64pe_code_for_debugging.md) |
+| `get_qb64pe_debugging_best_practices` | Get debugging best practices specifically for QB64PE development | [[Docs]](docs/tools/get_qb64pe_debugging_best_practices.md) |
+| `get_llm_debugging_guide` | Get LLM-specific debugging guidance with timeout strategies and automation workflows | [[Docs]](docs/tools/get_llm_debugging_guide.md) |
+| `inject_native_qb64pe_logging` | Inject native QB64PE logging functions (_LOGINFO, _LOGERROR, etc.) with $CONSOLE:ONLY directive | [[Docs]](docs/tools/inject_native_qb64pe_logging.md) |
+| `generate_advanced_debugging_template` | Create comprehensive debugging templates with native logging and structured output | [[Docs]](docs/tools/generate_advanced_debugging_template.md) |
+| `generate_qb64pe_echo_functions` | Generate ECHO helper functions for simplified console output (mandatory for graphics modes) | [[Docs]](docs/tools/generate_qb64pe_echo_functions.md) |
+| `parse_qb64pe_structured_output` | Parse structured output from enhanced QB64PE programs with section analysis | [[Docs]](docs/tools/parse_qb64pe_structured_output.md) |
+| `generate_output_capture_commands` | Generate cross-platform commands for capturing and monitoring QB64PE program output | [[Docs]](docs/tools/generate_output_capture_commands.md) |
+| `get_debugging_help` | Get help with debugging QB64PE programs using PRINT statements, $CONSOLE, etc. | [[Docs]](docs/tools/get_debugging_help.md) |
+| `get_execution_monitoring_guidance` | Get comprehensive guidance for monitoring QB64PE program execution with LLM timeout strategies | [[Docs]](docs/tools/get_execution_monitoring_guidance.md) |
+| `generate_monitoring_template` | Generate QB64PE code template with built-in logging, screenshots, and execution monitoring | [[Docs]](docs/tools/generate_monitoring_template.md) |
+| `generate_console_formatting_template` | Generate QB64PE template with enhanced console output formatting for better terminal parsing | [[Docs]](docs/tools/generate_console_formatting_template.md) |
 
 </details>
 
 <details>
-<summary><strong>🔄 QBasic to QB64PE Porting (3 tools)</strong></summary>
+<summary><strong>[Port] QBasic to QB64PE Porting (3 tools)</strong></summary>
 
 | Tool | Description | Docs |
 |------|-------------|------|
-| `port_qbasic_to_qb64pe` | Complete automated porting of QBasic programs to QB64PE with 13+ transformation patterns | [📖](docs/tools/port_qbasic_to_qb64pe.md) |
-| `analyze_qbasic_compatibility` | Pre-porting analysis with complexity assessment and effort estimation | [📖](docs/tools/analyze_qbasic_compatibility.md) |
-| `get_porting_dialect_info` | Multi-dialect support information and implementation status | [📖](docs/tools/get_porting_dialect_info.md) |
+| `port_qbasic_to_qb64pe` | Complete automated porting of QBasic programs to QB64PE with 13+ transformation patterns | [[Docs]](docs/tools/port_qbasic_to_qb64pe.md) |
+| `analyze_qbasic_compatibility` | Pre-porting analysis with complexity assessment and effort estimation | [[Docs]](docs/tools/analyze_qbasic_compatibility.md) |
+| `get_porting_dialect_info` | Multi-dialect support information and implementation status | [[Docs]](docs/tools/get_porting_dialect_info.md) |
 
 </details>
 
 <details>
-<summary><strong>📖 Wiki & Documentation (3 tools)</strong></summary>
+<summary><strong>[Docs] Wiki & Documentation (3 tools)</strong></summary>
 
 | Tool | Description | Docs |
 |------|-------------|------|
-| `search_qb64pe_wiki` | Search the QB64PE wiki for documentation, tutorials, and reference materials | [📖](docs/tools/search_qb64pe_wiki.md) |
-| `get_qb64pe_page` | Retrieve detailed content from a specific QB64PE wiki page | [📖](docs/tools/get_qb64pe_page.md) |
-| `get_qb64pe_wiki_categories` | Get all available QB64PE wiki keyword categories with keyword counts | [📖](docs/tools/get_qb64pe_wiki_categories.md) |
+| `search_qb64pe_wiki` | Search the QB64PE wiki for documentation, tutorials, and reference materials | [[Docs]](docs/tools/search_qb64pe_wiki.md) |
+| `get_qb64pe_page` | Retrieve detailed content from a specific QB64PE wiki page | [[Docs]](docs/tools/get_qb64pe_page.md) |
+| `get_qb64pe_wiki_categories` | Get all available QB64PE wiki keyword categories with keyword counts | [[Docs]](docs/tools/get_qb64pe_wiki_categories.md) |
 
 </details>
 
 <details>
-<summary><strong>🛠️ Compiler & Development (4 tools)</strong></summary>
+<summary><strong>[Build] Compiler & Development (4 tools)</strong></summary>
 
 | Tool | Description | Docs |
 |------|-------------|------|
-| `get_compiler_options` | Get information about QB64PE compiler command-line options and flags | [📖](docs/tools/get_compiler_options.md) |
-| `get_qb64pe_best_practices` | Get best practices and coding guidelines for QB64PE development | [📖](docs/tools/get_qb64pe_best_practices.md) |
-| `get_qb64pe_graphics_guide` | Get comprehensive graphics statements guide designed for LLMs (includes _PUTIMAGE usage patterns) | [📖](docs/tools/get_qb64pe_graphics_guide.md) |
-| `compile_and_verify_qb64pe` | **NEW!** Compile QB64PE code with automatic error analysis and suggestions - enables autonomous compile-verify-fix loops | [📖](docs/tools/compile_and_verify_qb64pe.md) |
+| `get_compiler_options` | Get information about QB64PE compiler command-line options and flags | [[Docs]](docs/tools/get_compiler_options.md) |
+| `get_qb64pe_best_practices` | Get best practices and coding guidelines for QB64PE development | [[Docs]](docs/tools/get_qb64pe_best_practices.md) |
+| `get_qb64pe_graphics_guide` | Get comprehensive graphics statements guide designed for LLMs (includes _PUTIMAGE usage patterns) | [[Docs]](docs/tools/get_qb64pe_graphics_guide.md) |
+| `compile_and_verify_qb64pe` | **NEW!** Compile QB64PE code with automatic error analysis and suggestions - enables autonomous compile-verify-fix loops | [[Docs]](docs/tools/compile_and_verify_qb64pe.md) |
 
 </details>
 
 <details>
-<summary><strong>✅ Syntax & Compatibility (3 tools)</strong></summary>
+<summary><strong>[Valid] Syntax & Compatibility (3 tools)</strong></summary>
 
 | Tool | Description | Docs |
 |------|-------------|------|
-| `validate_qb64pe_syntax` | Validate QB64PE code syntax and suggest corrections | [📖](docs/tools/validate_qb64pe_syntax.md) |
-| `validate_qb64pe_compatibility` | Check code for QB64PE compatibility issues and get solutions | [📖](docs/tools/validate_qb64pe_compatibility.md) |
-| `search_qb64pe_compatibility` | Search for compatibility issues, solutions, and best practices | [📖](docs/tools/search_qb64pe_compatibility.md) |
+| `validate_qb64pe_syntax` | Validate QB64PE code syntax and suggest corrections | [[Docs]](docs/tools/validate_qb64pe_syntax.md) |
+| `validate_qb64pe_compatibility` | Check code for QB64PE compatibility issues and get solutions | [[Docs]](docs/tools/validate_qb64pe_compatibility.md) |
+| `search_qb64pe_compatibility` | Search for compatibility issues, solutions, and best practices | [[Docs]](docs/tools/search_qb64pe_compatibility.md) |
 
 </details>
 
 <details>
-<summary><strong>🔍 Keywords Reference (6 tools)</strong></summary>
+<summary><strong>[Search] Keywords Reference (6 tools)</strong></summary>
 
 | Tool | Description | Docs |
 |------|-------------|------|
-| `lookup_qb64pe_keyword` | Get detailed information about a specific QB64PE keyword | [📖](docs/tools/lookup_qb64pe_keyword.md) |
-| `autocomplete_qb64pe_keywords` | Get autocomplete suggestions for QB64PE keywords | [📖](docs/tools/autocomplete_qb64pe_keywords.md) |
-| `get_qb64pe_keywords_by_category` | Get all keywords in a specific category (statements, functions, operators, etc.) | [📖](docs/tools/get_qb64pe_keywords_by_category.md) |
-| `search_qb64pe_keywords` | Search for QB64PE keywords by name, description, or functionality | [📖](docs/tools/search_qb64pe_keywords.md) |
-| `search_qb64pe_keywords_by_wiki_category` | Search keywords within specific functional categories from the QB64PE wiki | [📖](docs/tools/search_qb64pe_keywords_by_wiki_category.md) |
-| `get_qb64pe_wiki_categories` | Get all available QB64PE wiki keyword categories with counts | [📖](docs/tools/get_qb64pe_wiki_categories.md) |
+| `lookup_qb64pe_keyword` | Get detailed information about a specific QB64PE keyword | [[Docs]](docs/tools/lookup_qb64pe_keyword.md) |
+| `autocomplete_qb64pe_keywords` | Get autocomplete suggestions for QB64PE keywords | [[Docs]](docs/tools/autocomplete_qb64pe_keywords.md) |
+| `get_qb64pe_keywords_by_category` | Get all keywords in a specific category (statements, functions, operators, etc.) | [[Docs]](docs/tools/get_qb64pe_keywords_by_category.md) |
+| `search_qb64pe_keywords` | Search for QB64PE keywords by name, description, or functionality | [[Docs]](docs/tools/search_qb64pe_keywords.md) |
+| `search_qb64pe_keywords_by_wiki_category` | Search keywords within specific functional categories from the QB64PE wiki | [[Docs]](docs/tools/search_qb64pe_keywords_by_wiki_category.md) |
+| `get_qb64pe_wiki_categories` | Get all available QB64PE wiki keyword categories with counts | [[Docs]](docs/tools/get_qb64pe_wiki_categories.md) |
 
 </details>
 
 <details>
-<summary><strong>⚡ Execution Monitoring & Process Management (7 tools)</strong></summary>
+<summary><strong>[Monitor] Execution Monitoring & Process Management (7 tools)</strong></summary>
 
 | Tool | Description | Docs |
 |------|-------------|------|
-| `analyze_qb64pe_execution_mode` | Analyze QB64PE source code to determine execution characteristics and monitoring requirements | [📖](docs/tools/analyze_qb64pe_execution_mode.md) |
-| `get_process_monitoring_commands` | Get cross-platform commands for monitoring QB64PE processes | [📖](docs/tools/get_process_monitoring_commands.md) |
-| `parse_console_output` | Parse QB64PE console output to detect completion signals and execution state | [📖](docs/tools/parse_console_output.md) |
-| `get_file_monitoring_commands` | Get cross-platform commands for monitoring QB64PE log files and output | [📖](docs/tools/get_file_monitoring_commands.md) |
-| `get_qb64pe_processes` | List all currently running QB64PE processes and windows | [📖](docs/tools/get_qb64pe_processes.md) |
-| `get_automation_status` | Get comprehensive status of all screenshot automation services | [📖](docs/tools/get_automation_status.md) |
-| `get_feedback_statistics` | Get detailed statistics about programming feedback and improvement trends | [📖](docs/tools/get_feedback_statistics.md) |
+| `analyze_qb64pe_execution_mode` | Analyze QB64PE source code to determine execution characteristics and monitoring requirements | [[Docs]](docs/tools/analyze_qb64pe_execution_mode.md) |
+| `get_process_monitoring_commands` | Get cross-platform commands for monitoring QB64PE processes | [[Docs]](docs/tools/get_process_monitoring_commands.md) |
+| `parse_console_output` | Parse QB64PE console output to detect completion signals and execution state | [[Docs]](docs/tools/parse_console_output.md) |
+| `get_file_monitoring_commands` | Get cross-platform commands for monitoring QB64PE log files and output | [[Docs]](docs/tools/get_file_monitoring_commands.md) |
+| `get_qb64pe_processes` | List all currently running QB64PE processes and windows | [[Docs]](docs/tools/get_qb64pe_processes.md) |
+| `get_automation_status` | Get comprehensive status of all screenshot automation services | [[Docs]](docs/tools/get_automation_status.md) |
+| `get_feedback_statistics` | Get detailed statistics about programming feedback and improvement trends | [[Docs]](docs/tools/get_feedback_statistics.md) |
 
 </details>
 
 <details>
-<summary><strong>📷 Screenshot & Graphics Analysis (8 tools)</strong></summary>
+<summary><strong>[Screen] Screenshot & Graphics Analysis (8 tools)</strong></summary>
 
 | Tool | Description | Docs |
 |------|-------------|------|
-| `capture_qb64pe_screenshot` | Automatically capture screenshot of QB64PE program window | [📖](docs/tools/capture_qb64pe_screenshot.md) |
-| `analyze_qb64pe_graphics_screenshot` | Analyze QB64PE graphics program screenshots to detect shapes, colors, layout, and visual elements | [📖](docs/tools/analyze_qb64pe_graphics_screenshot.md) |
-| `generate_qb64pe_screenshot_analysis_template` | Generate QB64PE program templates for screenshot analysis testing | [📖](docs/tools/generate_qb64pe_screenshot_analysis_template.md) |
-| `start_screenshot_monitoring` | Start monitoring QB64PE processes and automatically capture screenshots at intervals | [📖](docs/tools/start_screenshot_monitoring.md) |
-| `stop_screenshot_monitoring` | Stop automatic screenshot monitoring of QB64PE processes | [📖](docs/tools/stop_screenshot_monitoring.md) |
-| `start_screenshot_watching` | Start watching screenshot directories for new files and automatically trigger analysis | [📖](docs/tools/start_screenshot_watching.md) |
-| `stop_screenshot_watching` | Stop watching screenshot directories | [📖](docs/tools/stop_screenshot_watching.md) |
-| `get_screenshot_analysis_history` | Get history of automatic screenshot analyses performed | [📖](docs/tools/get_screenshot_analysis_history.md) |
+| `capture_qb64pe_screenshot` | Automatically capture screenshot of QB64PE program window | [[Docs]](docs/tools/capture_qb64pe_screenshot.md) |
+| `analyze_qb64pe_graphics_screenshot` | Analyze QB64PE graphics program screenshots to detect shapes, colors, layout, and visual elements | [[Docs]](docs/tools/analyze_qb64pe_graphics_screenshot.md) |
+| `generate_qb64pe_screenshot_analysis_template` | Generate QB64PE program templates for screenshot analysis testing | [[Docs]](docs/tools/generate_qb64pe_screenshot_analysis_template.md) |
+| `start_screenshot_monitoring` | Start monitoring QB64PE processes and automatically capture screenshots at intervals | [[Docs]](docs/tools/start_screenshot_monitoring.md) |
+| `stop_screenshot_monitoring` | Stop automatic screenshot monitoring of QB64PE processes | [[Docs]](docs/tools/stop_screenshot_monitoring.md) |
+| `start_screenshot_watching` | Start watching screenshot directories for new files and automatically trigger analysis | [[Docs]](docs/tools/start_screenshot_watching.md) |
+| `stop_screenshot_watching` | Stop watching screenshot directories | [[Docs]](docs/tools/stop_screenshot_watching.md) |
+| `get_screenshot_analysis_history` | Get history of automatic screenshot analyses performed | [[Docs]](docs/tools/get_screenshot_analysis_history.md) |
 
 </details>
 
 <details>
-<summary><strong>🔧 Installation & Setup (6 tools)</strong></summary>
+<summary><strong>[Setup] Installation & Setup (6 tools)</strong></summary>
 
 | Tool | Description | Docs |
 |------|-------------|------|
-| `detect_qb64pe_installation` | Detect QB64PE installation and check if it's properly configured in PATH | [📖](docs/tools/detect_qb64pe_installation.md) |
-| `get_qb64pe_path_configuration` | Get platform-specific instructions for adding QB64PE to system PATH | [📖](docs/tools/get_qb64pe_path_configuration.md) |
-| `validate_qb64pe_path` | Check if a specific path contains a valid QB64PE installation | [📖](docs/tools/validate_qb64pe_path.md) |
-| `generate_qb64pe_installation_report` | Generate a comprehensive report about QB64PE installation status | [📖](docs/tools/generate_qb64pe_installation_report.md) |
-| `get_qb64pe_installation_guidance` | Get user-friendly guidance for QB64PE installation and PATH configuration | [📖](docs/tools/get_qb64pe_installation_guidance.md) |
-| `get_programming_feedback_history` | Get history of programming feedback generated from screenshot analyses | [📖](docs/tools/get_programming_feedback_history.md) |
+| `detect_qb64pe_installation` | Detect QB64PE installation and check if it's properly configured in PATH | [[Docs]](docs/tools/detect_qb64pe_installation.md) |
+| `get_qb64pe_path_configuration` | Get platform-specific instructions for adding QB64PE to system PATH | [[Docs]](docs/tools/get_qb64pe_path_configuration.md) |
+| `validate_qb64pe_path` | Check if a specific path contains a valid QB64PE installation | [[Docs]](docs/tools/validate_qb64pe_path.md) |
+| `generate_qb64pe_installation_report` | Generate a comprehensive report about QB64PE installation status | [[Docs]](docs/tools/generate_qb64pe_installation_report.md) |
+| `get_qb64pe_installation_guidance` | Get user-friendly guidance for QB64PE installation and PATH configuration | [[Docs]](docs/tools/get_qb64pe_installation_guidance.md) |
+| `get_programming_feedback_history` | Get history of programming feedback generated from screenshot analyses | [[Docs]](docs/tools/get_programming_feedback_history.md) |
 
 </details>
 
 ---
 
-## 🎯 **Prompts Quick Reference**
+## [Prompts] **Prompts Quick Reference**
 
 | Prompt | Description | Docs |
 |--------|-------------|------|
-| `analyze-compilation-error` | **NEW!** Autonomous compilation error analysis and fixing with iterative verify-fix loops | [📖](docs/prompts/analyze-compilation-error.md) |
-| `review-qb64pe-code` | Review QB64PE code for best practices, syntax issues, and optimizations | [📖](docs/prompts/review-qb64pe-code.md) |
-| `debug-qb64pe-issue` | Help debug QB64PE programs with step-by-step guidance | [📖](docs/prompts/debug-qb64pe-issue.md) |
-| `monitor-qb64pe-execution` | Provide guidance for monitoring QB64PE program execution with timeout strategies | [📖](docs/prompts/monitor-qb64pe-execution.md) |
-| `analyze-qb64pe-graphics` | Analyze QB64PE graphics programs and provide detailed feedback on visual output | [📖](docs/prompts/analyze-qb64pe-graphics.md) |
-| `port-qbasic-to-qb64pe` | Provide guidance for porting QBasic programs to QB64PE with transformation analysis | [📖](docs/prompts/port-qbasic-to-qb64pe.md) |
+| `analyze-compilation-error` | **NEW!** Autonomous compilation error analysis and fixing with iterative verify-fix loops | [[Docs]](docs/prompts/analyze-compilation-error.md) |
+| `review-qb64pe-code` | Review QB64PE code for best practices, syntax issues, and optimizations | [[Docs]](docs/prompts/review-qb64pe-code.md) |
+| `debug-qb64pe-issue` | Help debug QB64PE programs with step-by-step guidance | [[Docs]](docs/prompts/debug-qb64pe-issue.md) |
+| `monitor-qb64pe-execution` | Provide guidance for monitoring QB64PE program execution with timeout strategies | [[Docs]](docs/prompts/monitor-qb64pe-execution.md) |
+| `analyze-qb64pe-graphics` | Analyze QB64PE graphics programs and provide detailed feedback on visual output | [[Docs]](docs/prompts/analyze-qb64pe-graphics.md) |
+| `port-qbasic-to-qb64pe` | Provide guidance for porting QBasic programs to QB64PE with transformation analysis | [[Docs]](docs/prompts/port-qbasic-to-qb64pe.md) |
 
 ---
 
-## 🚀 **Key Features**
+## [Debug] **Key Features**
 
-### 🔍 **Critical Discovery: $CONSOLE Directive Strategy**
+### [Search] **Critical Discovery: $CONSOLE Directive Strategy**
 ```basic
 ' For TEXT-ONLY programs (no graphics):
 $CONSOLE:ONLY  ' Console-only mode, enables shell redirection
@@ -268,12 +268,12 @@ Only 51 bytes decoded (0.06% of expected)
 FAILED: Incomplete DEFLATE implementation
 Auto-exiting in 10 seconds...
 ```
-- ✅ **Root Cause Found**: Incomplete Dynamic Huffman decoder
-- ✅ **Precise Metrics**: 51 bytes vs 82,944 expected (0.06%)
-- ✅ **Automated Workflow**: Zero manual intervention required
-- ✅ **Structured Output**: Easy parsing for LLM analysis
+- [Valid] **Root Cause Found**: Incomplete Dynamic Huffman decoder
+- [Valid] **Precise Metrics**: 51 bytes vs 82,944 expected (0.06%)
+- [Valid] **Automated Workflow**: Zero manual intervention required
+- [Valid] **Structured Output**: Easy parsing for LLM analysis
 
-### 🎯 **GORILLAS.BAS Porting Success**
+### [Prompts] **GORILLAS.BAS Porting Success**
 - **Source**: 1,136 lines QBasic → **Output**: 1,119 lines QB64PE
 - **Transformations**: 13 major patterns successfully applied
 - **Keywords**: 908 successful conversions to Pascal Case  
@@ -283,9 +283,9 @@ Auto-exiting in 10 seconds...
 ---
 
 <details>
-<summary><h2>📚 Documentation Structure</h2></summary>
+<summary><h2>[Guide] Documentation Structure</h2></summary>
 
-### 📖 **Tool Documentation**
+### [Docs] **Tool Documentation**
 Each tool has comprehensive documentation in [`docs/tools/`](docs/tools/):
 - **Overview**: Purpose and capabilities
 - **Parameters**: Input parameters and options
@@ -294,7 +294,7 @@ Each tool has comprehensive documentation in [`docs/tools/`](docs/tools/):
 - **Examples**: Practical usage examples
 - **Related Tools**: Cross-references and workflows
 
-### 🎯 **Prompt Documentation**  
+### [Prompts] **Prompt Documentation**  
 Each prompt has detailed guidance in [`docs/prompts/`](docs/prompts/):
 - **Overview**: Prompt purpose and functionality
 - **Parameters**: Input requirements and options
@@ -302,7 +302,7 @@ Each prompt has detailed guidance in [`docs/prompts/`](docs/prompts/):
 - **Examples**: Sample usage scenarios
 - **Related Prompts**: Cross-references and workflows
 
-### 📚 **Core Documentation**
+### [Guide] **Core Documentation**
 Comprehensive guides in [`docs/`](docs/):
 - [QB64PE Debugging Enhancement System](docs/QB64PE_DEBUGGING_ENHANCEMENT_SYSTEM.md)
 - [QB64PE Execution Monitoring](docs/QB64PE_EXECUTION_MONITORING.md)
@@ -319,14 +319,14 @@ Detailed API references in [`docs/api/`](docs/api/):
 Practical examples in [`docs/examples/`](docs/examples/):
 - [Tool Examples](docs/examples/TOOL_EXAMPLES.md)
 
-### 🚀 **Feature Documentation**
+### [Debug] **Feature Documentation**
 Feature-specific docs in [`docs/features/`](docs/features/):
 - [New Tools README](docs/features/NEW_TOOLS_README.md)
 
 </details>
 
 <details>
-<summary><h2>💡 Example Workflows</h2></summary>
+<summary><h2>[Examples] Example Workflows</h2></summary>
 
 ### 🤖 **Autonomous Compile-Verify-Fix Loop** ⭐ NEW!
 ```javascript
@@ -352,7 +352,7 @@ async function autonomousPorting(qbasicFile, outputFile) {
     });
     
     if (result.success) {
-      console.log("✅ Compilation successful!");
+      console.log("[Valid] Compilation successful!");
       return { success: true, iterations: iteration };
     }
     
@@ -368,7 +368,7 @@ async function autonomousPorting(qbasicFile, outputFile) {
 // AFTER: Agent compiles autonomously, iterates until success, 0 human interventions!
 ```
 
-### 🔄 **QBasic to QB64PE Porting**
+### [Port] **QBasic to QB64PE Porting**
 ```javascript
 // 1. Analyze compatibility
 { "tool": "analyze_qbasic_compatibility", "sourceCode": "PRINT \"Hello\"..." }
@@ -392,7 +392,7 @@ async function autonomousPorting(qbasicFile, outputFile) {
 { "tool": "parse_qb64pe_structured_output", "output": "=== PROGRAM ANALYSIS ===..." }
 ```
 
-### 📷 **Graphics Analysis**
+### [Screen] **Graphics Analysis**
 ```javascript
 // 1. Generate test program
 { "tool": "generate_qb64pe_screenshot_analysis_template", "testType": "basic_shapes" }
@@ -403,7 +403,7 @@ async function autonomousPorting(qbasicFile, outputFile) {
 
 ---
 
-**🎉 Complete QB64PE Development Suite! 52 Tools & 6 Prompts - Your Comprehensive Development Companion! 🚀**
+**🎉 Complete QB64PE Development Suite! 52 Tools & 6 Prompts - Your Comprehensive Development Companion! [Debug]**
 - **`enhance_qb64pe_code_for_debugging`** - Apply comprehensive debugging enhancements with console management, flow control, resource tracking, and graphics context fixes
 - **`get_qb64pe_debugging_best_practices`** - Get debugging best practices specifically for QB64PE development
 - **`get_llm_debugging_guide`** - Get LLM-specific debugging guidance with timeout strategies and automation workflows
@@ -414,27 +414,27 @@ async function autonomousPorting(qbasicFile, outputFile) {
 - **`get_debugging_help`** - Get help with debugging QB64PE programs using PRINT statements, $CONSOLE, etc.
 - **`get_execution_monitoring_guidance`** - Get comprehensive guidance for monitoring QB64PE program execution with LLM timeout strategies
 
-### 🔄 **QBasic to QB64PE Porting (3 tools)**
+### [Port] **QBasic to QB64PE Porting (3 tools)**
 - **`port_qbasic_to_qb64pe`** - Complete automated porting of QBasic programs to QB64PE with 13+ transformation patterns
 - **`analyze_qbasic_compatibility`** - Pre-porting analysis with complexity assessment and effort estimation  
 - **`get_porting_dialect_info`** - Multi-dialect support information and implementation status
 
-### 📖 Wiki & Documentation (3 tools)
+### [Docs] Wiki & Documentation (3 tools)
 - **`search_qb64pe_wiki`** - Search the QB64PE wiki for documentation, tutorials, and reference materials
 - **`get_qb64pe_page`** - Retrieve detailed content from a specific QB64PE wiki page
 - **`get_qb64pe_wiki_categories`** - Get all available QB64PE wiki keyword categories with keyword counts
 
-### 🛠️ Compiler & Development (3 tools)
+### [Build] Compiler & Development (3 tools)
 - **`get_compiler_options`** - Get information about QB64PE compiler command-line options and flags
 - **`get_qb64pe_best_practices`** - Get best practices and coding guidelines for QB64PE development  
 - **`detect_qb64pe_installation`** - Detect QB64PE installation and check if it's properly configured in PATH
 
-### ✅ Syntax & Compatibility (3 tools)
+### [Valid] Syntax & Compatibility (3 tools)
 - **`validate_qb64pe_syntax`** - Validate QB64PE code syntax and suggest corrections
 - **`validate_qb64pe_compatibility`** - Check code for QB64PE compatibility issues and get solutions
 - **`search_qb64pe_compatibility`** - Search for compatibility issues, solutions, and best practices
 
-### 🔍 Keywords Reference (6 tools)
+### [Search] Keywords Reference (6 tools)
 - **`lookup_qb64pe_keyword`** - Get detailed information about a specific QB64PE keyword
 - **`autocomplete_qb64pe_keywords`** - Get autocomplete suggestions for QB64PE keywords
 - **`get_qb64pe_keywords_by_category`** - Get all keywords in a specific category (statements, functions, operators, etc.)
@@ -442,7 +442,7 @@ async function autonomousPorting(qbasicFile, outputFile) {
 - **`search_qb64pe_keywords_by_wiki_category`** - Search keywords within specific functional categories from the QB64PE wiki
 - **`get_qb64pe_wiki_categories`** - Get all available QB64PE wiki keyword categories with counts
 
-### ⚡ Execution Monitoring & Screenshots (12 tools)
+### [Monitor] Execution Monitoring & Screenshots (12 tools)
 - **`analyze_qb64pe_execution_mode`** - Analyze QB64PE source code to determine execution characteristics and monitoring requirements
 - **`get_process_monitoring_commands`** - Get cross-platform commands for monitoring QB64PE processes
 - **`generate_monitoring_template`** - Generate QB64PE code template with built-in logging, screenshots, and execution monitoring
@@ -456,20 +456,20 @@ async function autonomousPorting(qbasicFile, outputFile) {
 - **`stop_screenshot_monitoring`** - Stop automatic screenshot monitoring of QB64PE processes
 - **`get_automation_status`** - Get comprehensive status of all screenshot automation services
 
-### 🔧 Installation & Setup (4 tools)
+### [Setup] Installation & Setup (4 tools)
 - **`get_qb64pe_path_configuration`** - Get platform-specific instructions for adding QB64PE to system PATH
 - **`validate_qb64pe_path`** - Check if a specific path contains a valid QB64PE installation
 - **`generate_qb64pe_installation_report`** - Generate a comprehensive report about QB64PE installation status
 - **`get_qb64pe_installation_guidance`** - Get user-friendly guidance for QB64PE installation and PATH configuration
 
-### 💡 Prompts (3 prompts)
+### [Examples] Prompts (3 prompts)
 - **`review-qb64pe-code`** - Review QB64PE code for best practices, syntax issues, and optimizations
 - **`debug-qb64pe-issue`** - Help debug QB64PE programs with step-by-step guidance
 - **`monitor-qb64pe-execution`** - Provide guidance for monitoring QB64PE program execution with timeout strategies
 
 ---
 
-### 🔍 **Keywords Reference System**
+### [Search] **Keywords Reference System**
 - Complete QB64PE keywords database (800+ keywords)
 - Smart categorization (statements, functions, operators, metacommands, OpenGL, types, legacy)
 - Real-time keyword validation with intelligent suggestions
@@ -479,7 +479,7 @@ async function autonomousPorting(qbasicFile, outputFile) {
 - Platform availability information
 - Syntax examples and related keyword suggestions
 
-### ⚡**Execution Monitoring & Process Management**
+### [Monitor]**Execution Monitoring & Process Management**
 - **Program execution type detection** - Identifies graphics vs console vs mixed programs
 - **LLM timeout strategies** - Prevents infinite waiting for graphics programs that require user interaction
 - **Cross-platform process monitoring** - Commands for Windows, Linux, and macOS process management
@@ -491,7 +491,7 @@ async function autonomousPorting(qbasicFile, outputFile) {
 - **File monitoring utilities** - Real-time log file monitoring and pattern searching
 - **Code template generation** - Wraps user code with monitoring, logging, and screenshot capabilitiesCP) server that provides advanced QB64PE (QBasic 64 Phoenix Edition) programming assistance. This server enables AI assistants to search the QB64PE wiki, understand compiler options, provide debugging help, validate QB64PE-only syntax, and handle cross-platform differences.
 
-## 🎯 **QBasic to QB64PE Porting System**
+## [Prompts] **QBasic to QB64PE Porting System**
 
 ### Automated Code Transformation
 - **Complete QBasic Program Conversion** - Successfully converts complex programs like GORILLAS.BAS (1,136 lines)
@@ -515,11 +515,11 @@ async function autonomousPorting(qbasicFile, outputFile) {
 13. **Multi-Statement Detection** - Identifies complex lines requiring manual review
 
 ### Porting Results Example (GORILLAS.BAS)
-- ✅ **Source**: 1,136 lines QBasic → **Output**: 1,119 lines QB64PE
-- ✅ **Transformations**: 13 major patterns successfully applied
-- ✅ **Keywords**: 908 successful conversions to Pascal Case  
-- ✅ **Compatibility**: HIGH rating - ready to compile
-- ✅ **Automation**: 99%+ automated with minimal manual review needed
+- [Valid] **Source**: 1,136 lines QBasic → **Output**: 1,119 lines QB64PE
+- [Valid] **Transformations**: 13 major patterns successfully applied
+- [Valid] **Keywords**: 908 successful conversions to Pascal Case  
+- [Valid] **Compatibility**: HIGH rating - ready to compile
+- [Valid] **Automation**: 99%+ automated with minimal manual review needed
 
 ### Future Dialect Support Framework
 - **GW-BASIC** - Line number conversion patterns ready
@@ -541,13 +541,13 @@ async function autonomousPorting(qbasicFile, outputFile) {
 - **Cross-Platform Monitoring** - Commands for Windows, Linux, macOS process and file monitoring
 - **Advanced Template Generation** - Creates comprehensive debugging programs with built-in logging and error handling
 
-### �🔍 **Wiki Integration**
+### �[Search] **Wiki Integration**
 - Search the official QB64PE wiki (https://qb64phoenix.com/qb64wiki/)
 - Retrieve complete page content with formatted examples
 - Intelligent caching system for improved performance
 - Fallback search mechanisms for comprehensive results
 
-### 🛠️ **Compiler Assistance**
+### [Build] **Compiler Assistance**
 - Complete QB64PE compiler options reference (-c, -x, -o, -z, -g, -w)
 - Platform-specific compilation guidance (Windows, macOS, Linux)
 - Optimization recommendations and build strategies
@@ -563,7 +563,7 @@ async function autonomousPorting(qbasicFile, outputFile) {
 - **Template Generation** - Advanced debugging templates with built-in monitoring
 - **Output Parsing** - Structured analysis of program execution results
 
-### ✅ **Syntax Validation & Compatibility**
+### [Valid] **Syntax Validation & Compatibility**
 - QB64PE-only syntax enforcement (excludes Visual Basic/QBasic constructs)
 - Comprehensive compatibility validation with detailed issue reporting
 - Multi-level validation (basic, strict, best-practices)
@@ -577,7 +577,7 @@ async function autonomousPorting(qbasicFile, outputFile) {
 - **SHARED keyword syntax validation**
 - **Variable shadowing detection**
 
-### 🔧 **Variable Scoping Assistant**
+### [Setup] **Variable Scoping Assistant**
 - **DIM SHARED usage validation** - Ensures variables are properly shared across procedures
 - **$DYNAMIC directive checking** - Validates dynamic array declarations
 - **Scope access analysis** - Detects variables accessed without proper SHARED declaration
@@ -585,7 +585,7 @@ async function autonomousPorting(qbasicFile, outputFile) {
 - **Best practices guidance** - Recommends proper variable scoping techniques
 - **Real-world examples** - Provides correct and incorrect usage patterns
 
-### 🔍 **Compatibility Knowledge Base**
+### [Search] **Compatibility Knowledge Base**
 - Extensive compatibility issue database
 - Searchable solutions and workarounds
 - Pattern-based code analysis
@@ -593,7 +593,7 @@ async function autonomousPorting(qbasicFile, outputFile) {
 - Debugging techniques specific to QB64PE
 - Platform compatibility matrix (Windows/Linux/macOS)
 
-### 📖 **Keywords Reference System**
+### [Docs] **Keywords Reference System**
 - Complete QB64PE keywords database (800+ keywords)
 - Smart categorization (statements, functions, operators, metacommands, OpenGL, types, legacy)
 - Real-time keyword validation with intelligent suggestions
@@ -603,7 +603,7 @@ async function autonomousPorting(qbasicFile, outputFile) {
 - Platform availability information
 - Syntax examples and related keyword suggestions
 
-### 📚 **Resources & Prompts**
+### [Guide] **Resources & Prompts**
 - Quick access to QB64PE compiler reference
 - Common syntax patterns and examples
 - Code review templates with focus areas
@@ -612,7 +612,7 @@ async function autonomousPorting(qbasicFile, outputFile) {
 </details>
 
 <details>
-<summary><h2>📦 Installation</h2></summary>
+<summary><h2>[Install] Installation</h2></summary>
 
 ### Prerequisites
 - Node.js 18 or higher
@@ -1095,7 +1095,7 @@ Template for monitoring QB64PE program execution with timeout strategies.
 </details>
 
 <details>
-<summary><h2>🛠️ Development</h2></summary>
+<summary><h2>[Build] Development</h2></summary>
 
 ### Building
 ```bash
@@ -1132,14 +1132,14 @@ src/
 
 ## Documentation
 
-### 🚀 **New Debugging & Automation Guides**
+### [Debug] **New Debugging & Automation Guides**
 - [QB64PE Debugging Enhancement System](docs/QB64PE_DEBUGGING_ENHANCEMENT_SYSTEM.md) - Complete guide to the advanced debugging system
 - [QB64PE Logging Service Guide](docs/QB64PE_LOGGING_SERVICE_GUIDE.md) - Comprehensive native logging service documentation
 - [Logging Service Implementation Summary](docs/LOGGING_SERVICE_IMPLEMENTATION_SUMMARY.md) - Implementation summary and success metrics
 - [LLM Usage Guide](docs/LLM_USAGE_GUIDE.md) - How LLMs use the MCP server tools and workflows
 - [LLM Connection Examples](docs/LLM_CONNECTION_EXAMPLES.md) - Configuration examples for connecting LLMs to the MCP server
 
-### 📚 **Core Development Guides**
+### [Guide] **Core Development Guides**
 - [Execution Monitoring Guide](docs/QB64PE_EXECUTION_MONITORING.md) - Comprehensive guide for monitoring QB64PE program execution, process management, and LLM timeout strategies
 - [Execution Monitoring Examples](docs/EXECUTION_MONITORING_EXAMPLES.md) - Practical examples and usage patterns for execution monitoring features
 - [Compatibility Integration Guide](docs/COMPATIBILITY_INTEGRATION.md) - Detailed documentation of the compatibility validation system
@@ -1294,7 +1294,7 @@ NEXT x`,
 </details>
 
 <details>
-<summary><h2>🤝 Contributing</h2></summary>
+<summary><h2>[Contrib] Contributing</h2></summary>
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature-name`
@@ -1317,9 +1317,9 @@ MIT License - see LICENSE file for details.
 ## Changelog
 
 ### v2.0.0 - Advanced Debugging & Automation Release
-- **🚀 MAJOR**: Advanced Debugging Enhancement System with comprehensive code fixing
-- **🚀 MAJOR**: Native QB64PE Logging Service with _LOGINFO, _LOGERROR, etc.
-- **🔍 CRITICAL DISCOVERY**: $CONSOLE:ONLY vs $CONSOLE for shell redirection compatibility
+- **[Debug] MAJOR**: Advanced Debugging Enhancement System with comprehensive code fixing
+- **[Debug] MAJOR**: Native QB64PE Logging Service with _LOGINFO, _LOGERROR, etc.
+- **[Search] CRITICAL DISCOVERY**: $CONSOLE:ONLY vs $CONSOLE for shell redirection compatibility
 - **NEW**: `enhance_qb64pe_code_for_debugging` - Comprehensive debugging enhancements
 - **NEW**: `inject_native_qb64pe_logging` - Native logging injection with proper console directives
 - **NEW**: `generate_advanced_debugging_template` - Advanced debugging templates

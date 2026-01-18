@@ -1,6 +1,6 @@
 {
   "name": "qb64pe-mcp-server",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Model Context Protocol server for QB64PE development assistance",
   "main": "build/index.js",
   "scripts": {
@@ -23,7 +23,7 @@
     "wiki",
     "development"
   ],
-  "author": "Your Name",
+  "author": "grymmjack",
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",

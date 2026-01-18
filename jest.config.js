@@ -16,6 +16,9 @@ module.exports = {
       },
     ],
   },
+  moduleNameMapper: {
+    "^(\\.{1,2}/.*)\\.js$": "$1"
+  },
   collectCoverageFrom: [
     "src/**/*.ts",
     "!src/**/*.d.ts",
@@ -26,4 +29,7 @@ module.exports = {
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
   verbose: true,
   testTimeout: 10000,
+  // Suppress console output during tests
+  silent: false,
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
 };

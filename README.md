@@ -13,8 +13,6 @@ The MCP server now includes an **Automatic Tool Discovery System** that ensures 
 - 📖 Includes usage guidelines and workflow patterns
 - 🔄 Zero configuration - works automatically
 
-See [TOOL_DISCOVERY_SYSTEM.md](TOOL_DISCOVERY_SYSTEM.md) for complete details.
-
 ## 🚀 **52 Tools & 6 Prompts Available!**
 
 This MCP server provides **52 comprehensive tools** and **6 intelligent prompts** for complete QB64PE development support, from installation detection to advanced debugging and porting assistance.
@@ -37,6 +35,7 @@ qb64pe-mcp-server/
 │   ├── services/                 # Core services (wiki, compiler, syntax, etc.)
 │   ├── tools/                    # MCP tool implementations
 │   ├── constants/                # Constants and data definitions
+│   ├── data/                     # Static data files
 │   └── utils/                    # Utility functions
 ├── build/                        # Compiled JavaScript output
 ├── tests/                        # Test suite
@@ -44,40 +43,61 @@ qb64pe-mcp-server/
 │   ├── fixtures/                 # Test fixtures
 │   │   ├── bas-files/            # .bas test files
 │   │   └── porting/              # Porting test files (qbasic/, qb64pe/)
+│   ├── services/                 # Service unit tests
+│   ├── tools/                    # Tool unit tests
+│   ├── utils/                    # Utility unit tests
 │   └── constants/                # Test constants
 ├── docs/                         # Documentation
+│   ├── guides/                   # Developer guides
+│   │   ├── HOW_AGENTS_LEARN.md
+│   │   ├── AGENT_INTELLIGENCE_GUIDE.md
+│   │   ├── QB64PE_DEBUGGING_SYSTEM_USAGE.md
+│   │   ├── GRAPHICS_MODE_ECHO_REQUIREMENTS.md
+│   │   └── QUICK_REFERENCE.md
 │   ├── api/                      # API reference docs
 │   │   ├── SERVICE_API_REFERENCE.md
 │   │   └── MCP_TOOLS_REFERENCE.md
 │   ├── examples/                 # Examples and tutorials
-│   │   └── TOOL_EXAMPLES.md
+│   │   ├── TOOL_EXAMPLES.md
+│   │   └── test-session-problems.md
 │   ├── features/                 # Feature documentation
 │   │   └── NEW_TOOLS_README.md
+│   ├── resources/                # MCP resources
+│   ├── tools/                    # Individual tool documentation (52 files)
+│   ├── prompts/                  # Prompt documentation (6 files)
 │   └── archive/                  # Archived documentation
-│       └── implementation-summaries/
+│       ├── implementation-summaries/
+│       └── session-problems/
 ├── tools/                        # Development and maintenance tools
 │   ├── data-generation/          # Data builders (build-*.js, extract-*.js)
 │   ├── validation/               # Validators (check-*.js, verify-*.js)
 │   ├── code-generation/          # Code generators (update-*.js)
 │   ├── generators/               # Template generators (generate-*.js, create-*.js)
+│   ├── testing/                  # Test helper scripts
 │   └── archive/                  # Archived tools
 │       └── debug-scripts/
 ├── templates/                    # Code templates
 │   ├── bas/                      # QB64PE code templates
 │   │   └── enhanced-debugging-template.bas
 │   └── example-claude-config.json
-├── docs/tools/                    # Individual tool documentation
-├── docs/
-│   ├── prompts/                  # Prompt documentation
-├── qb64pe-logs/                  # QB64PE execution logs
-└── qb64pe-screenshots/           # Screenshot captures
+├── coverage/                     # Test coverage reports (generated)
+├── qb64pe-logs/                  # QB64PE execution logs (runtime)
+├── qb64pe-screenshots/           # Screenshot captures (runtime)
+├── .vscode/                      # VS Code workspace settings
+├── jest.config.js                # Jest test configuration
+├── tsconfig.json                 # TypeScript configuration
+├── package.json                  # Node.js dependencies and scripts
+├── CONFIGURATION.md              # MCP server configuration guide
+└── README.md                     # This file
 ```
 
 ---
 
 ## �📋 **Tools Quick Reference**
 
-### � **Advanced Debugging & Automation (12 tools)**
+<details open>
+<summary><strong>🚀 Advanced Debugging & Automation (12 tools)</strong></summary>
+
 | Tool | Description | Docs |
 |------|-------------|------|
 | `enhance_qb64pe_code_for_debugging` | Apply comprehensive debugging enhancements with console management, flow control, and resource tracking | [📖](docs/tools/enhance_qb64pe_code_for_debugging.md) |
@@ -93,21 +113,33 @@ qb64pe-mcp-server/
 | `generate_monitoring_template` | Generate QB64PE code template with built-in logging, screenshots, and execution monitoring | [📖](docs/tools/generate_monitoring_template.md) |
 | `generate_console_formatting_template` | Generate QB64PE template with enhanced console output formatting for better terminal parsing | [📖](docs/tools/generate_console_formatting_template.md) |
 
-### 🔄 **QBasic to QB64PE Porting (3 tools)**
+</details>
+
+<details>
+<summary><strong>🔄 QBasic to QB64PE Porting (3 tools)</strong></summary>
+
 | Tool | Description | Docs |
 |------|-------------|------|
 | `port_qbasic_to_qb64pe` | Complete automated porting of QBasic programs to QB64PE with 13+ transformation patterns | [📖](docs/tools/port_qbasic_to_qb64pe.md) |
 | `analyze_qbasic_compatibility` | Pre-porting analysis with complexity assessment and effort estimation | [📖](docs/tools/analyze_qbasic_compatibility.md) |
 | `get_porting_dialect_info` | Multi-dialect support information and implementation status | [📖](docs/tools/get_porting_dialect_info.md) |
 
-### 📖 **Wiki & Documentation (3 tools)**
+</details>
+
+<details>
+<summary><strong>📖 Wiki & Documentation (3 tools)</strong></summary>
+
 | Tool | Description | Docs |
 |------|-------------|------|
 | `search_qb64pe_wiki` | Search the QB64PE wiki for documentation, tutorials, and reference materials | [📖](docs/tools/search_qb64pe_wiki.md) |
 | `get_qb64pe_page` | Retrieve detailed content from a specific QB64PE wiki page | [📖](docs/tools/get_qb64pe_page.md) |
 | `get_qb64pe_wiki_categories` | Get all available QB64PE wiki keyword categories with keyword counts | [📖](docs/tools/get_qb64pe_wiki_categories.md) |
 
-### 🛠️ **Compiler & Development (4 tools)**
+</details>
+
+<details>
+<summary><strong>🛠️ Compiler & Development (4 tools)</strong></summary>
+
 | Tool | Description | Docs |
 |------|-------------|------|
 | `get_compiler_options` | Get information about QB64PE compiler command-line options and flags | [📖](docs/tools/get_compiler_options.md) |
@@ -115,14 +147,22 @@ qb64pe-mcp-server/
 | `get_qb64pe_graphics_guide` | Get comprehensive graphics statements guide designed for LLMs (includes _PUTIMAGE usage patterns) | [📖](docs/tools/get_qb64pe_graphics_guide.md) |
 | `compile_and_verify_qb64pe` | **NEW!** Compile QB64PE code with automatic error analysis and suggestions - enables autonomous compile-verify-fix loops | [📖](docs/tools/compile_and_verify_qb64pe.md) |
 
-### ✅ **Syntax & Compatibility (3 tools)**
+</details>
+
+<details>
+<summary><strong>✅ Syntax & Compatibility (3 tools)</strong></summary>
+
 | Tool | Description | Docs |
 |------|-------------|------|
 | `validate_qb64pe_syntax` | Validate QB64PE code syntax and suggest corrections | [📖](docs/tools/validate_qb64pe_syntax.md) |
 | `validate_qb64pe_compatibility` | Check code for QB64PE compatibility issues and get solutions | [📖](docs/tools/validate_qb64pe_compatibility.md) |
 | `search_qb64pe_compatibility` | Search for compatibility issues, solutions, and best practices | [📖](docs/tools/search_qb64pe_compatibility.md) |
 
-### 🔍 **Keywords Reference (6 tools)**
+</details>
+
+<details>
+<summary><strong>🔍 Keywords Reference (6 tools)</strong></summary>
+
 | Tool | Description | Docs |
 |------|-------------|------|
 | `lookup_qb64pe_keyword` | Get detailed information about a specific QB64PE keyword | [📖](docs/tools/lookup_qb64pe_keyword.md) |
@@ -132,7 +172,11 @@ qb64pe-mcp-server/
 | `search_qb64pe_keywords_by_wiki_category` | Search keywords within specific functional categories from the QB64PE wiki | [📖](docs/tools/search_qb64pe_keywords_by_wiki_category.md) |
 | `get_qb64pe_wiki_categories` | Get all available QB64PE wiki keyword categories with counts | [📖](docs/tools/get_qb64pe_wiki_categories.md) |
 
-### ⚡ **Execution Monitoring & Process Management (7 tools)**
+</details>
+
+<details>
+<summary><strong>⚡ Execution Monitoring & Process Management (7 tools)</strong></summary>
+
 | Tool | Description | Docs |
 |------|-------------|------|
 | `analyze_qb64pe_execution_mode` | Analyze QB64PE source code to determine execution characteristics and monitoring requirements | [📖](docs/tools/analyze_qb64pe_execution_mode.md) |
@@ -143,7 +187,11 @@ qb64pe-mcp-server/
 | `get_automation_status` | Get comprehensive status of all screenshot automation services | [📖](docs/tools/get_automation_status.md) |
 | `get_feedback_statistics` | Get detailed statistics about programming feedback and improvement trends | [📖](docs/tools/get_feedback_statistics.md) |
 
-### 📷 **Screenshot & Graphics Analysis (8 tools)**
+</details>
+
+<details>
+<summary><strong>📷 Screenshot & Graphics Analysis (8 tools)</strong></summary>
+
 | Tool | Description | Docs |
 |------|-------------|------|
 | `capture_qb64pe_screenshot` | Automatically capture screenshot of QB64PE program window | [📖](docs/tools/capture_qb64pe_screenshot.md) |
@@ -155,7 +203,11 @@ qb64pe-mcp-server/
 | `stop_screenshot_watching` | Stop watching screenshot directories | [📖](docs/tools/stop_screenshot_watching.md) |
 | `get_screenshot_analysis_history` | Get history of automatic screenshot analyses performed | [📖](docs/tools/get_screenshot_analysis_history.md) |
 
-### 🔧 **Installation & Setup (6 tools)**
+</details>
+
+<details>
+<summary><strong>🔧 Installation & Setup (6 tools)</strong></summary>
+
 | Tool | Description | Docs |
 |------|-------------|------|
 | `detect_qb64pe_installation` | Detect QB64PE installation and check if it's properly configured in PATH | [📖](docs/tools/detect_qb64pe_installation.md) |
@@ -165,23 +217,7 @@ qb64pe-mcp-server/
 | `get_qb64pe_installation_guidance` | Get user-friendly guidance for QB64PE installation and PATH configuration | [📖](docs/tools/get_qb64pe_installation_guidance.md) |
 | `get_programming_feedback_history` | Get history of programming feedback generated from screenshot analyses | [📖](docs/tools/get_programming_feedback_history.md) |
 
-### 📝 **Session Problems & Development Tracking (6 tools)**
-| Tool | Description | Docs |
-|------|-------------|------|
-| `log_session_problem` | Log development problems encountered during sessions for continuous improvement | [📖](docs/tools/log_session_problem.md) |
-| `update_session_problem_status` | Update status of a logged session problem | [📖](docs/tools/update_session_problem_status.md) |
-| `get_session_problems_report` | Generate comprehensive analysis report of all logged session problems | [📖](docs/tools/get_session_problems_report.md) |
-| `get_session_problems_statistics` | Get statistical analysis of session problems by category and severity | [📖](docs/tools/get_session_problems_statistics.md) |
-| `clear_session_problems` | Clear all logged session problems to start fresh | [📖](docs/tools/clear_session_problems.md) |
-| `export_session_problems` | Export session problems to JSON file for external analysis | [📖](docs/tools/export_session_problems.md) |
-
-### 📚 **File Structure Validation (4 tools)**
-| Tool | Description | Docs |
-|------|-------------|------|
-| `validate_bi_file_structure` | Validate QB64_GJ_LIB .BI file structure (declarations only, no implementations) | [📖](docs/tools/validate_bi_file_structure.md) |
-| `validate_bm_file_structure` | Validate QB64_GJ_LIB .BM file structure (implementations only, no declarations) | [📖](docs/tools/validate_bm_file_structure.md) |
-| `validate_bi_bm_pair` | Validate matched .BI/.BM file pair for QB64_GJ_LIB compliance | [📖](docs/tools/validate_bi_bm_pair.md) |
-| `quick_check_qb64_file_structure` | Quick validation of any QB64PE file structure (auto-detects .BI or .BM) | [📖](docs/tools/quick_check_qb64_file_structure.md) |
+</details>
 
 ---
 
@@ -246,7 +282,8 @@ Auto-exiting in 10 seconds...
 
 ---
 
-## 📚 **Documentation Structure**
+<details>
+<summary><h2>📚 Documentation Structure</h2></summary>
 
 ### 📖 **Tool Documentation**
 Each tool has comprehensive documentation in [`docs/tools/`](docs/tools/):
@@ -286,9 +323,10 @@ Practical examples in [`docs/examples/`](docs/examples/):
 Feature-specific docs in [`docs/features/`](docs/features/):
 - [New Tools README](docs/features/NEW_TOOLS_README.md)
 
----
+</details>
 
-## 💡 **Example Workflows**
+<details>
+<summary><h2>💡 Example Workflows</h2></summary>
 
 ### 🤖 **Autonomous Compile-Verify-Fix Loop** ⭐ NEW!
 ```javascript
@@ -571,7 +609,10 @@ async function autonomousPorting(qbasicFile, outputFile) {
 - Code review templates with focus areas
 - Getting started guides and tutorials
 
-## Installation
+</details>
+
+<details>
+<summary><h2>📦 Installation</h2></summary>
 
 ### Prerequisites
 - Node.js 18 or higher
@@ -1051,7 +1092,10 @@ Template for monitoring QB64PE program execution with timeout strategies.
 - Real-time log file monitoring utilities
 - Process termination strategies across platforms
 
-## Development
+</details>
+
+<details>
+<summary><h2>🛠️ Development</h2></summary>
 
 ### Building
 ```bash
@@ -1091,13 +1135,13 @@ src/
 ### 🚀 **New Debugging & Automation Guides**
 - [QB64PE Debugging Enhancement System](docs/QB64PE_DEBUGGING_ENHANCEMENT_SYSTEM.md) - Complete guide to the advanced debugging system
 - [QB64PE Logging Service Guide](docs/QB64PE_LOGGING_SERVICE_GUIDE.md) - Comprehensive native logging service documentation
-- [Logging Service Implementation Summary](docs/archive/implementation-summaries/LOGGING_SERVICE_IMPLEMENTATION_SUMMARY.md) - Implementation summary and success metrics
+- [Logging Service Implementation Summary](docs/LOGGING_SERVICE_IMPLEMENTATION_SUMMARY.md) - Implementation summary and success metrics
 - [LLM Usage Guide](docs/LLM_USAGE_GUIDE.md) - How LLMs use the MCP server tools and workflows
 - [LLM Connection Examples](docs/LLM_CONNECTION_EXAMPLES.md) - Configuration examples for connecting LLMs to the MCP server
 
 ### 📚 **Core Development Guides**
 - [Execution Monitoring Guide](docs/QB64PE_EXECUTION_MONITORING.md) - Comprehensive guide for monitoring QB64PE program execution, process management, and LLM timeout strategies
-- [Execution Monitoring Examples](docs/examples/EXECUTION_MONITORING_EXAMPLES.md) - Practical examples and usage patterns for execution monitoring features
+- [Execution Monitoring Examples](docs/EXECUTION_MONITORING_EXAMPLES.md) - Practical examples and usage patterns for execution monitoring features
 - [Compatibility Integration Guide](docs/COMPATIBILITY_INTEGRATION.md) - Detailed documentation of the compatibility validation system
 - [Keywords Integration Guide](docs/KEYWORDS_INTEGRATION.md) - Comprehensive guide to the keywords reference system
 - [Variable Scoping Rules](docs/VARIABLE_SCOPING_RULES.md) - Complete guide to DIM SHARED, $DYNAMIC, and variable scoping
@@ -1105,7 +1149,10 @@ src/
 ### 🌐 **External Resources**
 - [QB64PE Official Wiki](https://qb64phoenix.com/qb64wiki/) - Official QB64PE documentation
 
-## Examples
+</details>
+
+<details>
+<summary><h2>📝 Examples</h2></summary>
 
 ### Example 1: Search for Graphics Functions
 ```javascript
@@ -1244,13 +1291,18 @@ NEXT x`,
 // Returns structured analysis with sections, logs, execution status, and completion rate
 ```
 
-## Contributing
+</details>
+
+<details>
+<summary><h2>🤝 Contributing</h2></summary>
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature-name`
 3. Make your changes and add tests
 4. Build and test: `npm run build && npm test`
 5. Submit a pull request
+
+</details>
 
 ## License
 

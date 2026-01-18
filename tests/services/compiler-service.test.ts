@@ -323,4 +323,51 @@ describe('QB64PECompilerService', () => {
       expect(typeof reference).toBe('string');
     });
   });
+
+  describe('compileAndVerify', () => {
+    it('should handle missing QB64PE', async () => {
+      const result = await service.compileAndVerify('/nonexistent/file.bas');
+      
+      expect(result.success).toBe(false);
+      expect(result.errors.length).toBeGreaterThan(0);
+      expect(result.suggestions.length).toBeGreaterThan(0);
+    });
+
+    it('should handle nonexistent source file', async () => {
+      const result = await service.compileAndVerify(
+        '/nonexistent/file.bas',
+        '/fake/qb64pe'
+      );
+      
+      expect(result.success).toBe(false);
+      expect(result.errors.some(e => e.message.includes('not found'))).toBe(true);
+    });
+
+    it('should return proper result structure', async () => {
+      const result = await service.compileAndVerify('/fake/file.bas');
+      
+      expect(result).toHaveProperty('success');
+      expect(result).toHaveProperty('output');
+      expect(result).toHaveProperty('errors');
+      expect(result).toHaveProperty('suggestions');
+      expect(Array.isArray(result.errors)).toBe(true);
+      expect(Array.isArray(result.suggestions)).toBe(true);
+    });
+
+    it('should handle compiler flags', async () => {
+      const result = await service.compileAndVerify(
+        '/fake/file.bas',
+        '/fake/qb64pe',
+        ['-c', '-w', '-o', 'output']
+      );
+      
+      expect(result).toBeDefined();
+    });
+
+    it('should provide suggestions for errors', async () => {
+      const result = await service.compileAndVerify('/fake/file.bas');
+      
+      expect(Array.isArray(result.suggestions)).toBe(true);
+    });
+  });
 });

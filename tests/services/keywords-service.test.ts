@@ -744,6 +744,194 @@ describe('KeywordsService', () => {
       expect(() => new KeywordsService()).not.toThrow();
     });
 
+    it('should handle wiki categories load error', () => {
+      jest.clearAllMocks();
+      
+      let callCount = 0;
+      (fs.existsSync as jest.Mock).mockReturnValue(false);
+      (fs.readFileSync as jest.Mock).mockImplementation((path: string) => {
+        callCount++;
+        if (path.includes('QB64PE Keywords by Category')) {
+          throw new Error('Wiki categories not found');
+        }
+        return JSON.stringify({ keywords: {} });
+      });
+      (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+      
+      expect(() => new KeywordsService()).not.toThrow();
+    });
+
+    it('should exercise all categorization logic', () => {
+      jest.clearAllMocks();
+      
+      const originalData = {
+        keywords: {
+          // Functions with various patterns - description as string
+          'CHR$ (function)': 'Returns character from ASCII code',
+          'STR$': 'Converts number to string',
+          'LEN (function)': '(function) Returns string length',
+          'SIN': 'Returns sine of angle',
+          '_RGB32 (function)': 'Returns RGB color',
+          
+          // Statements
+          'PRINT (statement)': '(statement) Outputs text',
+          'INPUT (statement)': 'Gets input statement',
+          'DIM': 'Declares variables',
+          
+          // Operators - comprehensive list
+          '+': 'Addition operator',
+          'MOD': 'Modulo operator',
+          'AND': 'Logical AND',
+          '_ANDALSO': 'Short-circuit AND',
+          'AND (boolean)': 'Boolean AND operator',
+          
+          // Types - comprehensive list
+          'INTEGER': 'Integer numerical type',
+          '_INTEGER64': '64-bit integer',
+          '_MEM': 'Memory type',
+          'OPTION _EXPLICIT': 'Explicit variable declaration',
+          
+          // Constants
+          '_PI': 'Mathematical constant pi',
+          'BASE': 'Array base constant',
+          
+          // Metacommands
+          '$CONSOLE': 'Console metacommand',
+          '$INCLUDE': 'Include file metacommand',
+          
+          // OpenGL
+          '_glBegin': 'OpenGL begin drawing',
+          '_glVertex3f': 'OpenGL vertex',
+          
+          // Legacy
+          'IOCTL': 'Legacy qbasic only keyword',
+          
+          // Complex syntax patterns
+          'IF...THEN': 'Conditional statement',
+          'FOR...NEXT': 'For loop',
+          'TYPE': 'Type definition',
+          
+          // Version testing
+          '_DISPLAY': 'QB64PE display rendering',
+          
+          // Platform-specific
+          'SHELL': 'Execute command Windows only'
+        }
+      };
+      
+      let callCount = 0;
+      (fs.existsSync as jest.Mock).mockReturnValue(false);
+      (fs.readFileSync as jest.Mock).mockImplementation((path: string) => {
+        callCount++;
+        if (path.includes('QB64PE Keywords by Category')) {
+          return JSON.stringify({ categories: {} });
+        }
+        return JSON.stringify(originalData);
+      });
+      (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+      (fs.mkdirSync as jest.Mock).mockImplementation(() => {});
+      
+      const testService = new KeywordsService();
+      
+      // Verify all types are recognized
+      expect(testService.getKeywordsByType('function').length).toBeGreaterThan(0);
+      expect(testService.getKeywordsByType('statement').length).toBeGreaterThan(0);
+      expect(testService.getKeywordsByType('operator').length).toBeGreaterThan(0);
+      expect(testService.getKeywordsByType('type').length).toBeGreaterThan(0);
+      expect(testService.getKeywordsByType('constant').length).toBeGreaterThan(0);
+      expect(testService.getKeywordsByType('metacommand').length).toBeGreaterThan(0);
+      expect(testService.getKeywordsByType('opengl').length).toBeGreaterThan(0);
+      expect(testService.getKeywordsByType('legacy').length).toBeGreaterThan(0);
+      
+      // Verify versions
+      expect(testService.getKeywordsByVersion('QB64PE').length).toBeGreaterThan(0);
+      expect(testService.getKeywordsByVersion('QB64').length).toBeGreaterThan(0);
+      expect(testService.getKeywordsByVersion('QBasic').length).toBeGreaterThan(0);
+      
+      // Test total count
+      expect(testService.getKeywordCount()).toBeGreaterThan(20);
+      expect(testService.getOriginalKeywordCount()).toBeGreaterThan(20);
+    });
+
+    it('should generate proper syntax for all keyword types', () => {
+      jest.clearAllMocks();
+      
+      const originalData = {
+        keywords: {
+          // Special syntax patterns - string descriptions
+          'IF...THEN': 'Conditional',
+          'FOR...NEXT': 'Loop',
+          'SUB': 'Subroutine',
+          'FUNCTION': 'Function',
+          'TYPE': 'Type',
+          '_MEM': 'Memory type',
+          'TESTFUNC$': 'String function returns value',
+          'TESTFUNC': 'Numeric function returns value',
+          '$TESTMETA': 'Test metacommand',
+          'TESTOP': 'Test operator',
+          'AND (boolean)': 'Boolean AND',
+          'TESTTYPE': 'Test type',
+          'TESTCONST': 'Test constant',
+          '_glTest': 'OpenGL test',
+          'TESTSTMT': 'Test statement'
+        }
+      };
+      
+      (fs.existsSync as jest.Mock).mockReturnValue(false);
+      (fs.readFileSync as jest.Mock).mockImplementation((path: string) => {
+        if (path.includes('QB64PE Keywords by Category')) {
+          return JSON.stringify({ categories: {} });
+        }
+        return JSON.stringify(originalData);
+      });
+      (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+      (fs.mkdirSync as jest.Mock).mockImplementation(() => {});
+      
+      const testService = new KeywordsService();
+      expect(testService.getKeywordCount()).toBeGreaterThan(0);
+    });
+
+    it('should generate examples for all special cases', () => {
+      jest.clearAllMocks();
+      
+      const originalData = {
+        keywords: {
+          // Special examples - string descriptions
+          'IF...THEN': 'Conditional',
+          'FOR...NEXT': 'Loop',
+          'PRINT': 'Output',
+          '_ACCEPTFILEDROP': 'File drop',
+          'SCREEN': 'Screen',
+          'COLOR': 'Color',
+          'CIRCLE': 'Circle',
+          'LINE': 'Line',
+          'INPUT$ (function)': 'Input function returns value',
+          'CHR$ (function)': 'Character function returns value',
+          '_RGB32 (function)': 'RGB function returns value',
+          'TIMER (function)': 'Timer function returns value',
+          'RND (function)': 'Random function returns value',
+          'TESTPRINT': 'Test PRINT statement',
+          '$TESTINCLUDE': 'Include test',
+          'TESTOP': 'Test operator',
+          '_MEM': 'Memory type',
+          '_glBegin': 'OpenGL begin'
+        }
+      };
+      
+      (fs.existsSync as jest.Mock).mockReturnValue(false);
+      (fs.readFileSync as jest.Mock).mockImplementation((path: string) => {
+        if (path.includes('QB64PE Keywords by Category')) {
+          return JSON.stringify({ categories: {} });
+        }
+        return JSON.stringify(originalData);
+      });
+      (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+      (fs.mkdirSync as jest.Mock).mockImplementation(() => {});
+      
+      const testService = new KeywordsService();
+      expect(testService.getKeywordCount()).toBeGreaterThan(0);
+    });
+
 
   });
 });

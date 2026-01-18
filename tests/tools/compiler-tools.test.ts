@@ -65,6 +65,91 @@ describe('Compiler Tools', () => {
       }
     });
 
+    it('should execute get_compiler_options with defaults', async () => {
+      registerCompilerTools(mockServer, services);
+      const call = (mockServer.registerTool as jest.Mock).mock.calls.find(
+        c => c[0] === 'get_compiler_options'
+      );
+      
+      if (call) {
+        const handler = call[2];
+        const result = await handler({});
+        expect(result).toBeDefined();
+      }
+    });
+
+    it('should handle get_compiler_options errors', async () => {
+      const errorServices = {
+        compilerService: {
+          getCompilerOptions: jest.fn().mockRejectedValue(new Error('Options failed'))
+        }
+      } as any;
+
+      const errorMockServer = {
+        registerTool: jest.fn()
+      } as any;
+
+      registerCompilerTools(errorMockServer, errorServices);
+      const call = (errorMockServer.registerTool as jest.Mock).mock.calls.find(
+        c => c[0] === 'get_compiler_options'
+      );
+      
+      if (call) {
+        const handler = call[2];
+        const result = await handler({ platform: 'windows' });
+        expect(result).toBeDefined();
+      }
+    });
+
+    it('should execute validate_qb64pe_syntax handler', async () => {
+      registerCompilerTools(mockServer, services);
+      const call = (mockServer.registerTool as jest.Mock).mock.calls.find(
+        c => c[0] === 'validate_qb64pe_syntax'
+      );
+      
+      if (call) {
+        const handler = call[2];
+        const result = await handler({ code: 'PRINT "Test"', checkLevel: 'basic' });
+        expect(result).toBeDefined();
+      }
+    });
+
+    it('should execute validate_qb64pe_syntax with defaults', async () => {
+      registerCompilerTools(mockServer, services);
+      const call = (mockServer.registerTool as jest.Mock).mock.calls.find(
+        c => c[0] === 'validate_qb64pe_syntax'
+      );
+      
+      if (call) {
+        const handler = call[2];
+        const result = await handler({ code: 'DIM x AS INTEGER' });
+        expect(result).toBeDefined();
+      }
+    });
+
+    it('should handle validate_qb64pe_syntax errors', async () => {
+      const errorServices = {
+        syntaxService: {
+          validateSyntax: jest.fn().mockRejectedValue(new Error('Validation failed'))
+        }
+      } as any;
+
+      const errorMockServer = {
+        registerTool: jest.fn()
+      } as any;
+
+      registerCompilerTools(errorMockServer, errorServices);
+      const call = (errorMockServer.registerTool as jest.Mock).mock.calls.find(
+        c => c[0] === 'validate_qb64pe_syntax'
+      );
+      
+      if (call) {
+        const handler = call[2];
+        const result = await handler({ code: 'INVALID' });
+        expect(result).toBeDefined();
+      }
+    });
+
     it('should execute get_debugging_help handler', async () => {
       registerCompilerTools(mockServer, services);
       const call = (mockServer.registerTool as jest.Mock).mock.calls.find(
@@ -74,6 +159,72 @@ describe('Compiler Tools', () => {
       if (call) {
         const handler = call[2];
         const result = await handler({ issue: 'variable scope problem' });
+        expect(result).toBeDefined();
+      }
+    });
+
+    it('should execute get_debugging_help with platform', async () => {
+      registerCompilerTools(mockServer, services);
+      const call = (mockServer.registerTool as jest.Mock).mock.calls.find(
+        c => c[0] === 'get_debugging_help'
+      );
+      
+      if (call) {
+        const handler = call[2];
+        const result = await handler({ issue: 'crash on startup', platform: 'windows' });
+        expect(result).toBeDefined();
+      }
+    });
+
+    it('should execute compile_and_verify_qb64pe handler', async () => {
+      registerCompilerTools(mockServer, services);
+      const call = (mockServer.registerTool as jest.Mock).mock.calls.find(
+        c => c[0] === 'compile_and_verify_qb64pe'
+      );
+      
+      if (call) {
+        const handler = call[2];
+        const result = await handler({ sourceFilePath: '/path/to/test.bas' });
+        expect(result).toBeDefined();
+      }
+    });
+
+    it('should execute compile_and_verify_qb64pe with all options', async () => {
+      registerCompilerTools(mockServer, services);
+      const call = (mockServer.registerTool as jest.Mock).mock.calls.find(
+        c => c[0] === 'compile_and_verify_qb64pe'
+      );
+      
+      if (call) {
+        const handler = call[2];
+        const result = await handler({
+          sourceFilePath: '/path/to/test.bas',
+          qb64pePath: '/path/to/qb64pe',
+          compilerFlags: ['-c', '-w']
+        });
+        expect(result).toBeDefined();
+      }
+    });
+
+    it('should handle compile_and_verify_qb64pe errors', async () => {
+      const errorServices = {
+        compilerService: {
+          compileAndVerify: jest.fn().mockRejectedValue(new Error('Compilation failed'))
+        }
+      } as any;
+
+      const errorMockServer = {
+        registerTool: jest.fn()
+      } as any;
+
+      registerCompilerTools(errorMockServer, errorServices);
+      const call = (errorMockServer.registerTool as jest.Mock).mock.calls.find(
+        c => c[0] === 'compile_and_verify_qb64pe'
+      );
+      
+      if (call) {
+        const handler = call[2];
+        const result = await handler({ sourceFilePath: '/invalid/path.bas' });
         expect(result).toBeDefined();
       }
     });

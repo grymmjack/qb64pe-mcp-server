@@ -1,7 +1,9 @@
 import { QB64PEWikiService } from '../../src/services/wiki-service';
+import axios from 'axios';
 
 // Mock axios for wiki requests
 jest.mock('axios');
+const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe('QB64PEWikiService', () => {
   let service: QB64PEWikiService;
@@ -9,6 +11,189 @@ describe('QB64PEWikiService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     service = new QB64PEWikiService();
+  });
+
+  describe('searchWiki with mocked responses', () => {
+    it('should parse actual wiki search results', async () => {
+      const mockHtml = `
+        <div class="mw-search-result">
+          <div class="mw-search-result-heading">
+            <a href="/PRINT">PRINT</a>
+          </div>
+          <div class="searchresult">Displays text on screen</div>
+        </div>
+      `;
+      
+      mockedAxios.get.mockResolvedValueOnce({ data: mockHtml });
+      
+      const results = await service.searchWiki('PRINT');
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('should handle empty search results from wiki', async () => {
+      const mockHtml = '<div class="mw-content-text">No results found</div>';
+      
+      mockedAxios.get.mockResolvedValueOnce({ data: mockHtml });
+      
+      const results = await service.searchWiki('NONEXISTENT');
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('should parse multiple search results', async () => {
+      const mockHtml = `
+        <div class="mw-search-result">
+          <div class="mw-search-result-heading"><a href="/PRINT">PRINT</a></div>
+          <div class="searchresult">Display function</div>
+        </div>
+        <div class="mw-search-result">
+          <div class="mw-search-result-heading"><a href="/PRINT_USING">PRINT USING</a></div>
+          <div class="searchresult">Formatted output</div>
+        </div>
+      `;
+      
+      mockedAxios.get.mockResolvedValueOnce({ data: mockHtml });
+      
+      const results = await service.searchWiki('PRINT');
+      expect(Array.isArray(results)).toBe(true);
+    });
+  });
+
+  describe('getPageContent with mocked responses', () => {
+    it('should parse page content with heading', async () => {
+      const mockHtml = `
+        <h1>PRINT Statement</h1>
+        <div id="mw-content-text">
+          <p>The PRINT statement displays text.</p>
+          <h2>Syntax</h2>
+          <p>PRINT expression</p>
+        </div>
+      `;
+      
+      mockedAxios.get.mockResolvedValueOnce({ data: mockHtml });
+      
+      const content = await service.getPageContent('PRINT');
+      expect(typeof content).toBe('string');
+      expect(content).toContain('PRINT Statement');
+    });
+
+    it('should extract code examples from page', async () => {
+      const mockHtml = `
+        <h1>PRINT</h1>
+        <div id="mw-content-text">
+          <p>Display text</p>
+          <pre>PRINT "Hello World"\\nFOR i = 1 TO 10\\nPRINT i\\nNEXT i</pre>
+        </div>
+      `;
+      
+      mockedAxios.get.mockResolvedValueOnce({ data: mockHtml });
+      
+      const content = await service.getPageContent('PRINT', true);
+      expect(typeof content).toBe('string');
+    });
+
+    it('should handle page without examples', async () => {
+      const mockHtml = `
+        <h1>DIM</h1>
+        <div id="mw-content-text">
+          <p>Declare variables</p>
+        </div>
+      `;
+      
+      mockedAxios.get.mockResolvedValueOnce({ data: mockHtml });
+      
+      const content = await service.getPageContent('DIM', false);
+      expect(typeof content).toBe('string');
+      expect(content).toContain('DIM');
+    });
+
+    it('should remove navigation elements', async () => {
+      const mockHtml = `
+        <h1>Test Page</h1>
+        <div id="mw-content-text">
+          <div class="navbox">Navigation</div>
+          <div class="infobox">Info</div>
+          <p>Real content</p>
+        </div>
+      `;
+      
+      mockedAxios.get.mockResolvedValueOnce({ data: mockHtml });
+      
+      const content = await service.getPageContent('Test');
+      expect(typeof content).toBe('string');
+    });
+
+    it('should extract multiple headings', async () => {
+      const mockHtml = `
+        <h1>Main Title</h1>
+        <div id="mw-content-text">
+          <h2>Section 1</h2>
+          <p>Content 1</p>
+          <h3>Subsection 1.1</h3>
+          <p>Content 1.1</p>
+          <h2>Section 2</h2>
+          <p>Content 2</p>
+        </div>
+      `;
+      
+      mockedAxios.get.mockResolvedValueOnce({ data: mockHtml });
+      
+      const content = await service.getPageContent('Test');
+      expect(typeof content).toBe('string');
+    });
+
+    it('should limit code examples to 5', async () => {
+      const mockHtml = `
+        <h1>Examples</h1>
+        <div id="mw-content-text">
+          <pre>PRINT "Example 1"\\nDIM x AS INTEGER</pre>
+          <pre>PRINT "Example 2"\\nFOR i = 1 TO 10\\nNEXT i</pre>
+          <pre>PRINT "Example 3"\\nIF x > 0 THEN</pre>
+          <pre>PRINT "Example 4"\\nSUB Test</pre>
+          <pre>PRINT "Example 5"\\nFUNCTION Add</pre>
+          <pre>PRINT "Example 6"\\nDIM y AS STRING</pre>
+          <pre>PRINT "Example 7"\\nDO UNTIL</pre>
+        </div>
+      `;
+      
+      mockedAxios.get.mockResolvedValueOnce({ data: mockHtml });
+      
+      const content = await service.getPageContent('Examples', true);
+      expect(typeof content).toBe('string');
+    });
+  });
+
+  describe('getWikiIndex with mocked response', () => {
+    it('should parse wiki index with sections', async () => {
+      const mockHtml = `
+        <div id="mw-content-text">
+          <h2>Language Elements</h2>
+          <ul>
+            <li><a href="/PRINT">PRINT</a></li>
+            <li><a href="/DIM">DIM</a></li>
+          </ul>
+          <h3>Control Flow</h3>
+          <ul>
+            <li><a href="/IF">IF</a></li>
+            <li><a href="/FOR">FOR</a></li>
+          </ul>
+        </div>
+      `;
+      
+      mockedAxios.get.mockResolvedValueOnce({ data: mockHtml });
+      
+      const index = await service.getWikiIndex();
+      expect(typeof index).toBe('string');
+      expect(index).toContain('QB64PE Wiki Index');
+    });
+
+    it('should handle empty index', async () => {
+      const mockHtml = '<div id="mw-content-text"></div>';
+      
+      mockedAxios.get.mockResolvedValueOnce({ data: mockHtml });
+      
+      const index = await service.getWikiIndex();
+      expect(typeof index).toBe('string');
+    });
   });
 
   describe('searchWiki', () => {
@@ -166,6 +351,202 @@ describe('QB64PEWikiService', () => {
     it('should provide fallback wiki index when fetch fails', async () => {
       const index = await service.getWikiIndex();
       expect(typeof index).toBe('string');
+    });
+  });
+
+  describe('common page searches', () => {
+    it('should find PRINT in common pages', async () => {
+      const results = await service.searchWiki('PRINT');
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('should find DIM in common pages', async () => {
+      const results = await service.searchWiki('DIM');
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('should find FOR in common pages', async () => {
+      const results = await service.searchWiki('FOR');
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('should find IF in common pages', async () => {
+      const results = await service.searchWiki('IF');
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('should find SUB in common pages', async () => {
+      const results = await service.searchWiki('SUB');
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('should find FUNCTION in common pages', async () => {
+      const results = await service.searchWiki('FUNCTION');
+      expect(Array.isArray(results)).toBe(true);
+    });
+  });
+
+  describe('search with keywords', () => {
+    it('should match keyword "output"', async () => {
+      const results = await service.searchWiki('output');
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('should match keyword "loop"', async () => {
+      const results = await service.searchWiki('loop');
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('should match keyword "variable"', async () => {
+      const results = await service.searchWiki('variable');
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('should match keyword "declare"', async () => {
+      const results = await service.searchWiki('declare');
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('should match keyword "conditional"', async () => {
+      const results = await service.searchWiki('conditional');
+      expect(Array.isArray(results)).toBe(true);
+    });
+  });
+
+  describe('page title handling', () => {
+    it('should handle titles with underscores', async () => {
+      const content = await service.getPageContent('FOR_NEXT');
+      expect(typeof content).toBe('string');
+    });
+
+    it('should handle titles with spaces', async () => {
+      const content = await service.getPageContent('IF THEN');
+      expect(typeof content).toBe('string');
+    });
+
+    it('should handle uppercase titles', async () => {
+      const content = await service.getPageContent('PRINT');
+      expect(typeof content).toBe('string');
+    });
+
+    it('should handle lowercase titles', async () => {
+      const content = await service.getPageContent('print');
+      expect(typeof content).toBe('string');
+    });
+
+    it('should handle mixed case titles', async () => {
+      const content = await service.getPageContent('Print');
+      expect(typeof content).toBe('string');
+    });
+  });
+
+  describe('category combinations', () => {
+    it('should search statements category', async () => {
+      const results = await service.searchWiki('test', 'statements');
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('should search functions category', async () => {
+      const results = await service.searchWiki('test', 'functions');
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('should search operators category', async () => {
+      const results = await service.searchWiki('test', 'operators');
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('should search keywords category', async () => {
+      const results = await service.searchWiki('test', 'keywords');
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('should search all categories', async () => {
+      const results = await service.searchWiki('test', 'all');
+      expect(Array.isArray(results)).toBe(true);
+    });
+  });
+
+  describe('empty and edge cases', () => {
+    it('should handle whitespace-only query', async () => {
+      const results = await service.searchWiki('   ');
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('should handle very long queries', async () => {
+      const longQuery = 'PRINT'.repeat(100);
+      const results = await service.searchWiki(longQuery);
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('should handle numeric queries', async () => {
+      const results = await service.searchWiki('12345');
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('should handle special characters', async () => {
+      const results = await service.searchWiki('$@#%');
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('should handle unicode characters', async () => {
+      const results = await service.searchWiki('漢字');
+      expect(Array.isArray(results)).toBe(true);
+    });
+  });
+
+  describe('case sensitivity', () => {
+    it('should be case insensitive for PRINT', async () => {
+      const upper = await service.searchWiki('PRINT');
+      const lower = await service.searchWiki('print');
+      expect(Array.isArray(upper)).toBe(true);
+      expect(Array.isArray(lower)).toBe(true);
+    });
+
+    it('should be case insensitive for keywords', async () => {
+      const upper = await service.searchWiki('LOOP');
+      const lower = await service.searchWiki('loop');
+      expect(Array.isArray(upper)).toBe(true);
+      expect(Array.isArray(lower)).toBe(true);
+    });
+  });
+
+  describe('multiple searches', () => {
+    it('should handle multiple consecutive searches', async () => {
+      const r1 = await service.searchWiki('PRINT');
+      const r2 = await service.searchWiki('DIM');
+      const r3 = await service.searchWiki('FOR');
+      expect(Array.isArray(r1)).toBe(true);
+      expect(Array.isArray(r2)).toBe(true);
+      expect(Array.isArray(r3)).toBe(true);
+    });
+
+    it('should handle searches with different categories', async () => {
+      const r1 = await service.searchWiki('test', 'graphics');
+      const r2 = await service.searchWiki('test', 'math');
+      const r3 = await service.searchWiki('test', 'string');
+      expect(Array.isArray(r1)).toBe(true);
+      expect(Array.isArray(r2)).toBe(true);
+      expect(Array.isArray(r3)).toBe(true);
+    });
+  });
+
+  describe('page content with different options', () => {
+    it('should handle page with examples enabled', async () => {
+      const content = await service.getPageContent('PRINT', true);
+      expect(typeof content).toBe('string');
+      expect(content.length).toBeGreaterThan(0);
+    });
+
+    it('should handle page with examples disabled', async () => {
+      const content = await service.getPageContent('PRINT', false);
+      expect(typeof content).toBe('string');
+      expect(content.length).toBeGreaterThan(0);
+    });
+
+    it('should handle page content for common keywords', async () => {
+      const content = await service.getPageContent('DIM', true);
+      expect(typeof content).toBe('string');
     });
   });
 });

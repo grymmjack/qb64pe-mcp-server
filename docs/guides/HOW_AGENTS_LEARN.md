@@ -150,7 +150,7 @@ Agent executes: [Autonomous fix workflow]
 
 **Implementation:**
 - See: `/src/index.ts` - `setupPrompts()` method
-- See: `/prompt-docs/analyze-compilation-error.md` - Full prompt documentation
+- See: `/docs/prompts/analyze-compilation-error.md` - Full prompt documentation
 
 ---
 
@@ -423,7 +423,7 @@ Agent: "✅ Fixed type mismatch at line 25. Compilation successful!"
 
 **Documents:**
 - `/AGENT_INTELLIGENCE_GUIDE.md` - Source file (52 tools, workflows, examples)
-- `/prompt-docs/analyze-compilation-error.md` - Compilation error prompt documentation
+- `/docs/prompts/analyze-compilation-error.md` - Compilation error prompt documentation
 - `/tool-docs/compile_and_verify_qb64pe.md` - Autonomous compilation tool docs
 
 **MCP Resources:**

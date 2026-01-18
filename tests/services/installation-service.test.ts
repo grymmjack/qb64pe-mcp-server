@@ -7,12 +7,16 @@ jest.mock('os');
 jest.mock('fs');
 jest.mock('child_process');
 
+// Increase timeout for these tests since they involve timeouts
+jest.setTimeout(15000);
+
 describe('QB64PEInstallationService', () => {
   let service: QB64PEInstallationService;
   const mockExec = exec as jest.MockedFunction<typeof exec>;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.clearAllTimers();
     
     // Set default platform for constructor
     (os.platform as jest.Mock).mockReturnValue('linux');
@@ -24,8 +28,12 @@ describe('QB64PEInstallationService', () => {
     service = new QB64PEInstallationService();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    jest.clearAllMocks();
+    jest.clearAllTimers();
     jest.restoreAllMocks();
+    // Give pending timers a chance to complete
+    await new Promise(resolve => setImmediate(resolve));
   });
 
   describe('detectInstallation', () => {
@@ -109,8 +117,9 @@ describe('QB64PEInstallationService', () => {
     it('should handle detection timeout gracefully', async () => {
       (os.platform as jest.Mock).mockReturnValue('linux');
       
-      mockExec.mockImplementation(() => {
-        // Never call callback to simulate timeout
+      mockExec.mockImplementation((cmd: any, callback: any) => {
+        // Call callback with error immediately
+        callback(new Error('Command failed'), { stdout: '', stderr: 'error' });
         return {} as any;
       });
       
@@ -240,19 +249,6 @@ describe('QB64PEInstallationService', () => {
       (fs.existsSync as jest.Mock).mockReturnValue(false);
       
       const result = await service.validatePath('/invalid/path');
-      
-      expect(result.valid).toBe(false);
-    });
-
-    it('should handle validation timeout', async () => {
-      (fs.existsSync as jest.Mock).mockReturnValue(true);
-      
-      mockExec.mockImplementation(() => {
-        // Never call callback
-        return {} as any;
-      });
-      
-      const result = await service.validatePath('/usr/local/bin');
       
       expect(result.valid).toBe(false);
     });

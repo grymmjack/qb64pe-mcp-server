@@ -35,6 +35,16 @@ describe('KeywordsService', () => {
       const lowerResults = service.searchKeywords('print');
       expect(upperResults.length).toBe(lowerResults.length);
     });
+
+    it('should search in descriptions', () => {
+      const results = service.searchKeywords('display');
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('should limit search results', () => {
+      const results = service.searchKeywords('I', 10);
+      expect(results.length).toBeLessThanOrEqual(10);
+    });
   });
 
   describe('getKeyword', () => {

@@ -51,6 +51,24 @@ describe('QB64PECompilerService', () => {
       expect(help).toBeDefined();
       expect(typeof help).toBe('string');
     });
+
+    it('should provide help for loop issues', async () => {
+      const help = await service.getDebuggingHelp('infinite loop detected');
+      expect(help).toContain('Debugging Help');
+      expect(help.length).toBeGreaterThan(0);
+    });
+
+    it('should provide help for graphics issues', async () => {
+      const help = await service.getDebuggingHelp('screen graphics problem');
+      expect(help).toContain('Debugging Help');
+      expect(help.length).toBeGreaterThan(0);
+    });
+
+    it('should filter techniques by platform', async () => {
+      const help = await service.getDebuggingHelp('error', 'linux');
+      expect(help).toBeDefined();
+      expect(typeof help).toBe('string');
+    });
   });
 
   describe('getCompilerReference', () => {

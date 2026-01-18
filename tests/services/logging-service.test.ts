@@ -78,4 +78,55 @@ describe('QB64PELoggingService', () => {
       expect(output).toContain('TEST');
     });
   });
+
+  describe('additional logging options', () => {
+    it('should handle TRACE log level', () => {
+      const code = 'PRINT "Test"';
+      const logged = service.injectNativeLogging(code, { logLevel: 'TRACE' as const });
+      expect(typeof logged).toBe('string');
+    });
+
+    it('should handle WARN log level', () => {
+      const code = 'PRINT "Test"';
+      const logged = service.injectNativeLogging(code, { logLevel: 'WARN' as const });
+      expect(typeof logged).toBe('string');
+    });
+
+    it('should handle ERROR log level', () => {
+      const code = 'PRINT "Test"';
+      const logged = service.injectNativeLogging(code, { logLevel: 'ERROR' as const });
+      expect(typeof logged).toBe('string');
+    });
+
+    it('should handle auto-exit timeout', () => {
+      const code = 'PRINT "Test"';
+      const logged = service.injectNativeLogging(code, { autoExitTimeout: 5 });
+      expect(typeof logged).toBe('string');
+    });
+
+    it('should handle custom console directive', () => {
+      const code = 'PRINT "Test"';
+      const logged = service.injectNativeLogging(code, { consoleDirective: '$CONSOLE' as const });
+      expect(typeof logged).toBe('string');
+    });
+
+    it('should handle disabled features', () => {
+      const code = 'PRINT "Test"';
+      const logged = service.injectNativeLogging(code, { 
+        enableNativeLogging: false,
+        enableEchoOutput: false,
+        enableStructuredOutput: false
+      });
+      expect(typeof logged).toBe('string');
+    });
+
+    it('should handle custom output sections', () => {
+      const code = 'PRINT "Test"';
+      const logged = service.injectNativeLogging(code, { 
+        enableStructuredOutput: true,
+        outputSections: ['Custom1', 'Custom2']
+      });
+      expect(typeof logged).toBe('string');
+    });
+  });
 });

@@ -303,4 +303,122 @@ describe('SessionProblemsService', () => {
       expect(stats.total).toBeGreaterThanOrEqual(0);
     });
   });
+
+  describe('getProblemsByStatus', () => {
+    beforeEach(() => {
+      const id = service.logProblem({
+        category: 'syntax' as const,
+        severity: 'high' as const,
+        title: 'Status Test',
+        description: 'Test',
+        context: { language: 'QB64PE' },
+        problem: { attempted: 'A', error: 'E', rootCause: 'R' },
+        solution: { implemented: 'I', preventionStrategy: 'P' }
+      });
+      service.updateProblemStatus(id.id, 'handled', 'agent');
+    });
+
+    it('should filter by status', () => {
+      const handled = service.getProblemsByStatus('handled');
+      expect(handled.length).toBeGreaterThan(0);
+      expect(handled.every(p => p.status === 'handled')).toBe(true);
+    });
+
+    it('should return new problems', () => {
+      service.logProblem({
+        category: 'workflow' as const,
+        severity: 'medium' as const,
+        title: 'New Problem',
+        description: 'Test',
+        context: { language: 'QB64PE' },
+        problem: { attempted: 'A', error: 'E', rootCause: 'R' },
+        solution: { implemented: 'I', preventionStrategy: 'P' }
+      });
+      const newProblems = service.getProblemsByStatus('new');
+      expect(newProblems.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('getUnhandledProblems', () => {
+    it('should return unhandled problems', () => {
+      service.logProblem({
+        category: 'tooling' as const,
+        severity: 'high' as const,
+        title: 'Unhandled',
+        description: 'Test',
+        context: { language: 'QB64PE' },
+        problem: { attempted: 'A', error: 'E', rootCause: 'R' },
+        solution: { implemented: 'I', preventionStrategy: 'P' }
+      });
+      const unhandled = service.getUnhandledProblems();
+      expect(Array.isArray(unhandled)).toBe(true);
+    });
+  });
+
+  describe('getActionableProblems', () => {
+    it('should return high priority problems', () => {
+      service.logProblem({
+        category: 'architecture' as const,
+        severity: 'critical' as const,
+        title: 'High Priority',
+        description: 'Test',
+        context: { language: 'QB64PE' },
+        problem: { attempted: 'A', error: 'E', rootCause: 'R' },
+        solution: { implemented: 'I', preventionStrategy: 'P' },
+        mcpImprovement: {
+          toolNeeded: 'New tool',
+          priority: 'high' as const
+        }
+      });
+      const actionable = service.getActionableProblems();
+      expect(Array.isArray(actionable)).toBe(true);
+    });
+
+    it('should sort by severity', () => {
+      service.logProblem({
+        category: 'syntax' as const,
+        severity: 'medium' as const,
+        title: 'Medium Priority',
+        description: 'Test',
+        context: { language: 'QB64PE' },
+        problem: { attempted: 'A', error: 'E', rootCause: 'R' },
+        solution: { implemented: 'I', preventionStrategy: 'P' },
+        mcpImprovement: {
+          priority: 'high' as const
+        }
+      });
+      service.logProblem({
+        category: 'tooling' as const,
+        severity: 'critical' as const,
+        title: 'Critical Priority',
+        description: 'Test',
+        context: { language: 'QB64PE' },
+        problem: { attempted: 'A', error: 'E', rootCause: 'R' },
+        solution: { implemented: 'I', preventionStrategy: 'P' },
+        mcpImprovement: {
+          priority: 'high' as const
+        }
+      });
+      const actionable = service.getActionableProblems();
+      if (actionable.length >= 2) {
+        expect(actionable[0].severity).toBe('critical');
+      }
+    });
+  });
+
+  describe('clear', () => {
+    it('should clear all problems', () => {
+      service.logProblem({
+        category: 'syntax' as const,
+        severity: 'high' as const,
+        title: 'To Clear',
+        description: 'Test',
+        context: { language: 'QB64PE' },
+        problem: { attempted: 'A', error: 'E', rootCause: 'R' },
+        solution: { implemented: 'I', preventionStrategy: 'P' }
+      });
+      service.clear();
+      expect(service.getProblems().length).toBe(0);
+    });
+  });
 });

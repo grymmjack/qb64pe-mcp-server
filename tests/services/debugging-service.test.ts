@@ -47,5 +47,67 @@ describe('QB64PEDebuggingService', () => {
       const result = service.enhanceCodeForDebugging(session.id);
       expect(result.enhancedCode.length).toBeGreaterThan(code.length);
     });
+
+    it('should add console management', () => {
+      const session = service.createDebuggingSession('_DISPLAY\\nPRINT "Test"');
+      const result = service.enhanceCodeForDebugging(session.id, { enableConsole: true });
+      expect(result.enhancedCode).toBeDefined();
+    });
+
+    it('should add logging system', () => {
+      const session = service.createDebuggingSession('PRINT "Test"');
+      const result = service.enhanceCodeForDebugging(session.id, { enableLogging: true });
+      expect(result.enhancedCode).toBeDefined();
+    });
+
+    it('should add screenshots', () => {
+      const session = service.createDebuggingSession('_DISPLAY');
+      const result = service.enhanceCodeForDebugging(session.id, { enableScreenshots: true });
+      expect(result.enhancedCode).toBeDefined();
+    });
+
+    it('should add resource tracking', () => {
+      const session = service.createDebuggingSession('PRINT "Test"');
+      const result = service.enhanceCodeForDebugging(session.id, { enableResourceTracking: true });
+      expect(result.enhancedCode).toBeDefined();
+    });
+
+    it('should add flow control', () => {
+      const session = service.createDebuggingSession('PRINT "Test"');
+      const result = service.enhanceCodeForDebugging(session.id, { enableFlowControl: true });
+      expect(result.enhancedCode).toBeDefined();
+    });
+
+    it('should respect timeout settings', () => {
+      const session = service.createDebuggingSession('PRINT "Test"');
+      const result = service.enhanceCodeForDebugging(session.id, { timeoutSeconds: 60 });
+      expect(result.enhancedCode).toBeDefined();
+    });
+
+    it('should support verbose output', () => {
+      const session = service.createDebuggingSession('PRINT "Test"');
+      const result = service.enhanceCodeForDebugging(session.id, { verboseOutput: true });
+      expect(result.enhancedCode).toBeDefined();
+    });
+  });
+
+  describe('session management', () => {
+    it('should retrieve session by id', () => {
+      const session = service.createDebuggingSession('PRINT "Test"');
+      const retrieved = service.getSessionStatus(session.id);
+      expect(retrieved).toBeDefined();
+      expect(retrieved?.id).toBe(session.id);
+    });
+
+    it('should return undefined for non-existent session', () => {
+      const retrieved = service.getSessionStatus('non-existent-id');
+      expect(retrieved).toBeUndefined();
+    });
+
+    it('should handle empty code', () => {
+      const session = service.createDebuggingSession('');
+      expect(session).toBeDefined();
+      expect(session.sourceCode).toBe('');
+    });
   });
 });

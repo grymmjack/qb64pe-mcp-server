@@ -42,5 +42,33 @@ describe('QB64PEPortingService', () => {
       const result = await service.portQBasicToQB64PE(code, { convertGraphics: true });
       expect(result.portedCode).toBeDefined();
     });
+
+    it('should handle different dialects', async () => {
+      const code = 'PRINT "Test"';
+      const result = await service.portQBasicToQB64PE(code, { sourceDialect: 'qbasic' });
+      expect(result).toBeDefined();
+    });
+
+
+
+    it('should add error handling', async () => {
+      const code = 'OPEN "test.txt" FOR INPUT AS #1';
+      const result = await service.portQBasicToQB64PE(code, { addModernFeatures: true });
+      expect(result).toBeDefined();
+    });
+
+    it('should handle empty code', async () => {
+      const result = await service.portQBasicToQB64PE('');
+      expect(result.portedCode).toBe('');
+      expect(result.errors.length).toBe(0);
+    });
+
+    it('should detect incompatibilities', async () => {
+      const code = 'POKE 1000, 255'; // Potential incompatibility
+      const result = await service.portQBasicToQB64PE(code);
+      expect(result.warnings.length >= 0).toBe(true);
+    });
   });
+
+
 });

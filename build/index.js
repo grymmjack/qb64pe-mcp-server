@@ -67,6 +67,7 @@ const graphics_tools_js_1 = require("./tools/graphics-tools.js");
 const debugging_tools_js_1 = require("./tools/debugging-tools.js");
 const feedback_tools_js_1 = require("./tools/feedback-tools.js");
 const session_problems_tools_js_1 = require("./tools/session-problems-tools.js");
+const project_build_context_tools_js_1 = require("./tools/project-build-context-tools.js");
 const file_structure_tools_js_1 = require("./tools/file-structure-tools.js");
 const tool_discovery_js_1 = require("./utils/tool-discovery.js");
 /**
@@ -272,6 +273,7 @@ class QB64PEMCPServer {
         (0, debugging_tools_js_1.registerDebuggingTools)(this.server, services);
         (0, feedback_tools_js_1.registerFeedbackTools)(this.server, services);
         (0, session_problems_tools_js_1.registerSessionProblemsTools)(this.server, services);
+        (0, project_build_context_tools_js_1.registerProjectBuildContextTools)(this.server, services);
         (0, file_structure_tools_js_1.registerFileStructureTools)(this.server, services);
     }
     async setupResources() {
@@ -1155,6 +1157,111 @@ Use these tools in your autonomous workflow:
 \`\`\`
 
 **NOW: Execute the autonomous action plan. Do NOT wait for user confirmation.**`,
+                    },
+                },
+            ],
+        }));
+        // Build context preservation prompt
+        this.server.registerPrompt("preserve-build-context", {
+            title: "Preserve Build Context in Summaries",
+            description: "Guidance for preserving critical build commands and procedural knowledge in conversation summaries. " +
+                "Addresses the problem: 'Conversation summarization loses critical build command details'",
+            argsSchema: {
+                summaryType: zod_1.z
+                    .enum(["conversation", "session", "project"])
+                    .optional()
+                    .describe("Type of summary being created"),
+            },
+        }, ({ summaryType = "conversation" }) => ({
+            messages: [
+                {
+                    role: "user",
+                    content: {
+                        type: "text",
+                        text: `🔍 **Build Context Preservation Guidance**
+
+When creating ${summaryType} summaries, you MUST preserve critical build and workflow information to prevent loss across conversation boundaries.
+
+## [BUILD-CRITICAL] Information to Preserve
+
+### 1. Compilation Commands
+Mark with [BUILD-CRITICAL] in summaries:
+- **Exact QB64PE compilation command**: Full command with all flags
+- **Compiler flags used**: e.g., \`-c -w -x\`, \`-o outputname\`
+- **Output executable name**: If specified with \`-o\` flag
+- **QB64PE installation path**: If non-standard location
+- **Source file path**: Project location
+
+Example preservation:
+\`\`\`
+[BUILD-CRITICAL] Compilation Command:
+/Users/grymmjack/git/QB64pe/qb64pe -c -w -x DRAW.BAS -o DRAW.run
+\`\`\`
+
+### 2. Procedural Knowledge (Not Just Declarative)
+Preserve HOW to do things, not just WHAT was done:
+- Build process steps and order
+- Custom workflows established by user
+- Flags that differ from MCP tool defaults
+- Project-specific requirements
+
+### 3. Project Configuration
+- Include/library paths
+- Platform-specific settings
+- Custom build parameters
+- Environment variables
+
+## Validation Checklist
+
+Before finalizing a summary, verify:
+- [ ] Build command is complete and exact
+- [ ] All non-default flags are documented
+- [ ] Output name is specified if custom
+- [ ] QB64PE path is saved if non-standard
+- [ ] Workflow steps are preserved, not just results
+
+## MCP Tools for Build Context
+
+Use these tools to ensure build context is never lost:
+- \`get_project_build_context\` - Retrieve saved build info before summarizing
+- \`list_project_build_contexts\` - Check all projects being worked on
+- \`compile_and_verify_qb64pe\` - Automatically saves build context
+
+## Anti-Patterns to Avoid
+
+❌ **BAD**: "Last command: ./DRAW.run" (execution only)
+✅ **GOOD**: "Build: /path/qb64pe -c -w -x DRAW.BAS -o DRAW.run | Run: ./DRAW.run"
+
+❌ **BAD**: Using MCP tool defaults without checking history
+✅ **GOOD**: Check \`get_project_build_context\` first, use previous flags
+
+❌ **BAD**: "The code was fixed" (declarative only)
+✅ **GOOD**: "Build process: 1) Fix syntax 2) Compile with -c -w -x 3) Run executable" (procedural)
+
+## Summary Template
+
+\`\`\`markdown
+## Build Configuration [PERSISTENT]
+
+**Project**: [path]
+
+**Build Command**: [BUILD-CRITICAL]
+\`\`\`bash
+[exact command]
+\`\`\`
+
+**Compiler Flags**: [list with explanations]
+**Output**: [executable name and location]
+**Last Successful Build**: [timestamp]
+
+## Critical Workflows [WORKFLOW]
+
+1. [Step-by-step procedures established]
+2. [Custom processes user requires]
+3. [Deviations from defaults]
+\`\`\`
+
+This ensures the next conversation can immediately resume with correct build parameters!`,
                     },
                 },
             ],

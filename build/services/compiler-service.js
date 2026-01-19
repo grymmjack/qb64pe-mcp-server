@@ -34,10 +34,15 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.QB64PECompilerService = void 0;
+const project_build_context_service_1 = require("./project-build-context-service");
 /**
  * Service for QB64PE compiler information and debugging help
  */
 class QB64PECompilerService {
+    buildContextService;
+    constructor() {
+        this.buildContextService = new project_build_context_service_1.ProjectBuildContextService();
+    }
     compilerOptions = [
         {
             flag: "-c",
@@ -371,6 +376,17 @@ INPUT "Press Enter to exit...", dummy$
             errors: [],
             suggestions: [],
         };
+        // Check for parameter differences from previous builds
+        const flags = compilerFlags || ['-c', '-w'];
+        const outputName = path.basename(sourceFilePath, path.extname(sourceFilePath));
+        const paramDiff = await this.buildContextService.checkParameterDiff(sourceFilePath, flags, undefined // outputName is auto-generated from source
+        );
+        if (paramDiff.differs) {
+            result.contextWarning = paramDiff.suggestion;
+            result.suggestions.push(`⚠️ Build parameters differ from previous build!`);
+            result.suggestions.push(`Previous command: ${paramDiff.previousCommand}`);
+            result.suggestions.push(`Consider using previous flags if they were working: ${JSON.stringify(paramDiff.previousFlags)}`);
+        }
         try {
             // Determine QB64PE executable path
             let qb64peExe = qb64pePath;
@@ -416,9 +432,7 @@ INPUT "Press Enter to exit...", dummy$
                 result.suggestions.push('Ensure the file path is correct and the file exists');
                 return result;
             }
-            // Build compilation command
-            const flags = compilerFlags || ['-c', '-w']; // Compile without running, show warnings
-            const outputName = path.basename(sourceFilePath, path.extname(sourceFilePath));
+            // Build compilation command (flags and outputName already defined above for context check)
             const cmd = `"${qb64peExe}" ${flags.join(' ')} -o "${outputName}" "${sourceFilePath}"`;
             // Execute compilation
             try {
@@ -452,6 +466,8 @@ INPUT "Press Enter to exit...", dummy$
                     });
                 }
             }
+            // Save build context regardless of success/failure
+            await this.buildContextService.saveContext(sourceFilePath, qb64peExe, flags, outputName, result.success, result.executablePath);
         }
         catch (error) {
             result.errors.push({

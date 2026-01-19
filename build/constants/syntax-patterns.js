@@ -1,0 +1,189 @@
+"use strict";
+// ============================================================================
+// QB64PE SYNTAX PATTERNS FROM TEXTMATE GRAMMAR
+// ============================================================================
+// Auto-generated from QB64PE VSCode TextMate grammar files
+// Generated: 2026-01-17T17:39:55.508Z
+// Patterns: 16
+// Repository: 1
+//
+// This file contains syntax patterns extracted from the QB64PE TextMate grammar
+// for enhanced syntax highlighting and validation in the MCP server
+// ============================================================================
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.QB64PE_REPOSITORY_PATTERNS = exports.QB64PE_SYNTAX_PATTERNS = void 0;
+exports.getSyntaxHelp = getSyntaxHelp;
+exports.validateSyntax = validateSyntax;
+exports.getSyntaxHighlighting = getSyntaxHighlighting;
+/**
+ * Syntax patterns from QB64PE TextMate grammar
+ */
+exports.QB64PE_SYNTAX_PATTERNS = [
+    {
+        regex: "\\n",
+        name: "meta.ending-space"
+    },
+    {
+        begin: "^(?=\\t)",
+        end: "(?=[^\\t])",
+        name: "meta.leading-space"
+    },
+    {
+        begin: "^(?= )",
+        end: "(?=[^ ])",
+        name: "meta.leading-space"
+    },
+    {
+        begin: "(^[ \\t]+)?(?='|rem|REM|Rem|rEm|reM|rEM|ReM)",
+        end: "(?!\\G)",
+        beginCaptures: { "1": { "name": "punctuation.whitespace.comment.leading.QB64PE" } }
+    },
+    {
+        begin: "\"",
+        end: "\"",
+        name: "string.quoted.double.QB64PE",
+        beginCaptures: { "0": { "name": "punctuation.definition.string.begin.QB64PE" } },
+        endCaptures: { "0": { "name": "punctuation.definition.string.end.QB64PE" } }
+    },
+    {
+        regex: "(?i:(SUB|FUNCTION)+(.*))$",
+        name: "support.function.QB64PE",
+        captures: { "1": { "name": "keyword.all.QB64PE" }, "2": { "name": "support.function.QB64PE" } }
+    },
+    {
+        regex: "(\\$)[a-zA-Z_x7f-xff][a-zA-Z0-9_x7f-xff]*?\\b\\s*",
+        name: "variable.other.QB64PE",
+        captures: { "1": { "name": "punctuation.definition.variable.QB64PE" }, "2": { "name": "support.function.QB64PE" } }
+    },
+    {
+        regex: "\\b\\w+\\s+(?i:as)\\s+\\w+\b(?!\\s*\\))",
+        name: "support.type.QB64PE"
+    },
+    {
+        regex: "\\s?-?\\b((0(x|X)[0-9a-fA-F]*)|(([0-9]+\\.?[0-9]*)|(\\.[0-9]+))((e|E)(\\+|-)?[0-9]+)?)(L|l|UL|ul|u|U|F|f)?\\b\\s?",
+        name: "constant.numeric.QB64PE"
+    },
+    {
+        regex: "(?i:\\b_{0,1}(DASH-|ABS|ACCEPTFILEDROP|ACCESS|ACOS|ACOSH|ADLER32|ALIAS|ALLOWFULLSCREEN|ALPHA|ALPHA32|AND|ANDALSO|APPEND|AS|ASC|ASCII|ASIN|ASINH|ASSERT|ATAN2|ATANH|ATN|AUTODISPLAY|AXIS|Apostrophe|Arrays|BACKGROUNDCOLOR|BEEP|BIN\\$|BINARY|BIT|BLEND|BLINK|BLOAD|BLUE|BLUE32|BRIGHTNESS32|BSAVE|BUTTON|BUTTONCHANGE|BYTE|BYVAL|Boolean|CALL|CALL_ABSOLUTE|CAPSLOCK|CASE|CASE_ELSE|CASE_IS|CAST|CDBL|CEIL|CHAIN|CHDIR|CHR\\$|CINP|CINT|CIRCLE|CLAMP|CLEAR|CLEARCOLOR|CLIP|CLIPBOARD\\$|CLIPBOARDIMAGE|CLNG|CLOSE|CLS|COLOR|COLORCHOOSERDIALOG|COMMAND\\$|COMMANDCOUNT|COMMON|CONNECTED|CONNECTIONADDRESS\\$|CONSOLE|CONSOLECURSOR|CONSOLEFONT|CONSOLEINPUT|CONSOLETITLE|CONST|CONTINUE|CONTROLCHR|COPYIMAGE|COPYPALETTE|COS|CRC32|CSNG|CSRLIN|CV|CVD|CVDMBF|CVI|CVL|CVS|CVSMBF|CWD\\$|Colon|Comma|Concatenation|Console_Window|D2G|D2R|DATA|DATE\\$|DECLARE_LIBRARY|DECODEURL\\$|DEFAULTCOLOR|DEFDBL|DEFINE|DEFINT|DEFLATE\\$|DEFLNG|DEFSNG|DEFSTR|DEF_SEG|DELAY|DEPTHBUFFER|DESKTOPHEIGHT|DESKTOPWIDTH|DEST|DEVICE\\$|DEVICEINPUT|DEVICES|DIM|DIR\\$|DIREXISTS|DISPLAY|DISPLAYORDER|DONTBLEND|DONTWAIT|DOUBLE|DRAW|DROPPEDFILE|Dollar_Sign|ECHO|ELSE|ELSEIF|EMBEDDED\\$|ENCODEURL\\$|END|ENVIRON|ENVIRON\\$|ENVIRONCOUNT|EOF|EQV|ERASE|ERL|ERR|ERROR|ERRORLINE|ERRORMESSAGE\\$|ERROR_Codes|EXIT|EXP|Equal|FIELD|FILEEXISTS|FILES|FILES\\$|FINISHDROP|FIX|FLOAT|FONT|FONTHEIGHT|FONTWIDTH|FREEFILE|FREEFONT|FREEIMAGE|FREETIMER|FULLPATH\\$|FULLSCREEN|FUNCTION|G2D|G2R|GET|GL|GLRENDER|GOSUB|GOTO|GREEN|GREEN32|GlAccum|GlAlphaFunc|GlAreTexturesResident|GlArrayElement|GlBegin|GlBindTexture|GlBitmap|GlBlendFunc|GlCallList|GlCallLists|GlClear|GlClearAccum|GlClearColor|GlClearDepth|GlClearIndex|GlClearStencil|GlClipPlane|GlColor3b|GlColor3bv|GlColor3d|GlColor3dv|GlColor3f|GlColor3fv|GlColor3i|GlColor3iv|GlColor3s|GlColor3sv|GlColor3ub|GlColor3ubv|GlColor3ui|GlColor3uiv|GlColor3us|GlColor3usv|GlColor4b|GlColor4bv|GlColor4d|GlColor4dv|GlColor4f|GlColor4fv|GlColor4i|GlColor4iv|GlColor4s|GlColor4sv|GlColor4ub|GlColor4ubv|GlColor4ui|GlColor4uiv|GlColor4us|GlColor4usv|GlColorMask|GlColorMaterial|GlColorPointer|GlCopyPixels|GlCopyTexImage1D|GlCopyTexImage2D|GlCopyTexSubImage1D|GlCopyTexSubImage2D|GlCullFace|GlDeleteLists|GlDeleteTextures|GlDepthFunc|GlDepthMask|GlDepthRange|GlDisable|GlDisableClientState|GlDrawArrays|GlDrawBuffer|GlDrawElements|GlDrawPixels|GlEdgeFlag|GlEdgeFlagPointer|GlEdgeFlagv|GlEnable|GlEnableClientState|GlEnd|GlEndList|GlEvalCoord1d|GlEvalCoord1dv|GlEvalCoord1f|GlEvalCoord1fv|GlEvalCoord2d|GlEvalCoord2dv|GlEvalCoord2f|GlEvalCoord2fv|GlEvalMesh1|GlEvalMesh2|GlEvalPoint1|GlEvalPoint2|GlFeedbackBuffer|GlFinish|GlFlush|GlFogf|GlFogfv|GlFogi|GlFogiv|GlFrontFace|GlFrustum|GlGenLists|GlGenTextures|GlGetBooleanv|GlGetClipPlane|GlGetDoublev|GlGetError|GlGetFloatv|GlGetIntegerv|GlGetLightfv|GlGetLightiv|GlGetMapdv|GlGetMapfv|GlGetMapiv|GlGetMaterialfv|GlGetMaterialiv|GlGetPixelMapfv|GlGetPixelMapuiv|GlGetPixelMapusv|GlGetPointerv|GlGetPolygonStipple|GlGetString|GlGetTexEnvfv|GlGetTexEnviv|GlGetTexGendv|GlGetTexGenfv|GlGetTexGeniv|GlGetTexImage|GlGetTexLevelParameterfv|GlGetTexLevelParameteriv|GlGetTexParameterfv|GlGetTexParameteriv|GlHint|GlIndexMask|GlIndexPointer|GlIndexd|GlIndexdv|GlIndexf|GlIndexfv|GlIndexi|GlIndexiv|GlIndexs|GlIndexsv|GlIndexub|GlIndexubv|GlInitNames|GlInterleavedArrays|GlIsEnabled|GlIsList|GlIsTexture|GlLightModelf|GlLightModelfv|GlLightModeli|GlLightModeliv|GlLightf|GlLightfv|GlLighti|GlLightiv|GlLineStipple|GlLineWidth|GlListBase|GlLoadIdentity|GlLoadMatrixd|GlLoadMatrixf|GlLoadName|GlLogicOp|GlMap1d|GlMap1f|GlMap2d|GlMap2f|GlMapGrid1d|GlMapGrid1f|GlMapGrid2d|GlMapGrid2f|GlMaterialf|GlMaterialfv|GlMateriali|GlMaterialiv|GlMatrixMode|GlMultMatrixd|GlMultMatrixf|GlNewList|GlNormal3b|GlNormal3bv|GlNormal3d|GlNormal3dv|GlNormal3f|GlNormal3fv|GlNormal3i|GlNormal3iv|GlNormal3s|GlNormal3sv|GlNormalPointer|GlOrtho|GlPassThrough|GlPixelMapfv|GlPixelMapuiv|GlPixelMapusv|GlPixelStoref|GlPixelStorei|GlPixelTransferf|GlPixelTransferi|GlPixelZoom|GlPointSize|GlPolygonMode|GlPolygonOffset|GlPolygonStipple|GlPopAttrib|GlPopClientAttrib|GlPopMatrix|GlPopName|GlPrioritizeTextures|GlPushAttrib|GlPushClientAttrib|GlPushMatrix|GlPushName|GlRasterPos2d|GlRasterPos2dv|GlRasterPos2f|GlRasterPos2fv|GlRasterPos2i|GlRasterPos2iv|GlRasterPos2s|GlRasterPos2sv|GlRasterPos3d|GlRasterPos3dv|GlRasterPos3f|GlRasterPos3fv|GlRasterPos3i|GlRasterPos3iv|GlRasterPos3s|GlRasterPos3sv|GlRasterPos4d|GlRasterPos4dv|GlRasterPos4f|GlRasterPos4fv|GlRasterPos4i|GlRasterPos4iv|GlRasterPos4s|GlRasterPos4sv|GlReadBuffer|GlReadPixels|GlRectd|GlRectdv|GlRectf|GlRectfv|GlRecti|GlRectiv|GlRects|GlRectsv|GlRenderMode|GlRotated|GlRotatef|GlScaled|GlScalef|GlScissor|GlSelectBuffer|GlShadeModel|GlStencilFunc|GlStencilMask|GlStencilOp|GlTexCoord1d|GlTexCoord1dv|GlTexCoord1f|GlTexCoord1fv|GlTexCoord1i|GlTexCoord1iv|GlTexCoord1s|GlTexCoord1sv|GlTexCoord2d|GlTexCoord2dv|GlTexCoord2f|GlTexCoord2fv|GlTexCoord2i|GlTexCoord2iv|GlTexCoord2s|GlTexCoord2sv|GlTexCoord3d|GlTexCoord3dv|GlTexCoord3f|GlTexCoord3fv|GlTexCoord3i|GlTexCoord3iv|GlTexCoord3s|GlTexCoord3sv|GlTexCoord4d|GlTexCoord4dv|GlTexCoord4f|GlTexCoord4fv|GlTexCoord4i|GlTexCoord4iv|GlTexCoord4s|GlTexCoord4sv|GlTexCoordPointer|GlTexEnvf|GlTexEnvfv|GlTexEnvi|GlTexEnviv|GlTexGend|GlTexGendv|GlTexGenf|GlTexGenfv|GlTexGeni|GlTexGeniv|GlTexImage1D|GlTexImage2D|GlTexParameterf|GlTexParameterfv|GlTexParameteri|GlTexParameteriv|GlTexSubImage1D|GlTexSubImage2D|GlTranslated|GlTranslatef|GlVertex2d|GlVertex2dv|GlVertex2f|GlVertex2fv|GlVertex2i|GlVertex2iv|GlVertex2s|GlVertex2sv|GlVertex3d|GlVertex3dv|GlVertex3f|GlVertex3fv|GlVertex3i|GlVertex3iv|GlVertex3s|GlVertex3sv|GlVertex4d|GlVertex4dv|GlVertex4f|GlVertex4fv|GlVertex4i|GlVertex4iv|GlVertex4s|GlVertex4sv|GlVertexPointer|GlViewport|GluPerspective|Greater_Than|Greater_Than_Or_Equal|HEIGHT|HEX\\$|HIDE|HSB32|HSBA32|HUE32|HYPOT|ICON|IF|IIF|IMP|INCLERRORFILE\\$|INCLERRORLINE|INFLATE\\$|INKEY\\$|INP|INPUT|INPUT\\$|INPUTBOX\\$|INSTR|INSTRREV|INT|INTEGER|INTEGER64|INTERRUPT|INTERRUPTX|KEYCLEAR|KEYDOWN|KEYHIT|KEY_LIST|KEY_n|KILL|Keyboard_scancodes|Keyword_Reference_-_Alphabetical|LASTAXIS|LASTBUTTON|LASTWHEEL|LBOUND|LCASE\\$|LEFT\\$|LEN|LET|LIMIT|LINE|LINE_INPUT|LOADFONT|LOADIMAGE|LOC|LOCATE|LOCK|LOF|LOG|LOGERROR|LOGINFO|LOGMINLEVEL|LOGTRACE|LOGWARN|LONG|LPOS|LPRINT|LPRINT_USING|LSET|LTRIM\\$|Less_Than|Less_Than_Or_Equal|MAPTRIANGLE|MAPUNICODE|MAX|MD5\\$|MEM|MEMCOPY|MEMELEMENT|MEMEXISTS|MEMFILL|MEMFREE|MEMGET|MEMIMAGE|MEMNEW|MEMPUT|MEMSOUND|MESSAGEBOX|MID\\$|MIDISOUNDBANK|MIN|MK\\$|MKD\\$|MKDIR|MKDMBF\\$|MKI\\$|MKL\\$|MKS\\$|MKSMBF\\$|MOD|MOUSEBUTTON|MOUSEHIDDEN|MOUSEHIDE|MOUSEINPUT|MOUSEMOVE|MOUSEMOVEMENTX|MOUSEMOVEMENTY|MOUSESHOW|MOUSEWHEEL|MOUSEX|MOUSEY|Main_Page|Mathematical_Operations#Derived_Mathematical_Functions|Metacommand|NAME|NEGATE|NEWIMAGE|NEXT|NOT|NOTIFYPOPUP|NUMLOCK|Not_Equal|OCT\\$|OFF|OFFSET|ON|ON_ERROR|OPEN|OPENCLIENT|OPENCONNECTION|OPENFILEDIALOG\\$|OPENHOST|OPEN_COM|OPTION_BASE|OPTION_EXPLICIT|OPTION_EXPLICITARRAY|OR|ORELSE|OS\\$|OUT|OUTPUT|PAINT|PALETTE|PALETTECOLOR|PALETTE_USING|PCOPY|PEEK|PI|PIXELSIZE|PLAY|PMAP|POINT|POKE|POS|PRESERVE|PRESET|PRINT|PRINTIMAGE|PRINTMODE|PRINTSTRING|PRINTWIDTH|PRINT_USING|PSET|PUT|PUTIMAGE|Parenthesis|Question_mark|Quotation_mark|R2D|R2G|RANDOM|RANDOMIZE|READ|READBIT|READFILE\\$|RED|RED32|REDIM|REM|RESET|RESETBIT|RESIZE|RESIZEHEIGHT|RESIZEWIDTH|RESTORE|RESUME|RETURN|RGB|RGB32|RGBA|RGBA32|RIGHT\\$|RMDIR|RND|ROL|ROR|ROUND|RSET|RTRIM\\$|RUN|SADD|SATURATION32|SAVEFILEDIALOG\\$|SAVEIMAGE|SCREEN|SCREENCLICK|SCREENEXISTS|SCREENHIDE|SCREENICON|SCREENIMAGE|SCREENMOVE|SCREENPRINT|SCREENSHOW|SCREENX|SCREENY|SCROLLLOCK|SEEK|SELECTFOLDERDIALOG\\$|SELECT_CASE|SETALPHA|SETBIT|SGN|SHARED|SHELL|SHELLHIDE|SHL|SHR|SIN|SINGLE|SLEEP|SNDBAL|SNDCLOSE|SNDCOPY|SNDGETPOS|SNDLEN|SNDLIMIT|SNDLOOP|SNDNEW|SNDOPEN|SNDOPENRAW|SNDPAUSE|SNDPAUSED|SNDPLAY|SNDPLAYCOPY|SNDPLAYFILE|SNDPLAYING|SNDRATE|SNDRAW|SNDRAWBATCH|SNDRAWDONE|SNDRAWLEN|SNDSETPOS|SNDSTOP|SNDVOL|SOUND|SOURCE|SPACE\\$|SPC|SQR|STARTDIR\\$|STATIC|STATUSCODE|STEP|STICK|STOP|STR\\$|STRCMP|STRICMP|STRIG|STRING|STRING\\$|SUB|SWAP|SYSTEM|Segment|Semicolon|TAB|TAN|THEN|TIME\\$|TIMER|TITLE|TITLE\\$|TO|TOGGLEBIT|TOSTR\\$|TOTALDROPPEDFILES|TRIM\\$|TYPE|UBOUND|UCASE\\$|UCHARPOS|UFONTHEIGHT|ULINESPACING|UNLOCK|UNSIGNED|UNTIL|UPRINTSTRING|UPRINTWIDTH|Underscore|Unicode|VAL|VARPTR|VARPTR\\$|VARSEG|VIEW|VIEW_PRINT|WAIT|WAVE|WEND|WHEEL|WHILE|WIDTH|WINDOW|WINDOWHANDLE|WINDOWHASFOCUS|WRITE|WRITEFILE)\\b)",
+        name: "keyword.all.QB64PE"
+    },
+    {
+        regex: "(?im:\\b(?!open\\s)(If|Then|Else|ElseIf|Else If|End If|Not|Or|And|Xor|Mod|While|Wend|For|Step|To|Each|Case|Select|End Select|Return|Continue|_Continue|Do|Until|Loop|Next|With|Exit Do|Exit For|Exit Function|Exit Property|Exit Sub|IIf|Limit|_Limit|Delay|_Delay|sleep|Key|Off|_NEGATE|_ANDALSO|_ORELSE)\\b)",
+        name: "keyword.control.QB64PE",
+        captures: { "1": { "name": "keyword.control.QB64PE" } }
+    },
+    {
+        regex: "\\s*(?im:(\\$ASSERTS|\\$CHECKING|\\$COLOR|\\$CONSOLE|\\$DEBUG|\\$DYNAMIC|\\$ELSE|\\$ELSEIF.*|\\$EMBED|\\$END_IF.*|\\$ERROR|\\$EXEICON|\\$IF.*|\\$INCLUDE|\\$INCLUDEONCE|\\$LET|\\$MIDISOUNDFONT|\\$NOPREFIX|\\$RESIZE|\\$SCREENHIDE|\\$SCREENSHOW|\\$STATIC|\\$UNSTABLE|\\$VERSIONINFO).*)\\s*",
+        name: "meta.preprocessor.QB64PE"
+    },
+    {
+        regex: "\\b(?i:(\\w+~*[!#$%&]{0,2}))(?:\\=|\\:)*\\s*",
+        name: "variable.QB64PE"
+    },
+    {
+        regex: "[,:;]+",
+        name: "punctuation.separator.QB64PE"
+    },
+    {
+        regex: "\\s*(\\=|-|\\+|/|\\\\|MOD|>|<|<>|>=|<=|!)+\\s*",
+        name: "operator.QB64PE"
+    },
+    {
+        regex: "\\\".*\\\"",
+        name: "string.quoted.double.QB64PE"
+    }
+];
+/**
+ * Repository patterns (reusable syntax elements)
+ */
+exports.QB64PE_REPOSITORY_PATTERNS = {
+    "round-brackets": {
+        begin: "\\(",
+        end: "\\)",
+        name: "meta.round-brackets",
+        beginCaptures: { "0": { "name": "punctuation.section.round-brackets.begin.QB64PE" } },
+        endCaptures: { "0": { "name": "punctuation.section.round-brackets.end.QB64PE" } }
+    }
+};
+/**
+ * Get syntax help for QB64PE constructs using TextMate grammar information
+ */
+function getSyntaxHelp(identifier) {
+    const upperId = identifier.toUpperCase();
+    // Check for common QB64PE patterns
+    if (upperId.endsWith('$')) {
+        return "'" + identifier + "' appears to be a string function or variable (ends with $)";
+    }
+    if (upperId.match(/^GL[A-Z]/)) {
+        return "'" + identifier + "' appears to be an OpenGL function";
+    }
+    if (upperId.match(/^_[A-Z]+$/)) {
+        return "'" + identifier + "' appears to be a QB64PE system constant or function";
+    }
+    if (upperId.startsWith('_')) {
+        return "'" + identifier + "' appears to be a QB64PE-specific function or constant (starts with _)";
+    }
+    return null;
+}
+/**
+ * Validate code syntax using TextMate grammar patterns
+ */
+function validateSyntax(code) {
+    const errors = [];
+    // Basic validation using extracted patterns
+    // This is a simplified implementation - could be enhanced with full regex matching
+    // Check for unclosed strings
+    const stringMatches = code.match(/"/g);
+    if (stringMatches && stringMatches.length % 2 !== 0) {
+        errors.push('Unclosed string literal');
+    }
+    // Check for unclosed parentheses
+    const parenMatches = code.match(/\(/g);
+    const closeParenMatches = code.match(/\)/g);
+    if ((parenMatches?.length || 0) !== (closeParenMatches?.length || 0)) {
+        errors.push('Mismatched parentheses');
+    }
+    return { valid: errors.length === 0, errors };
+}
+/**
+ * Get syntax highlighting information for a given code snippet
+ */
+function getSyntaxHighlighting(code) {
+    const tokens = [];
+    // Simple syntax highlighting based on TextMate patterns
+    // This is a basic implementation - could be enhanced with full regex matching
+    // Split code into lines and process each line
+    const lines = code.split('\n');
+    for (const line of lines) {
+        let remaining = line;
+        let position = 0;
+        while (position < remaining.length) {
+            const rest = remaining.substring(position);
+            // Check for strings first (they take precedence)
+            const stringMatch = rest.match(/^([^"']*)"([^"]*)"/);
+            if (stringMatch && stringMatch.index === 0) {
+                if (stringMatch[1]) {
+                    tokens.push({ text: stringMatch[1], scope: 'source.QB64PE' });
+                }
+                tokens.push({ text: '"' + stringMatch[2] + '"', scope: 'string.quoted.double.QB64PE' });
+                position += stringMatch[0].length;
+                continue;
+            }
+            // Check for comments (REM or ')
+            const commentMatch = rest.match(/^(.*?)(\bREM\b|')/i);
+            if (commentMatch && (commentMatch.index === 0 || commentMatch[1].length === 0 || rest[0] === "'" || /\bREM\b/i.test(rest.substring(0, 10)))) {
+                const beforeComment = commentMatch[1] || '';
+                if (beforeComment) {
+                    tokens.push({ text: beforeComment, scope: 'source.QB64PE' });
+                }
+                tokens.push({ text: rest.substring(beforeComment.length), scope: 'comment.line.QB64PE' });
+                break; // Comments consume rest of line
+            }
+            // No special patterns, consume the rest as source
+            tokens.push({ text: rest, scope: 'source.QB64PE' });
+            break;
+        }
+    }
+    return tokens;
+}
+//# sourceMappingURL=syntax-patterns.js.map

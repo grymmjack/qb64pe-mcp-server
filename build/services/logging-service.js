@@ -1,0 +1,389 @@
+"use strict";
+/**
+ * QB64PE Logging Service
+ *
+ * Provides native QB64PE logging capabilities and enhanced console output management
+ * for automated debugging and LLM analysis workflows.
+ *
+ * Key Features:
+ * - Native QB64PE logging function injection (_LOGINFO, _LOGERROR, etc.)
+ * - $CONSOLE:ONLY directive management for shell redirection
+ * - Structured output section generation
+ * - Automated output capture and parsing
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.QB64PELoggingService = void 0;
+class QB64PELoggingService {
+    defaultConfig = {
+        enableNativeLogging: true,
+        enableStructuredOutput: true,
+        enableEchoOutput: true, // Enable simplified console output
+        consoleDirective: '$CONSOLE:ONLY', // For text-only programs; use $CONSOLE for graphics
+        logLevel: 'INFO',
+        autoExitTimeout: 10,
+        outputSections: [
+            'PROGRAM ANALYSIS',
+            'HEADER VALIDATION',
+            'DATA PROCESSING',
+            'RESULTS SUMMARY'
+        ]
+    };
+    /**
+     * Inject native QB64PE logging functions into source code
+     */
+    injectNativeLogging(sourceCode, config) {
+        const cfg = { ...this.defaultConfig, ...config };
+        let enhanced = sourceCode;
+        // Ensure proper console directive for automation
+        if (!enhanced.includes('$CONSOLE')) {
+            enhanced = `${cfg.consoleDirective}\n${enhanced}`;
+        }
+        else {
+            // Fix existing console directive
+            enhanced = enhanced.replace(/\$CONSOLE(?!:ONLY)/g, cfg.consoleDirective);
+        }
+        // Add logging function definitions if not present
+        if (!enhanced.includes('_LOGINFO') && cfg.enableNativeLogging) {
+            const loggingHeader = this.generateLoggingHeader(cfg);
+            enhanced = this.insertAfterDirectives(enhanced, loggingHeader);
+        }
+        else if (!enhanced.includes('SUB ECHO') && cfg.enableEchoOutput) {
+            // Add ECHO functions even if native logging is disabled
+            const echoHeader = this.generateEchoHeader(cfg);
+            enhanced = this.insertAfterDirectives(enhanced, echoHeader);
+        }
+        return enhanced;
+    }
+    /**
+     * Generate structured output sections for systematic debugging
+     */
+    generateStructuredOutput(sections, includeLogging = true, config) {
+        const cfg = { ...this.defaultConfig, ...config };
+        let output = '';
+        sections.forEach((section, index) => {
+            const sectionName = section.toUpperCase().replace(/\s+/g, ' ');
+            // Use _ECHO if enabled, otherwise use PRINT
+            if (cfg.enableEchoOutput) {
+                output += `\n_ECHO "=== ${sectionName} ==="\n`;
+            }
+            else {
+                output += `\nPRINT "=== ${sectionName} ==="\n`;
+            }
+            if (includeLogging) {
+                if (cfg.enableEchoOutput) {
+                    output += `_ECHO "[INFO] Starting ${section.toLowerCase()}"\n`;
+                }
+                else {
+                    output += `_LOGINFO "Starting ${section.toLowerCase()}"\n`;
+                }
+            }
+            output += `' TODO: Add ${section.toLowerCase()} logic here\n`;
+            if (cfg.enableEchoOutput) {
+                output += `_ECHO "Step ${index + 1} completed"\n`;
+            }
+            else {
+                output += `PRINT "Step ${index + 1} completed"\n`;
+            }
+        });
+        return output;
+    }
+    /**
+     * Enhance existing QB64PE code with comprehensive logging
+     */
+    enhanceCodeWithLogging(sourceCode, config) {
+        const cfg = { ...this.defaultConfig, ...config };
+        let enhanced = this.injectNativeLogging(sourceCode, cfg);
+        // Add structured sections if enabled
+        if (cfg.enableStructuredOutput) {
+            enhanced = this.addStructuredSections(enhanced, cfg);
+        }
+        // Add auto-exit mechanism for automation
+        enhanced = this.addAutoExitMechanism(enhanced, cfg);
+        // Add error handling and cleanup
+        enhanced = this.addErrorHandling(enhanced, cfg);
+        return enhanced;
+    }
+    /**
+     * Parse structured output from QB64PE program execution
+     */
+    parseStructuredOutput(output) {
+        const sections = {};
+        const logs = [];
+        const lines = output.split('\n');
+        let currentSection = '';
+        let success = true;
+        let totalSteps = 0;
+        let failedSteps = 0;
+        for (const line of lines) {
+            const trimmed = line.trim();
+            // Parse section headers
+            const sectionMatch = trimmed.match(/^=== (.+) ===$/);
+            if (sectionMatch) {
+                currentSection = sectionMatch[1];
+                sections[currentSection] = [];
+                continue;
+            }
+            // Parse log entries (native QB64PE logging)
+            const logMatch = trimmed.match(/^(TRACE|INFO|WARN|ERROR):\s*(.+)$/);
+            if (logMatch) {
+                logs.push({
+                    level: logMatch[1],
+                    message: logMatch[2],
+                    section: currentSection || undefined,
+                    timestamp: new Date().toISOString()
+                });
+                if (logMatch[1] === 'ERROR') {
+                    success = false;
+                    failedSteps++;
+                }
+                continue;
+            }
+            // Parse step completion
+            if (trimmed.includes('Step') && trimmed.includes('completed')) {
+                totalSteps++;
+            }
+            // Parse success/failure indicators
+            if (trimmed.startsWith('FAILED:') || trimmed.includes('ERROR')) {
+                success = false;
+                failedSteps++;
+            }
+            // Add to current section
+            if (currentSection && trimmed) {
+                sections[currentSection].push(trimmed);
+            }
+        }
+        return {
+            sections,
+            logs,
+            summary: {
+                success,
+                totalSteps,
+                failedSteps
+            }
+        };
+    }
+    /**
+     * Generate debugging template with advanced logging
+     */
+    generateAdvancedDebuggingTemplate(programName, analysisSteps, config) {
+        const cfg = { ...this.defaultConfig, ...config };
+        return `${cfg.consoleDirective}
+OPTION _EXPLICIT
+
+' Advanced Debugging Template for ${programName}
+' Generated with QB64PE Logging Service
+' Date: ${new Date().toISOString()}
+
+CONST DEBUG_MODE = 1
+CONST PROGRAM_NAME$ = "${programName}"
+CONST LOG_LEVEL = 2 ' INFO level
+
+DIM program_start_time AS DOUBLE
+DIM current_step AS INTEGER
+DIM total_errors AS INTEGER
+
+' Initialize logging
+program_start_time = TIMER
+${cfg.enableEchoOutput ? '_ECHO "[INFO] Starting " + PROGRAM_NAME$ + " analysis"' : '_LOGINFO "Starting " + PROGRAM_NAME$ + " analysis"'}
+${cfg.enableEchoOutput ? '_ECHO "=== PROGRAM INITIALIZATION ==="' : 'PRINT "=== PROGRAM INITIALIZATION ==="'}
+${cfg.enableEchoOutput ? '_ECHO "Program: " + PROGRAM_NAME$' : 'PRINT "Program: " + PROGRAM_NAME$'}
+${cfg.enableEchoOutput ? '_ECHO "Start Time: " + STR$(program_start_time)' : 'PRINT "Start Time: " + STR$(program_start_time)'}
+${cfg.enableEchoOutput ? '_ECHO "Debug Mode: " + STR$(DEBUG_MODE)' : 'PRINT "Debug Mode: " + STR$(DEBUG_MODE)'}
+
+${this.generateStructuredAnalysisSteps(analysisSteps, cfg)}
+
+' Results summary with native logging
+${cfg.enableEchoOutput ? '_ECHO "=== EXECUTION SUMMARY ==="' : 'PRINT "=== EXECUTION SUMMARY ==="'}
+IF total_errors = 0 THEN
+    ${cfg.enableEchoOutput ? '_ECHO "[INFO] Analysis completed successfully"' : '_LOGINFO "Analysis completed successfully"'}
+    ${cfg.enableEchoOutput ? '_ECHO "SUCCESS: All " + STR$(current_step) + " steps completed"' : 'PRINT "SUCCESS: All " + STR$(current_step) + " steps completed"'}
+ELSE
+    ${cfg.enableEchoOutput ? '_ECHO "[ERROR] Analysis failed with " + STR$(total_errors) + " errors"' : '_LOGERROR "Analysis failed with " + STR$(total_errors) + " errors"'}
+    ${cfg.enableEchoOutput ? '_ECHO "FAILED: " + STR$(total_errors) + " errors in " + STR$(current_step) + " steps"' : 'PRINT "FAILED: " + STR$(total_errors) + " errors in " + STR$(current_step) + " steps"'}
+END IF
+
+DIM execution_time AS DOUBLE
+execution_time = TIMER - program_start_time
+${cfg.enableEchoOutput ? '_ECHO "Execution Time: " + STR$(execution_time) + " seconds"' : 'PRINT "Execution Time: " + STR$(execution_time) + " seconds"'}
+${cfg.enableEchoOutput ? '_ECHO "[INFO] Total execution time: " + STR$(execution_time) + " seconds"' : '_LOGINFO "Total execution time: " + STR$(execution_time) + " seconds"'}
+
+' Auto-exit for automation
+IF DEBUG_MODE = 1 THEN
+    ${cfg.enableEchoOutput ? '_ECHO "Auto-exiting in " + STR$(' + cfg.autoExitTimeout + ') + " seconds..."' : 'PRINT "Auto-exiting in " + STR$(' + cfg.autoExitTimeout + ') + " seconds..."'}
+    _DELAY ${cfg.autoExitTimeout}
+    SYSTEM
+END IF
+
+' Cleanup and exit
+${cfg.enableEchoOutput ? '_ECHO "[INFO] Program cleanup completed"' : '_LOGINFO "Program cleanup completed"'}
+END`;
+    }
+    /**
+     * Generate native _ECHO usage guide
+     */
+    generateEchoFunctions(config) {
+        const cfg = { ...this.defaultConfig, ...config };
+        return this.generateEchoHeader(cfg);
+    }
+    /**
+     * Generate shell command for output capture
+     */
+    generateOutputCaptureCommand(programPath, outputPath = 'analysis_output.txt') {
+        return `"${programPath}" > "${outputPath}" 2>&1`;
+    }
+    /**
+     * Generate file monitoring commands for cross-platform use
+     */
+    generateFileMonitoringCommands(logFile) {
+        return {
+            windows: `powershell -Command "Get-Content -Path '${logFile}' -Wait -Tail 10"`,
+            linux: `tail -f "${logFile}"`,
+            macos: `tail -f "${logFile}"`,
+            batch: `powershell -Command "while($true) { Clear-Host; Get-Content '${logFile}' | Select-Object -Last 20; Start-Sleep 2 }"`
+        };
+    }
+    generateLoggingHeader(config) {
+        let header = `
+' Native QB64PE Logging Functions
+' Logging Level: ${config.logLevel}
+' Auto-generated by QB64PE Logging Service
+
+`;
+        // Add _ECHO usage note for simplified console output
+        if (config.enableEchoOutput) {
+            header += `
+' _ECHO - Native QB64PE console output
+' Auto-generated by QB64PE Logging Service
+'
+' Use _ECHO for direct console output without _DEST management
+' Compatible with ${config.consoleDirective} directive for shell redirection
+
+`;
+        }
+        return header;
+    }
+    generateEchoHeader(config) {
+        return `
+' _ECHO - Native QB64PE console output
+' Auto-generated by QB64PE Logging Service
+'
+' Use _ECHO for direct console output without _DEST management
+' Compatible with ${config.consoleDirective} directive for shell redirection
+
+`;
+    }
+    insertAfterDirectives(code, header) {
+        const lines = code.split('\n');
+        let insertIndex = 0;
+        // Find the end of compiler directives
+        for (let i = 0; i < lines.length; i++) {
+            if (lines[i].trim().startsWith('$') ||
+                lines[i].trim().startsWith('OPTION') ||
+                lines[i].trim() === '') {
+                insertIndex = i + 1;
+            }
+            else {
+                break;
+            }
+        }
+        lines.splice(insertIndex, 0, header);
+        return lines.join('\n');
+    }
+    addStructuredSections(code, config) {
+        const structuredOutput = this.generateStructuredOutput(config.outputSections, config.enableNativeLogging, config);
+        // Insert before END statement
+        const endIndex = code.lastIndexOf('END');
+        if (endIndex !== -1) {
+            return code.substring(0, endIndex) + structuredOutput + '\n' + code.substring(endIndex);
+        }
+        return code + structuredOutput;
+    }
+    addAutoExitMechanism(code, config) {
+        const autoExit = `
+' Auto-exit mechanism for automation
+IF DEBUG_MODE = 1 THEN
+    PRINT "Auto-exiting in " + STR$(${config.autoExitTimeout}) + " seconds..."
+    _DELAY ${config.autoExitTimeout}
+    SYSTEM
+END IF
+`;
+        // Insert before final END
+        const endIndex = code.lastIndexOf('END');
+        if (endIndex !== -1) {
+            return code.substring(0, endIndex) + autoExit + '\n' + code.substring(endIndex);
+        }
+        return code + autoExit;
+    }
+    addErrorHandling(code, config) {
+        const errorHandling = `
+' Error handling and cleanup
+ON ERROR GOTO ErrorHandler
+GOTO ProgramEnd
+
+ErrorHandler:
+_LOGERROR "Runtime error: " + STR$(ERR) + " at line " + STR$(ERL)
+PRINT "FATAL ERROR: " + STR$(ERR) + " at line " + STR$(ERL)
+RESUME ProgramEnd
+
+ProgramEnd:
+_LOGINFO "Program execution completed"
+`;
+        // Insert before final END
+        const endIndex = code.lastIndexOf('END');
+        if (endIndex !== -1) {
+            return code.substring(0, endIndex) + errorHandling + '\n' + code.substring(endIndex);
+        }
+        return code + errorHandling;
+    }
+    generateStructuredAnalysisSteps(steps, config) {
+        const cfg = config || this.defaultConfig;
+        let output = '';
+        steps.forEach((step, index) => {
+            const stepNumber = index + 1;
+            const sectionName = step.toUpperCase().replace(/\s+/g, ' ');
+            output += `
+' Step ${stepNumber}: ${step}
+current_step = ${stepNumber}`;
+            if (cfg.enableEchoOutput) {
+                output += `
+_ECHO "=== STEP ${stepNumber}: ${sectionName} ==="
+_ECHO "[INFO] Starting step ${stepNumber}: ${step.toLowerCase()}"
+
+' TODO: Implement ${step.toLowerCase()} logic here
+_ECHO "Processing ${step.toLowerCase()}..."
+
+' Example error detection
+' IF error_condition THEN
+'     total_errors = total_errors + 1
+'     _ECHO "[ERROR] Step ${stepNumber} failed: " + error_message$
+' ELSE
+'     _ECHO "[INFO] Step ${stepNumber} completed successfully"
+' END IF
+`;
+            }
+            else {
+                output += `
+PRINT "=== STEP ${stepNumber}: ${sectionName} ==="
+_LOGINFO "Starting step ${stepNumber}: ${step.toLowerCase()}"
+
+' TODO: Implement ${step.toLowerCase()} logic here
+PRINT "Processing ${step.toLowerCase()}..."
+
+' Example error detection
+' IF error_condition THEN
+'     total_errors = total_errors + 1
+'     _LOGERROR "Step ${stepNumber} failed: " + error_message$
+'     PRINT "ERROR: Step ${stepNumber} failed"
+' ELSE
+'     _LOGINFO "Step ${stepNumber} completed successfully"
+'     PRINT "SUCCESS: Step ${stepNumber} completed"
+' END IF
+`;
+            }
+        });
+        return output;
+    }
+}
+exports.QB64PELoggingService = QB64PELoggingService;
+exports.default = QB64PELoggingService;
+//# sourceMappingURL=logging-service.js.map

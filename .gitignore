@@ -175,7 +175,7 @@ dist
 .env.local
 
 # Built files
-build/
+#build/
 dist/
 
 # IDE files

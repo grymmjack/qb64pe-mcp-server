@@ -30,6 +30,7 @@ import { registerGraphicsTools } from "./tools/graphics-tools.js";
 import { registerDebuggingTools } from "./tools/debugging-tools.js";
 import { registerFeedbackTools } from "./tools/feedback-tools.js";
 import { registerSessionProblemsTools } from "./tools/session-problems-tools.js";
+import { registerProjectBuildContextTools } from "./tools/project-build-context-tools.js";
 import { registerFileStructureTools } from "./tools/file-structure-tools.js";
 import { ServiceContainer } from "./utils/tool-types.js";
 import { toolDiscoveryManager } from "./utils/tool-discovery.js";
@@ -43,7 +44,7 @@ class ToolDiscoveryMCPServer extends McpServer {
 
   constructor(config: { name: string; version: string }) {
     super(config);
-    
+
     // Wrap the registerTool method to track tools and inject discovery
     this.originalRegisterTool = this.registerTool.bind(this);
     this.registerTool = this.wrapRegisterTool.bind(this) as any;
@@ -55,14 +56,14 @@ class ToolDiscoveryMCPServer extends McpServer {
   private wrapRegisterTool(
     name: string,
     config: any,
-    handler: (args: any, extra: any) => Promise<any>
+    handler: (args: any, extra: any) => Promise<any>,
   ): void {
     // Register tool in discovery manager
     const category = this.inferCategoryFromToolName(name);
     toolDiscoveryManager.registerTool({
       name,
       title: config.title || name,
-      description: config.description || 'No description provided',
+      description: config.description || "No description provided",
       category,
       inputSchema: JSON.stringify(config.inputSchema || {}, null, 2),
     });
@@ -72,13 +73,13 @@ class ToolDiscoveryMCPServer extends McpServer {
       // If this is the first tool call (any tool), provide tool summary
       if (!toolDiscoveryManager.hasLearnedTools()) {
         toolDiscoveryManager.markToolsAsLearned();
-        
+
         const toolSummary = toolDiscoveryManager.getToolSummary();
-        
+
         try {
           // Get the actual tool result
           const actualResult = await handler(args, extra);
-          
+
           // Combine tool discovery with the actual result
           return {
             content: [
@@ -114,7 +115,7 @@ ${toolSummary}
 
 ---
 
-⚠️ **Tool Error:** ${error instanceof Error ? error.message : 'Unknown error'}
+⚠️ **Tool Error:** ${error instanceof Error ? error.message : "Unknown error"}
 `,
               },
             ],
@@ -135,19 +136,29 @@ ${toolSummary}
    */
   private inferCategoryFromToolName(name: string): string {
     const lowerName = name.toLowerCase();
-    
-    if (lowerName.includes('wiki')) return 'wiki';
-    if (lowerName.includes('keyword')) return 'keywords';
-    if (lowerName.includes('compile')) return 'compiler';
-    if (lowerName.includes('compatibility') || lowerName.includes('validate')) return 'compatibility';
-    if (lowerName.includes('execute') || lowerName.includes('run')) return 'execution';
-    if (lowerName.includes('install') || lowerName.includes('setup')) return 'installation';
-    if (lowerName.includes('port') || lowerName.includes('convert')) return 'porting';
-    if (lowerName.includes('graphic') || lowerName.includes('screenshot') || lowerName.includes('image')) return 'graphics';
-    if (lowerName.includes('debug')) return 'debugging';
-    if (lowerName.includes('feedback') || lowerName.includes('report')) return 'feedback';
-    
-    return 'other';
+
+    if (lowerName.includes("wiki")) return "wiki";
+    if (lowerName.includes("keyword")) return "keywords";
+    if (lowerName.includes("compile")) return "compiler";
+    if (lowerName.includes("compatibility") || lowerName.includes("validate"))
+      return "compatibility";
+    if (lowerName.includes("execute") || lowerName.includes("run"))
+      return "execution";
+    if (lowerName.includes("install") || lowerName.includes("setup"))
+      return "installation";
+    if (lowerName.includes("port") || lowerName.includes("convert"))
+      return "porting";
+    if (
+      lowerName.includes("graphic") ||
+      lowerName.includes("screenshot") ||
+      lowerName.includes("image")
+    )
+      return "graphics";
+    if (lowerName.includes("debug")) return "debugging";
+    if (lowerName.includes("feedback") || lowerName.includes("report"))
+      return "feedback";
+
+    return "other";
   }
 }
 
@@ -251,6 +262,7 @@ class QB64PEMCPServer {
     registerDebuggingTools(this.server, services);
     registerFeedbackTools(this.server, services);
     registerSessionProblemsTools(this.server, services);
+    registerProjectBuildContextTools(this.server, services);
     registerFileStructureTools(this.server, services);
   }
 
@@ -671,11 +683,11 @@ Use the MCP tools for automated detection and configuration assistance.`;
       },
       async (uri) => {
         try {
-          const { readFile } = await import('fs/promises');
-          const { join } = await import('path');
+          const { readFile } = await import("fs/promises");
+          const { join } = await import("path");
           const guideContent = await readFile(
-            join(process.cwd(), 'AGENT_INTELLIGENCE_GUIDE.md'),
-            'utf-8'
+            join(process.cwd(), "AGENT_INTELLIGENCE_GUIDE.md"),
+            "utf-8",
           );
           return {
             contents: [
@@ -1158,9 +1170,20 @@ ${preserveOriginal === "true" ? "Please preserve original comments and structure
         description:
           "Intelligent analysis of QB64PE compilation failures with autonomous fix guidance. Use when user shows terminal output from failed compilation.",
         argsSchema: {
-          terminalOutput: z.string().describe("Complete terminal output from failed QB64PE compilation"),
-          sourceFilePath: z.string().describe("Absolute path to the .bas file that failed to compile"),
-          errorContext: z.string().optional().describe("Additional context about what the user was trying to do"),
+          terminalOutput: z
+            .string()
+            .describe(
+              "Complete terminal output from failed QB64PE compilation",
+            ),
+          sourceFilePath: z
+            .string()
+            .describe("Absolute path to the .bas file that failed to compile"),
+          errorContext: z
+            .string()
+            .optional()
+            .describe(
+              "Additional context about what the user was trying to do",
+            ),
         },
       },
       ({ terminalOutput, sourceFilePath, errorContext }) => ({
@@ -1283,6 +1306,117 @@ Use these tools in your autonomous workflow:
 \`\`\`
 
 **NOW: Execute the autonomous action plan. Do NOT wait for user confirmation.**`,
+            },
+          },
+        ],
+      }),
+    );
+
+    // Build context preservation prompt
+    this.server.registerPrompt(
+      "preserve-build-context",
+      {
+        title: "Preserve Build Context in Summaries",
+        description:
+          "Guidance for preserving critical build commands and procedural knowledge in conversation summaries. " +
+          "Addresses the problem: 'Conversation summarization loses critical build command details'",
+        argsSchema: {
+          summaryType: z
+            .enum(["conversation", "session", "project"])
+            .optional()
+            .describe("Type of summary being created"),
+        },
+      },
+      ({ summaryType = "conversation" }) => ({
+        messages: [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: `🔍 **Build Context Preservation Guidance**
+
+When creating ${summaryType} summaries, you MUST preserve critical build and workflow information to prevent loss across conversation boundaries.
+
+## [BUILD-CRITICAL] Information to Preserve
+
+### 1. Compilation Commands
+Mark with [BUILD-CRITICAL] in summaries:
+- **Exact QB64PE compilation command**: Full command with all flags
+- **Compiler flags used**: e.g., \`-c -w -x\`, \`-o outputname\`
+- **Output executable name**: If specified with \`-o\` flag
+- **QB64PE installation path**: If non-standard location
+- **Source file path**: Project location
+
+Example preservation:
+\`\`\`
+[BUILD-CRITICAL] Compilation Command:
+/Users/grymmjack/git/QB64pe/qb64pe -c -w -x DRAW.BAS -o DRAW.run
+\`\`\`
+
+### 2. Procedural Knowledge (Not Just Declarative)
+Preserve HOW to do things, not just WHAT was done:
+- Build process steps and order
+- Custom workflows established by user
+- Flags that differ from MCP tool defaults
+- Project-specific requirements
+
+### 3. Project Configuration
+- Include/library paths
+- Platform-specific settings
+- Custom build parameters
+- Environment variables
+
+## Validation Checklist
+
+Before finalizing a summary, verify:
+- [ ] Build command is complete and exact
+- [ ] All non-default flags are documented
+- [ ] Output name is specified if custom
+- [ ] QB64PE path is saved if non-standard
+- [ ] Workflow steps are preserved, not just results
+
+## MCP Tools for Build Context
+
+Use these tools to ensure build context is never lost:
+- \`get_project_build_context\` - Retrieve saved build info before summarizing
+- \`list_project_build_contexts\` - Check all projects being worked on
+- \`compile_and_verify_qb64pe\` - Automatically saves build context
+
+## Anti-Patterns to Avoid
+
+❌ **BAD**: "Last command: ./DRAW.run" (execution only)
+✅ **GOOD**: "Build: /path/qb64pe -c -w -x DRAW.BAS -o DRAW.run | Run: ./DRAW.run"
+
+❌ **BAD**: Using MCP tool defaults without checking history
+✅ **GOOD**: Check \`get_project_build_context\` first, use previous flags
+
+❌ **BAD**: "The code was fixed" (declarative only)
+✅ **GOOD**: "Build process: 1) Fix syntax 2) Compile with -c -w -x 3) Run executable" (procedural)
+
+## Summary Template
+
+\`\`\`markdown
+## Build Configuration [PERSISTENT]
+
+**Project**: [path]
+
+**Build Command**: [BUILD-CRITICAL]
+\`\`\`bash
+[exact command]
+\`\`\`
+
+**Compiler Flags**: [list with explanations]
+**Output**: [executable name and location]
+**Last Successful Build**: [timestamp]
+
+## Critical Workflows [WORKFLOW]
+
+1. [Step-by-step procedures established]
+2. [Custom processes user requires]
+3. [Deviations from defaults]
+\`\`\`
+
+This ensures the next conversation can immediately resume with correct build parameters!`,
             },
           },
         ],

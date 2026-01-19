@@ -3,7 +3,7 @@ export interface CompilerOption {
     description: string;
     platform: string[];
     example: string;
-    category: 'compilation' | 'debugging' | 'optimization';
+    category: "compilation" | "debugging" | "optimization";
 }
 export interface DebuggingTechnique {
     technique: string;
@@ -16,6 +16,8 @@ export interface DebuggingTechnique {
  * Service for QB64PE compiler information and debugging help
  */
 export declare class QB64PECompilerService {
+    private buildContextService;
+    constructor();
     private readonly compilerOptions;
     private readonly debuggingTechniques;
     /**
@@ -52,10 +54,11 @@ export declare class QB64PECompilerService {
         errors: Array<{
             line?: number;
             message: string;
-            severity: 'error' | 'warning';
+            severity: "error" | "warning";
         }>;
         executablePath?: string;
         suggestions: string[];
+        contextWarning?: string;
     }>;
     /**
      * Parse QB64PE compilation output to extract errors and provide suggestions

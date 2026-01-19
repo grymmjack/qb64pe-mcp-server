@@ -3,7 +3,7 @@ export interface CompilerOption {
     description: string;
     platform: string[];
     example: string;
-    category: 'compilation' | 'debugging' | 'optimization';
+    category: "compilation" | "debugging" | "optimization";
 }
 export interface DebuggingTechnique {
     technique: string;
@@ -54,7 +54,7 @@ export declare class QB64PECompilerService {
         errors: Array<{
             line?: number;
             message: string;
-            severity: 'error' | 'warning';
+            severity: "error" | "warning";
         }>;
         executablePath?: string;
         suggestions: string[];

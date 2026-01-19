@@ -91,7 +91,7 @@ class ToolDiscoveryMCPServer extends mcp_js_1.McpServer {
         tool_discovery_js_1.toolDiscoveryManager.registerTool({
             name,
             title: config.title || name,
-            description: config.description || 'No description provided',
+            description: config.description || "No description provided",
             category,
             inputSchema: JSON.stringify(config.inputSchema || {}, null, 2),
         });
@@ -140,7 +140,7 @@ ${toolSummary}
 
 ---
 
-⚠️ **Tool Error:** ${error instanceof Error ? error.message : 'Unknown error'}
+⚠️ **Tool Error:** ${error instanceof Error ? error.message : "Unknown error"}
 `,
                             },
                         ],
@@ -158,27 +158,29 @@ ${toolSummary}
      */
     inferCategoryFromToolName(name) {
         const lowerName = name.toLowerCase();
-        if (lowerName.includes('wiki'))
-            return 'wiki';
-        if (lowerName.includes('keyword'))
-            return 'keywords';
-        if (lowerName.includes('compile'))
-            return 'compiler';
-        if (lowerName.includes('compatibility') || lowerName.includes('validate'))
-            return 'compatibility';
-        if (lowerName.includes('execute') || lowerName.includes('run'))
-            return 'execution';
-        if (lowerName.includes('install') || lowerName.includes('setup'))
-            return 'installation';
-        if (lowerName.includes('port') || lowerName.includes('convert'))
-            return 'porting';
-        if (lowerName.includes('graphic') || lowerName.includes('screenshot') || lowerName.includes('image'))
-            return 'graphics';
-        if (lowerName.includes('debug'))
-            return 'debugging';
-        if (lowerName.includes('feedback') || lowerName.includes('report'))
-            return 'feedback';
-        return 'other';
+        if (lowerName.includes("wiki"))
+            return "wiki";
+        if (lowerName.includes("keyword"))
+            return "keywords";
+        if (lowerName.includes("compile"))
+            return "compiler";
+        if (lowerName.includes("compatibility") || lowerName.includes("validate"))
+            return "compatibility";
+        if (lowerName.includes("execute") || lowerName.includes("run"))
+            return "execution";
+        if (lowerName.includes("install") || lowerName.includes("setup"))
+            return "installation";
+        if (lowerName.includes("port") || lowerName.includes("convert"))
+            return "porting";
+        if (lowerName.includes("graphic") ||
+            lowerName.includes("screenshot") ||
+            lowerName.includes("image"))
+            return "graphics";
+        if (lowerName.includes("debug"))
+            return "debugging";
+        if (lowerName.includes("feedback") || lowerName.includes("report"))
+            return "feedback";
+        return "other";
     }
 }
 /**
@@ -605,9 +607,9 @@ Use the MCP tools for automated detection and configuration assistance.`;
             mimeType: "text/markdown",
         }, async (uri) => {
             try {
-                const { readFile } = await Promise.resolve().then(() => __importStar(require('fs/promises')));
-                const { join } = await Promise.resolve().then(() => __importStar(require('path')));
-                const guideContent = await readFile(join(process.cwd(), 'AGENT_INTELLIGENCE_GUIDE.md'), 'utf-8');
+                const { readFile } = await Promise.resolve().then(() => __importStar(require("fs/promises")));
+                const { join } = await Promise.resolve().then(() => __importStar(require("path")));
+                const guideContent = await readFile(join(process.cwd(), "AGENT_INTELLIGENCE_GUIDE.md"), "utf-8");
                 return {
                     contents: [
                         {
@@ -1033,9 +1035,16 @@ ${preserveOriginal === "true" ? "Please preserve original comments and structure
             title: "Analyze QB64PE Compilation Error",
             description: "Intelligent analysis of QB64PE compilation failures with autonomous fix guidance. Use when user shows terminal output from failed compilation.",
             argsSchema: {
-                terminalOutput: zod_1.z.string().describe("Complete terminal output from failed QB64PE compilation"),
-                sourceFilePath: zod_1.z.string().describe("Absolute path to the .bas file that failed to compile"),
-                errorContext: zod_1.z.string().optional().describe("Additional context about what the user was trying to do"),
+                terminalOutput: zod_1.z
+                    .string()
+                    .describe("Complete terminal output from failed QB64PE compilation"),
+                sourceFilePath: zod_1.z
+                    .string()
+                    .describe("Absolute path to the .bas file that failed to compile"),
+                errorContext: zod_1.z
+                    .string()
+                    .optional()
+                    .describe("Additional context about what the user was trying to do"),
             },
         }, ({ terminalOutput, sourceFilePath, errorContext }) => ({
             messages: [

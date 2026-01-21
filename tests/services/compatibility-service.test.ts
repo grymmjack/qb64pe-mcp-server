@@ -359,5 +359,74 @@ describe('QB64PECompatibilityService', () => {
       expect(guidance).toContain('basic');
     });
   });
-});
 
+  describe('boolean constants validation', () => {
+    it('should detect usage of user-defined TRUE constant', async () => {
+      const code = 'MARQUEE_draw TRUE';
+      const issues = await service.validateCompatibility(code);
+      const trueIssue = issues.find(issue => issue.category === 'boolean_constants');
+      expect(trueIssue).toBeDefined();
+      expect(trueIssue?.message).toContain('not built-in');
+    });
+
+    it('should detect usage of user-defined FALSE constant', async () => {
+      const code = 'result = FALSE';
+      const issues = await service.validateCompatibility(code);
+      const falseIssue = issues.find(issue => issue.category === 'boolean_constants');
+      expect(falseIssue).toBeDefined();
+      expect(falseIssue?.message).toContain('not built-in');
+    });
+
+    it('should not flag TRUE when it is being defined', async () => {
+      const code = 'CONST TRUE = -1';
+      const issues = await service.validateCompatibility(code);
+      const trueIssue = issues.find(issue => 
+        issue.category === 'boolean_constants' && issue.pattern === 'TRUE'
+      );
+      // Should not find it as an error when followed by =
+      expect(trueIssue).toBeUndefined();
+    });
+
+    it('should suggest using _TRUE and _FALSE', async () => {
+      const code = 'IF flag = TRUE THEN';
+      const issues = await service.validateCompatibility(code);
+      const trueIssue = issues.find(issue => issue.category === 'boolean_constants');
+      expect(trueIssue?.suggestion).toContain('_TRUE');
+      expect(trueIssue?.suggestion).toContain('_FALSE');
+    });
+  });
+
+  describe('unnecessary DECLARE SUB validation', () => {
+    it('should detect unnecessary DECLARE SUB statement', async () => {
+      const code = 'DECLARE SUB MyProcedure';
+      const issues = await service.validateCompatibility(code);
+      const declareIssue = issues.find(issue => issue.category === 'unnecessary_declarations');
+      expect(declareIssue).toBeDefined();
+      expect(declareIssue?.message).toContain('unnecessary');
+    });
+
+    it('should also detect unnecessary DECLARE FUNCTION', async () => {
+      const code = 'DECLARE FUNCTION Calculate% (x AS INTEGER)';
+      const issues = await service.validateCompatibility(code);
+      const declareIssue = issues.find(issue => 
+        issue.category === 'unnecessary_declarations'
+      );
+      // Both SUB and FUNCTION DECLARE are unnecessary in QB64PE
+      expect(declareIssue).toBeDefined();
+    });
+
+    it('should suggest removing DECLARE statements', async () => {
+      const code = 'DECLARE SUB Draw_Menu';
+      const issues = await service.validateCompatibility(code);
+      const declareIssue = issues.find(issue => issue.category === 'unnecessary_declarations');
+      expect(declareIssue?.suggestion).toContain('Remove DECLARE');
+    });
+
+    it('should mention DECLARE is only for C library imports', async () => {
+      const code = 'DECLARE SUB HandleClick';
+      const issues = await service.validateCompatibility(code);
+      const declareIssue = issues.find(issue => issue.category === 'unnecessary_declarations');
+      expect(declareIssue?.suggestion).toContain('DECLARE LIBRARY');
+    });
+  });
+});

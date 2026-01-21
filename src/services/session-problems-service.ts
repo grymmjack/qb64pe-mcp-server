@@ -3,10 +3,6 @@
  * Tracks development problems during chat sessions for continuous improvement
  */
 
-import { promises as fs } from 'fs';
-import { join } from 'path';
-import { homedir } from 'os';
-
 export interface SessionProblem {
   id: string;
   timestamp: Date;
@@ -14,10 +10,6 @@ export interface SessionProblem {
   severity: 'critical' | 'high' | 'medium' | 'low';
   title: string;
   description: string;
-  status: 'new' | 'acknowledged' | 'in-progress' | 'handled' | 'wont-fix';
-  handledBy?: string;
-  handledAt?: Date;
-  handlingNotes?: string;
   context: {
     language: string;
     framework?: string;
@@ -60,68 +52,9 @@ export interface SessionProblemsReport {
 export class SessionProblemsService {
   private problems: Map<string, SessionProblem> = new Map();
   private sessionId: string;
-  private storageDir: string;
-  private currentSessionFile: string;
 
   constructor() {
     this.sessionId = this.generateSessionId();
-    this.storageDir = join(homedir(), '.qb64pe-mcp', 'session-problems');
-    this.currentSessionFile = join(this.storageDir, `${this.sessionId}.json`);
-    this.initializeStorage();
-  }
-
-  /**
-   * Initialize storage directory and load existing session
-   */
-  private async initializeStorage(): Promise<void> {
-    try {
-      // Create storage directory if it doesn't exist
-      await fs.mkdir(this.storageDir, { recursive: true });
-      
-      // Try to load existing session file
-      try {
-        const data = await fs.readFile(this.currentSessionFile, 'utf-8');
-        const sessionData = JSON.parse(data);
-        
-        // Restore problems from file
-        sessionData.problems.forEach((problem: SessionProblem) => {
-          // Convert timestamp string back to Date
-    
-    // Save to disk asynchronously (don't block)
-    this.saveToFile().catch(err => 
-      console.error('[SessionProblems] Failed to persist problem:', err)
-    );
-    
-          problem.timestamp = new Date(problem.timestamp);
-          this.problems.set(problem.id, problem);
-        });
-      } catch (error) {
-        // File doesn't exist yet, that's fine - new session
-      }
-    } catch (error) {
-      console.error('[SessionProblems] Failed to initialize storage:', error);
-    }
-  }
-
-  /**
-   * Save current session to disk
-   */
-  private async saveToFile(): Promise<void> {
-    try {
-      const sessionData = {
-        sessionId: this.sessionId,
-        lastUpdated: new Date().toISOString(),
-        problems: Array.from(this.problems.values()),
-      };
-      
-      await fs.writeFile(
-        this.currentSessionFile,
-        JSON.stringify(sessionData, null, 2),
-        'utf-8'
-      );
-    } catch (error) {
-      console.error('[SessionProblems] Failed to save to file:', error);
-    }
   }
 
   /**
@@ -136,22 +69,15 @@ export class SessionProblemsService {
   /**
    * Log a new problem
    */
-  logProblem(problem: Omit<SessionProblem, 'id' | 'timestamp' | 'status'>): SessionProblem {
+  logProblem(problem: Omit<SessionProblem, 'id' | 'timestamp'>): SessionProblem {
     const id = `problem-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
     const fullProblem: SessionProblem = {
       ...problem,
       id,
       timestamp: new Date(),
-      status: 'new',
     };
 
     this.problems.set(id, fullProblem);
-    
-    // Save to disk asynchronously (don't block)
-    this.saveToFile().catch(err => 
-      console.error('[SessionProblems] Failed to persist problem:', err)
-    );
-    
     return fullProblem;
   }
 
@@ -176,64 +102,6 @@ export class SessionProblemsService {
    */
   getProblemsBySeverity(severity: SessionProblem['severity']): SessionProblem[] {
     return this.getProblems().filter(p => p.severity === severity);
-  }
-
-  /**
-   * Update problem status
-   */
-  updateProblemStatus(
-    problemId: string,
-    status: SessionProblem['status'],
-    handledBy?: string,
-    notes?: string
-  ): SessionProblem | null {
-    const problem = this.problems.get(problemId);
-    if (!problem) return null;
-
-    problem.status = status;
-    if (status === 'handled' || status === 'wont-fix') {
-      problem.handledBy = handledBy;
-      problem.handledAt = new Date();
-      problem.handlingNotes = notes;
-    }
-
-    this.problems.set(problemId, problem);
-    
-    // Save to disk
-    this.saveToFile().catch(err => 
-      console.error('[SessionProblems] Failed to persist status update:', err)
-    );
-    
-    return problem;
-  }
-
-  /**
-   * Get problems by status
-   */
-  getProblemsByStatus(status: SessionProblem['status']): SessionProblem[] {
-    return this.getProblems().filter(p => p.status === status);
-  }
-
-  /**
-   * Get unhandled problems (new + acknowledged + in-progress)
-   */
-  getUnhandledProblems(): SessionProblem[] {
-    return this.getProblems().filter(
-      p => p.status === 'new' || p.status === 'acknowledged' || p.status === 'in-progress'
-    );
-  }
-
-  /**
-   * Get actionable problems for MCP improvement (high priority unhandled)
-   */
-  getActionableProblems(): SessionProblem[] {
-    return this.getUnhandledProblems()
-      .filter(p => p.mcpImprovement && p.mcpImprovement.priority === 'high')
-      .sort((a, b) => {
-        // Sort by severity first
-        const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-        return severityOrder[a.severity] - severityOrder[b.severity];
-      });
   }
 
   /**
@@ -506,31 +374,6 @@ export class SessionProblemsService {
   clear(): void {
     this.problems.clear();
     this.sessionId = this.generateSessionId();
-    this.currentSessionFile = join(this.storageDir, `${this.sessionId}.json`);
-    
-    // Save empty session file
-    this.saveToFile().catch(err => 
-      console.error('[SessionProblems] Failed to save cleared session:', err)
-    );
-  }
-
-  /**
-   * Get storage location
-   */
-  getStorageLocation(): string {
-    return this.currentSessionFile;
-  }
-
-  /**
-   * List all saved session files
-   */
-  async listSessions(): Promise<string[]> {
-    try {
-      const files = await fs.readdir(this.storageDir);
-      return files.filter(f => f.endsWith('.json')).sort().reverse();
-    } catch (error) {
-      return [];
-    }
   }
 
   /**
@@ -540,15 +383,6 @@ export class SessionProblemsService {
     const problems = this.getProblems();
     return {
       total: problems.length,
-      byStatus: {
-        new: problems.filter(p => p.status === 'new').length,
-        acknowledged: problems.filter(p => p.status === 'acknowledged').length,
-        inProgress: problems.filter(p => p.status === 'in-progress').length,
-        handled: problems.filter(p => p.status === 'handled').length,
-        wontFix: problems.filter(p => p.status === 'wont-fix').length,
-      },
-      unhandled: this.getUnhandledProblems().length,
-      actionable: this.getActionableProblems().length,
       bySeverity: {
         critical: problems.filter(p => p.severity === 'critical').length,
         high: problems.filter(p => p.severity === 'high').length,

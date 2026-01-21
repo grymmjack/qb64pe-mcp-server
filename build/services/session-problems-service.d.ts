@@ -9,10 +9,6 @@ export interface SessionProblem {
     severity: 'critical' | 'high' | 'medium' | 'low';
     title: string;
     description: string;
-    status: 'new' | 'acknowledged' | 'in-progress' | 'handled' | 'wont-fix';
-    handledBy?: string;
-    handledAt?: Date;
-    handlingNotes?: string;
     context: {
         language: string;
         framework?: string;
@@ -53,17 +49,7 @@ export interface SessionProblemsReport {
 export declare class SessionProblemsService {
     private problems;
     private sessionId;
-    private storageDir;
-    private currentSessionFile;
     constructor();
-    /**
-     * Initialize storage directory and load existing session
-     */
-    private initializeStorage;
-    /**
-     * Save current session to disk
-     */
-    private saveToFile;
     /**
      * Generate unique session ID
      */
@@ -71,7 +57,7 @@ export declare class SessionProblemsService {
     /**
      * Log a new problem
      */
-    logProblem(problem: Omit<SessionProblem, 'id' | 'timestamp' | 'status'>): SessionProblem;
+    logProblem(problem: Omit<SessionProblem, 'id' | 'timestamp'>): SessionProblem;
     /**
      * Get all problems for current session
      */
@@ -84,22 +70,6 @@ export declare class SessionProblemsService {
      * Get problems by severity
      */
     getProblemsBySeverity(severity: SessionProblem['severity']): SessionProblem[];
-    /**
-     * Update problem status
-     */
-    updateProblemStatus(problemId: string, status: SessionProblem['status'], handledBy?: string, notes?: string): SessionProblem | null;
-    /**
-     * Get problems by status
-     */
-    getProblemsByStatus(status: SessionProblem['status']): SessionProblem[];
-    /**
-     * Get unhandled problems (new + acknowledged + in-progress)
-     */
-    getUnhandledProblems(): SessionProblem[];
-    /**
-     * Get actionable problems for MCP improvement (high priority unhandled)
-     */
-    getActionableProblems(): SessionProblem[];
     /**
      * Generate comprehensive report
      */
@@ -125,27 +95,10 @@ export declare class SessionProblemsService {
      */
     clear(): void;
     /**
-     * Get storage location
-     */
-    getStorageLocation(): string;
-    /**
-     * List all saved session files
-     */
-    listSessions(): Promise<string[]>;
-    /**
      * Get statistics
      */
     getStatistics(): {
         total: number;
-        byStatus: {
-            new: number;
-            acknowledged: number;
-            inProgress: number;
-            handled: number;
-            wontFix: number;
-        };
-        unhandled: number;
-        actionable: number;
         bySeverity: {
             critical: number;
             high: number;

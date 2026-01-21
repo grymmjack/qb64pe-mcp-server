@@ -817,9 +817,7 @@
         "Initialize early: Set up arrays and variables before use",
         "Test incrementally: Build up complexity gradually",
         "Separate concerns: Split complex operations into multiple lines",
-        "Use standard functions: Stick to well-documented QB64PE functions",
-        "Boolean values: Use _TRUE (-1) and _FALSE (0) reserved words, or define your own constants",
-        "No DECLARE needed: SUBs/FUNCTIONs are auto-available. DECLARE is only for C library imports (DECLARE LIBRARY)"
+        "Use standard functions: Stick to well-documented QB64PE functions"
       ],
       "syntax_rules": [
         "Functions must use type sigils for return types, not AS clauses",
@@ -827,68 +825,8 @@
         "Avoid chaining multiple control structures on one line",
         "Array declarations should be separate when using dimensions",
         "Variable assignments should be on separate lines from declarations",
-        "Some BASIC string functions may not be available (implement custom versions)",
-        "TRUE and FALSE are not built-in constants - use _TRUE and _FALSE reserved words or define your own",
-        "DECLARE is only for C library imports (DECLARE LIBRARY) - not needed for SUBs or FUNCTIONs"
+        "Some BASIC string functions may not be available (implement custom versions)"
       ]
-    },
-    "boolean_constants": {
-      "title": "Boolean Values in QB64PE",
-      "description": "QB64PE provides _TRUE and _FALSE as reserved words that always evaluate to boolean values",
-      "reserved_words": {
-        "_TRUE": "-1 (all bits set to 1) - ALWAYS available as reserved word",
-        "_FALSE": "0 (all bits set to 0) - ALWAYS available as reserved word"
-      },
-      "user_defined": {
-        "note": "TRUE and FALSE are NOT built-in, but you can define them",
-        "syntax": "CONST TRUE = -1, FALSE = 0",
-        "alternative": "Use _TRUE and _FALSE which are always available"
-      },
-      "examples": {
-        "recommended": [
-          "IF flag = _TRUE THEN",
-          "MARQUEE_draw _TRUE",
-          "result = _FALSE"
-        ],
-        "user_defined": [
-          "CONST TRUE = -1, FALSE = 0",
-          "IF flag = TRUE THEN",
-          "result = FALSE"
-        ],
-        "numeric": [
-          "IF flag = -1 THEN",
-          "result = 0"
-        ]
-      },
-      "rationale": "QB64PE provides _TRUE and _FALSE as reserved words. Traditional TRUE/FALSE are not built-in but can be user-defined. The value -1 represents true (all bits 1) and 0 represents false."
-    },
-    "declare_statements": {
-      "title": "DECLARE Statement Usage in QB64PE",
-      "description": "QB64PE handles forward references automatically - DECLARE is only for C library imports",
-      "rules": {
-        "subs": "DECLARE SUB is NOT needed - SUBs are automatically available",
-        "functions": "DECLARE FUNCTION is NOT needed - FUNCTIONs are automatically available",
-        "forward_reference": "All procedures can be called before definition",
-        "c_libraries": "DECLARE LIBRARY ... END DECLARE is ONLY for importing C library functions"
-      },
-      "examples": {
-        "incorrect": [
-          "DECLARE SUB MyProcedure",
-          "DECLARE FUNCTION Calculate% (x AS INTEGER)"
-        ],
-        "correct": [
-          "' No DECLARE needed:",
-          "SUB MyProcedure",
-          "    PRINT \"Hello\"",
-          "END SUB",
-          "",
-          "' DECLARE only for C libraries:",
-          "DECLARE LIBRARY",
-          "    FUNCTION my_c_function& (x AS LONG)",
-          "END DECLARE"
-        ]
-      },
-      "rationale": "QB64PE's modern parser handles all forward references automatically. DECLARE is only needed for DECLARE LIBRARY blocks when importing C functions."
     },
     "source_organization": {
       "title": "QB64PE Source Code Organization Requirements",
@@ -1570,26 +1508,6 @@
       "severity": "info",
       "message": "REDIM SHARED used within procedure affects global array",
       "suggestion": "Consider if global array modification is intended or use local array instead"
-    },
-    "undefined_boolean_constants": {
-      "regex": "\\b(TRUE|FALSE)\\b(?!\\s*=)",
-      "severity": "warning",
-      "message": "TRUE and FALSE are not built-in constants in QB64PE",
-      "suggestion": "Use _TRUE (-1) and _FALSE (0) which are reserved words, or define your own: CONST TRUE = -1, FALSE = 0",
-      "examples": {
-        "incorrect": "MARQUEE_draw TRUE\nIF condition = FALSE THEN",
-        "correct": "MARQUEE_draw _TRUE\nIF condition = _FALSE THEN\n' Or: CONST TRUE = -1, FALSE = 0"
-      }
-    },
-    "unnecessary_declare_statements": {
-      "regex": "^\\s*DECLARE\\s+(SUB|FUNCTION)\\s+\\w+(?!.*LIBRARY)",
-      "severity": "info",
-      "message": "DECLARE SUB/FUNCTION is unnecessary in QB64PE - procedures are automatically available",
-      "suggestion": "Remove DECLARE statements. QB64PE handles forward references automatically. DECLARE is only needed for DECLARE LIBRARY (C library imports).",
-      "examples": {
-        "incorrect": "DECLARE SUB MyProcedure\nDECLARE FUNCTION Calculate%",
-        "correct": "SUB MyProcedure\n    PRINT \"Hello\"\nEND SUB\n\n' DECLARE only for C libraries:\nDECLARE LIBRARY\n    FUNCTION c_func&\nEND DECLARE"
-      }
     }
   },
   "variable_types": {

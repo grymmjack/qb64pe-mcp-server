@@ -1488,6 +1488,22 @@ MIT License - see LICENSE file for details.
 
 ## Changelog
 
+### v2.0.1 - Compatibility Rules Correction (January 21, 2026)
+
+- **🔧 CORRECTED**: Boolean constants validation - _TRUE and _FALSE are RESERVED WORDS (always available)
+- **🔧 CORRECTED**: DECLARE statement validation - DECLARE is ONLY for C library imports, not for SUBs/FUNCTIONs
+- **📚 UPDATED**: Knowledge base now correctly reflects QB64PE language facts
+- **✅ IMPROVED**: Best practices updated with correct boolean and DECLARE guidance
+- **📖 DOCS**: Created .github/instructions/project-conventions.instructions.md for future reference
+- **🎯 LESSON LEARNED**: Always verify using MCP tools when working on MCP server itself
+
+Key corrections based on actual QB64PE behavior:
+- _TRUE and _FALSE are reserved words, always available (not user-defined)
+- TRUE/FALSE can be user-defined but are not built-in
+- DECLARE is only for DECLARE LIBRARY (C function imports)
+- QB64PE handles all SUB/FUNCTION forward references automatically
+- No DECLARE needed for any QB64PE procedures
+
 ### v2.0.0 - Advanced Debugging & Automation Release
 
 - **🚀 MAJOR**: Advanced Debugging Enhancement System with comprehensive code fixing

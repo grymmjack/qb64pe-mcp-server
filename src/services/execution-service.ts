@@ -2,6 +2,99 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
+// Load keywords data for dynamic graphics detection
+const KEYWORDS_DATA_PATH = path.join(__dirname, '../data/keywords-data.json');
+let keywordsData: any = null;
+let graphicsKeywordsCache: Set<string> | null = null;
+
+/**
+ * Load and cache QB64PE keywords data
+ */
+function loadKeywordsData(): any {
+  if (!keywordsData) {
+    try {
+      const data = fs.readFileSync(KEYWORDS_DATA_PATH, 'utf8');
+      keywordsData = JSON.parse(data);
+    } catch (error) {
+      console.error(`Failed to load keywords data: ${error}`);
+      keywordsData = { categories: {} };
+    }
+  }
+  return keywordsData;
+}
+
+/**
+ * Build and cache set of graphics-related keywords
+ * Includes all keywords that produce screen output
+ */
+function getGraphicsKeywords(): Set<string> {
+  if (graphicsKeywordsCache) {
+    return graphicsKeywordsCache;
+  }
+
+  const data = loadKeywordsData();
+  const graphicsKeywords = new Set<string>();
+  
+  // Graphics-related keyword patterns (case-insensitive)
+  const graphicsPatterns = [
+    /SCREEN/i, /_NEWIMAGE/i, /_LOADIMAGE/i, /_DISPLAY/i, /_PUTIMAGE/i,
+    /PSET/i, /PRESET/i, /LINE/i, /CIRCLE/i, /PAINT/i, /DRAW/i,
+    /COLOR/i, /PALETTE/i, /CLS/i, /POINT/i, /GET/i, /PUT/i,
+    /_PRINTSTRING/i, /_UPRINTSTRING/i, /_FONT/i, /_PRINTMODE/i,
+    /_COPYIMAGE/i, /_FREEIMAGE/i, /_SAVEIMAGE/i, /_SCREENIMAGE/i,
+    /_MAPTRIANGLE/i, /_SETALPHA/i, /_BLEND/i, /_DONTBLEND/i,
+    /_CLEARCOLOR/i, /PCOPY/i, /VIEW/i, /WINDOW/i, /_PRINTWIDTH/i,
+    /LOCATE/i, /_WIDTH/i, /_HEIGHT/i, /_RESIZE/i, /_BACKGROUNDCOLOR/i,
+    /_ALPHA/i, /_BLUE/i, /_GREEN/i, /_RED/i, /_RGB/i, /_RGBA/i,
+    /_SCREENSHOW/i, /_SCREENHIDE/i, /_SCREENMOVE/i, /_SCREENCLICK/i,
+    /_SCREENX/i, /_SCREENY/i, /_SCREENICON/i, /_TITLE/i,
+    /_GLRENDER/i, /_DEPTHBUFFER/i, /SMOOTH/i, /STEP/i,
+  ];
+  
+  // Add keywords from the database that match graphics patterns
+  if (data.keywords) {
+    for (const [keywordName, keywordInfo] of Object.entries(data.keywords)) {
+      const keyword = keywordName.toUpperCase();
+      
+      // Check if keyword matches any graphics pattern
+      if (graphicsPatterns.some(pattern => pattern.test(keyword))) {
+        graphicsKeywords.add(keyword);
+      }
+    }
+  }
+  
+  // Also check categories for graphics-related keywords
+  if (data.categories) {
+    const categoriesToCheck = ['statements', 'functions'];
+    
+    for (const categoryName of categoriesToCheck) {
+      const category = data.categories[categoryName];
+      if (category && category.keywords && Array.isArray(category.keywords)) {
+        for (const keyword of category.keywords) {
+          const keywordUpper = keyword.toUpperCase();
+          if (graphicsPatterns.some(pattern => pattern.test(keywordUpper))) {
+            graphicsKeywords.add(keywordUpper);
+          }
+        }
+      }
+    }
+  }
+  
+  // Fallback: if data loading failed, use minimal essential graphics keywords
+  if (graphicsKeywords.size === 0) {
+    console.warn('No graphics keywords loaded from data, using fallback set');
+    [
+      'SCREEN', 'PSET', 'PRESET', 'LINE', 'CIRCLE', 'PAINT', 'DRAW',
+      'PUT', 'GET', 'POINT', '_PUTIMAGE', '_LOADIMAGE', '_NEWIMAGE',
+      '_DISPLAY', '_LIMIT', 'COLOR', 'PALETTE', 'CLS',
+      '_SCREENIMAGE', '_SAVEIMAGE', '_FREEIMAGE', '_PRINTSTRING'
+    ].forEach(kw => graphicsKeywords.add(kw));
+  }
+  
+  graphicsKeywordsCache = graphicsKeywords;
+  return graphicsKeywords;
+}
+
 export interface ExecutionState {
   processId?: number;
   status: 'not_started' | 'running' | 'completed' | 'terminated' | 'graphics_mode' | 'console_mode';
@@ -126,19 +219,22 @@ export class QB64PEExecutionService {
 
   /**
    * Detect if source code uses graphics functions
+   * Dynamically uses the validated QB64PE keyword database
    */
   private detectGraphicsUsage(sourceCode: string): boolean {
-    const graphicsKeywords = [
-      'SCREEN', 'PSET', 'PRESET', 'LINE', 'CIRCLE', 'PAINT', 'DRAW',
-      'PUT', 'GET', 'POINT', '_PUTIMAGE', '_LOADIMAGE', '_NEWIMAGE',
-      '_DISPLAY', '_LIMIT', 'COLOR', 'PALETTE', 'CLS',
-      '_SCREENIMAGE', '_SAVEIMAGE', '_FREEIMAGE'
-    ];
-
+    const graphicsKeywords = getGraphicsKeywords();
     const codeUpper = sourceCode.toUpperCase();
-    return graphicsKeywords.some(keyword => 
-      new RegExp(`\\b${keyword}\\b`).test(codeUpper)
-    );
+    
+    // Check if any graphics keyword appears in the source code
+    for (const keyword of graphicsKeywords) {
+      // Use word boundary regex to avoid false matches in variable names
+      const pattern = new RegExp(`\\b${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`);
+      if (pattern.test(codeUpper)) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 
   /**

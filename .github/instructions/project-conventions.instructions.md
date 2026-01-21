@@ -58,15 +58,37 @@ END DECLARE
 When working on the QB64PE MCP server itself:
 
 1. **Look up keywords** using `mcp_qb64pe_lookup_qb64pe_keyword`
-2. **Search wiki** using `mcp_qb64pe_search_qb64pe_wiki`
-3. **Check compatibility** using `mcp_qb64pe_search_qb64pe_compatibility`
-4. **Verify syntax** using `mcp_qb64pe_validate_qb64pe_syntax`
+   - Now includes intelligent fallback searches
+   - Automatically tries semantic term searches if keyword not found
+   - Provides wiki search URLs for manual verification
+   - Example: If TRUE not found, automatically searches for "boolean" and "constants"
+
+2. **Search for related keywords** using `mcp_qb64pe_search_qb64pe_keywords`
+   - Use when you need broader search results
+   - Think semantically: TRUE/FALSE → search for "boolean"
+   - Can search by category or description
+
+3. **Verify against wiki** using `fetch_webpage`
+   - Direct wiki page URLs: `https://qb64phoenix.com/qb64wiki/index.php/Boolean`
+   - Wiki search URLs: `https://qb64phoenix.com/qb64wiki/index.php?search=_TRUE&title=Special%3ASearch&profile=default&fulltext=1`
+   - Always cross-reference with official documentation
+
+4. **Check compatibility** using `mcp_qb64pe_search_qb64pe_compatibility`
+5. **Verify syntax** using `mcp_qb64pe_validate_qb64pe_syntax`
 
 ### Before Making Changes
-- Search the wiki for the keyword/feature
-- Look up reserved words in constants/reserved-words.ts
-- Check existing compatibility rules
-- Test against actual QB64PE behavior
+- Always try `mcp_qb64pe_lookup_qb64pe_keyword` first (it now auto-searches)
+- If lookup fails, use the suggested fallback searches it provides
+- Use `fetch_webpage` to verify against actual QB64PE wiki pages
+- Look up reserved words in src/constants/reserved-words.ts (if exists)
+- Check existing compatibility rules in src/services/compatibility-service.ts
+- Test against actual QB64PE behavior when possible
+
+### Smart Search Strategy
+The tools are designed to work together:
+1. **Primary:** `mcp_qb64pe_lookup_qb64pe_keyword` - tries exact match + automatic fallbacks
+2. **Secondary:** `mcp_qb64pe_search_qb64pe_keywords` - broader semantic searches  
+3. **Tertiary:** `fetch_webpage` - verify against official wiki documentation
 
 ## File Organization
 

@@ -1488,14 +1488,31 @@ MIT License - see LICENSE file for details.
 
 ## Changelog
 
-### v2.0.1 - Compatibility Rules Correction (January 21, 2026)
+### v2.0.1 - Compatibility Rules Correction & Intelligent Keyword Lookup (January 21, 2026)
 
+#### Compatibility Corrections
 - **🔧 CORRECTED**: Boolean constants validation - _TRUE and _FALSE are RESERVED WORDS (always available)
 - **🔧 CORRECTED**: DECLARE statement validation - DECLARE is ONLY for C library imports, not for SUBs/FUNCTIONs
 - **📚 UPDATED**: Knowledge base now correctly reflects QB64PE language facts
 - **✅ IMPROVED**: Best practices updated with correct boolean and DECLARE guidance
 - **📖 DOCS**: Created .github/instructions/project-conventions.instructions.md for future reference
 - **🎯 LESSON LEARNED**: Always verify using MCP tools when working on MCP server itself
+
+#### Intelligent Keyword Lookup System
+- **✨ NEW**: `lookup_qb64pe_keyword` now includes intelligent fallback searches
+- **🔍 SMART**: Automatically infers semantic terms when keyword not found
+- **📚 AUTO**: Performs related searches (e.g., TRUE/FALSE → searches "boolean", "constants")
+- **🌐 WIKI**: Generates direct wiki search URLs for manual verification
+- **💡 TIPS**: Provides contextual suggestions and search strategies
+- **🤖 LLM**: Optimized for autonomous agent workflows
+
+Semantic categories supported:
+- Boolean (`true`/`false` → `BOOLEAN`, `CONSTANTS`)
+- Graphics (`screen`/`pixel`/`draw` → `SCREEN`, `GRAPHICS`, `_DISPLAY`)
+- File I/O (`file`/`open`/`read` → `OPEN`, `FILE`, `INPUT`, `OUTPUT`)
+- Strings (`string`/`text`/`chr` → `STRING`, `CHR$`, `ASC`)
+- Math (`sin`/`cos`/`sqrt` → `SIN`, `COS`, `SQR`, `ABS`)
+- Sound (`sound`/`audio`/`play` → `SOUND`, `PLAY`, `_SNDOPEN`)
 
 Key corrections based on actual QB64PE behavior:
 - _TRUE and _FALSE are reserved words, always available (not user-defined)

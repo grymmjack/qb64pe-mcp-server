@@ -53,6 +53,7 @@ export declare class QB64PEExecutionService {
     analyzeExecutionMode(sourceCode: string): ExecutionState;
     /**
      * Detect if source code uses graphics functions
+     * Dynamically uses the validated QB64PE keyword database
      */
     private detectGraphicsUsage;
     /**

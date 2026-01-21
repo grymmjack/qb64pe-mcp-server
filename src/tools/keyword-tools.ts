@@ -23,16 +23,15 @@ export function registerKeywordTools(
     "lookup_qb64pe_keyword",
     {
       title: "Lookup QB64PE Keyword",
-      description: "Get detailed information about a specific QB64PE keyword",
+      description: "Get detailed information about a specific QB64PE keyword. Automatically performs fallback searches if keyword not found in local database.",
       inputSchema: {
         keyword: z.string().describe("The QB64PE keyword to look up"),
       },
     },
     async ({ keyword }) => {
       try {
-        const validation = services.keywordsService.validateKeyword(
-          keyword.toUpperCase(),
-        );
+        const upperKeyword = keyword.toUpperCase();
+        const validation = services.keywordsService.validateKeyword(upperKeyword);
 
         if (validation.isValid && validation.keyword) {
           const wikiUrl = `https://qb64phoenix.com/qb64wiki/index.php/${validation.keyword.name.replace(/ /g, "_")}`;
@@ -57,17 +56,98 @@ export function registerKeywordTools(
 
           return createMCPTextResponse(response);
         } else {
-          const errorMsg = validation.message || "Keyword not found";
-          const suggestions = validation.suggestions?.length
-            ? `\n\nDid you mean: ${validation.suggestions.join(", ")}?`
-            : "";
-          return createMCPTextResponse(`${errorMsg}${suggestions}`);
+          // FALLBACK STRATEGY: Try intelligent searches
+          let response = `⚠️ **Keyword "${keyword}" not found in local database.**\n\n`;
+          
+          // Strategy 1: Try searching with semantic terms
+          const semanticTerms = inferSemanticTerms(keyword);
+          if (semanticTerms.length > 0) {
+            response += `🔍 **Attempting fallback searches...**\n\n`;
+            
+            for (const term of semanticTerms) {
+              const searchResults = services.keywordsService.searchKeywords(term, 5);
+              if (searchResults.length > 0) {
+                response += `### Search results for "${term}":\n`;
+                searchResults.forEach((result: any, idx: number) => {
+                  response += `${idx + 1}. **${result.keyword}** (${result.matchType} match, relevance: ${result.relevance})\n`;
+                  response += `   - ${result.info.description}\n`;
+                  response += `   - Wiki: https://qb64phoenix.com/qb64wiki/index.php/${result.keyword.replace(/ /g, "_")}\n\n`;
+                });
+              }
+            }
+          }
+          
+          // Strategy 2: Provide wiki search URL
+          const wikiSearchUrl = `https://qb64phoenix.com/qb64wiki/index.php?search=${encodeURIComponent(keyword)}&title=Special%3ASearch&profile=default&fulltext=1`;
+          response += `\n📚 **Direct Wiki Search:** [${keyword}](${wikiSearchUrl})\n\n`;
+          
+          // Strategy 3: Show any suggestions from validation
+          if (validation.suggestions && validation.suggestions.length > 0) {
+            response += `💡 **Did you mean:** ${validation.suggestions.join(", ")}?\n\n`;
+          }
+          
+          response += `\n**Tip:** Try searching for related concepts. For example:\n`;
+          response += `- If looking for TRUE/FALSE, try searching for "boolean"\n`;
+          response += `- If looking for a graphics function, try searching for "graphics" or "screen"\n`;
+          response += `- If looking for a file operation, try searching for "file" or "open"\n`;
+
+          return createMCPTextResponse(response);
         }
       } catch (error) {
         return createMCPError(error, "looking up keyword");
       }
     },
   );
+  
+  /**
+   * Infer semantic search terms from a keyword
+   */
+  function inferSemanticTerms(keyword: string): string[] {
+    const terms: string[] = [];
+    const lower = keyword.toLowerCase();
+    
+    // Boolean-related
+    if (lower.includes('true') || lower.includes('false')) {
+      terms.push('BOOLEAN', 'CONSTANTS');
+    }
+    
+    // Graphics-related
+    if (lower.includes('screen') || lower.includes('pixel') || lower.includes('draw') || 
+        lower.includes('color') || lower.includes('graphics') || lower.includes('image')) {
+      terms.push('SCREEN', 'GRAPHICS', '_DISPLAY');
+    }
+    
+    // File-related
+    if (lower.includes('file') || lower.includes('open') || lower.includes('read') || 
+        lower.includes('write') || lower.includes('load') || lower.includes('save')) {
+      terms.push('OPEN', 'FILE', 'INPUT', 'OUTPUT');
+    }
+    
+    // String-related
+    if (lower.includes('string') || lower.includes('text') || lower.includes('chr') || 
+        lower.includes('asc')) {
+      terms.push('STRING', 'CHR$', 'ASC');
+    }
+    
+    // Math-related
+    if (lower.includes('math') || lower.includes('calc') || lower.includes('sin') || 
+        lower.includes('cos') || lower.includes('sqrt')) {
+      terms.push('SIN', 'COS', 'SQR', 'ABS');
+    }
+    
+    // Sound-related
+    if (lower.includes('sound') || lower.includes('audio') || lower.includes('play') || 
+        lower.includes('music')) {
+      terms.push('SOUND', 'PLAY', '_SNDOPEN');
+    }
+    
+    // Always try the keyword itself if no terms found
+    if (terms.length === 0) {
+      terms.push(keyword.toUpperCase());
+    }
+    
+    return terms;
+  }
 
   // Autocomplete keywords tool
   server.registerTool(

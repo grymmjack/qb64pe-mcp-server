@@ -15,7 +15,7 @@ class SessionProblemsService {
      * Generate unique session ID
      */
     generateSessionId() {
-        const date = new Date().toISOString().split('T')[0];
+        const date = new Date().toISOString().split("T")[0];
         const random = Math.random().toString(36).substring(2, 8);
         return `session-${date}-${random}`;
     }
@@ -44,13 +44,13 @@ class SessionProblemsService {
      * Get problems by category
      */
     getProblemsByCategory(category) {
-        return this.getProblems().filter(p => p.category === category);
+        return this.getProblems().filter((p) => p.category === category);
     }
     /**
      * Get problems by severity
      */
     getProblemsBySeverity(severity) {
-        return this.getProblems().filter(p => p.severity === severity);
+        return this.getProblems().filter((p) => p.severity === severity);
     }
     /**
      * Generate comprehensive report
@@ -71,7 +71,7 @@ class SessionProblemsService {
             architecture: 0,
             other: 0,
         };
-        problems.forEach(problem => {
+        problems.forEach((problem) => {
             bySeverity[problem.severity]++;
             byCategory[problem.category]++;
         });
@@ -94,20 +94,21 @@ class SessionProblemsService {
     identifyPatterns(problems) {
         const patterns = [];
         // Check for tool usage patterns
-        const toolNotUsed = problems.filter(p => p.metrics?.toolsShouldHaveUsed && p.metrics.toolsShouldHaveUsed.length > 0);
+        const toolNotUsed = problems.filter((p) => p.metrics?.toolsShouldHaveUsed &&
+            p.metrics.toolsShouldHaveUsed.length > 0);
         if (toolNotUsed.length >= 2) {
             patterns.push(`Multiple instances of not using available MCP tools (${toolNotUsed.length} cases) - tools should be used FIRST`);
         }
         // Check for syntax error patterns
-        const syntaxErrors = problems.filter(p => p.category === 'syntax');
+        const syntaxErrors = problems.filter((p) => p.category === "syntax");
         if (syntaxErrors.length >= 2) {
-            const commonErrors = this.findCommonSubstrings(syntaxErrors.map(e => e.problem.error));
+            const commonErrors = this.findCommonSubstrings(syntaxErrors.map((e) => e.problem.error));
             if (commonErrors.length > 0) {
-                patterns.push(`Recurring syntax errors: ${commonErrors.join(', ')}`);
+                patterns.push(`Recurring syntax errors: ${commonErrors.join(", ")}`);
             }
         }
         // Check for repeated manual attempts
-        const manualAttempts = problems.filter(p => p.metrics && p.metrics.attemptsBeforeSolution > 2);
+        const manualAttempts = problems.filter((p) => p.metrics && p.metrics.attemptsBeforeSolution > 2);
         if (manualAttempts.length >= 2) {
             patterns.push(`Multiple problems required 3+ attempts - indicates need for proactive validation`);
         }
@@ -119,25 +120,25 @@ class SessionProblemsService {
     generateRecommendations(problems, patterns) {
         const recommendations = [];
         // Check if MCP tool creation is needed
-        const needNewTools = problems.filter(p => p.mcpImprovement?.toolNeeded);
+        const needNewTools = problems.filter((p) => p.mcpImprovement?.toolNeeded);
         if (needNewTools.length > 0) {
             const toolNames = needNewTools
-                .map(p => p.mcpImprovement?.toolNeeded)
+                .map((p) => p.mcpImprovement?.toolNeeded)
                 .filter(Boolean);
-            recommendations.push(`Create new MCP tools: ${[...new Set(toolNames)].join(', ')}`);
+            recommendations.push(`Create new MCP tools: ${[...new Set(toolNames)].join(", ")}`);
         }
         // Check if existing tools need enhancement
-        const needEnhancement = problems.filter(p => p.mcpImprovement?.enhancementNeeded);
+        const needEnhancement = problems.filter((p) => p.mcpImprovement?.enhancementNeeded);
         if (needEnhancement.length > 0) {
             recommendations.push(`Enhance existing tools: ${needEnhancement.length} tools need improvements`);
         }
         // Workflow recommendations
-        if (patterns.some(p => p.includes('not using available MCP tools'))) {
-            recommendations.push('CRITICAL: LLM training needed - emphasize using MCP tools FIRST before manual attempts');
-            recommendations.push('Add workflow guidance: Validate → Generate → Test pattern');
+        if (patterns.some((p) => p.includes("not using available MCP tools"))) {
+            recommendations.push("CRITICAL: LLM training needed - emphasize using MCP tools FIRST before manual attempts");
+            recommendations.push("Add workflow guidance: Validate → Generate → Test pattern");
         }
         // Documentation recommendations
-        const docNeeded = problems.filter(p => p.solution.preventionStrategy.toLowerCase().includes('documentation'));
+        const docNeeded = problems.filter((p) => p.solution.preventionStrategy.toLowerCase().includes("documentation"));
         if (docNeeded.length > 0) {
             recommendations.push(`Update documentation: ${docNeeded.length} problems could be prevented with better docs`);
         }
@@ -151,12 +152,12 @@ class SessionProblemsService {
             return [];
         const commonParts = new Set();
         // Extract common patterns (simple approach)
-        strings.forEach(str1 => {
-            strings.forEach(str2 => {
+        strings.forEach((str1) => {
+            strings.forEach((str2) => {
                 if (str1 !== str2) {
                     const words1 = str1.toLowerCase().split(/\s+/);
                     const words2 = str2.toLowerCase().split(/\s+/);
-                    words1.forEach(word => {
+                    words1.forEach((word) => {
                         if (word.length > 4 && words2.includes(word)) {
                             commonParts.add(word);
                         }
@@ -175,55 +176,55 @@ class SessionProblemsService {
         lines.push(`**Session ID:** ${report.sessionId}`);
         lines.push(`**Date:** ${report.date.toISOString()}`);
         lines.push(`**Total Problems:** ${report.totalProblems}`);
-        lines.push('');
-        lines.push('## Summary');
-        lines.push('');
-        lines.push('### By Severity');
+        lines.push("");
+        lines.push("## Summary");
+        lines.push("");
+        lines.push("### By Severity");
         Object.entries(report.bySeverity).forEach(([severity, count]) => {
             if (count > 0) {
                 lines.push(`- **${severity}**: ${count}`);
             }
         });
-        lines.push('');
-        lines.push('### By Category');
+        lines.push("");
+        lines.push("### By Category");
         Object.entries(report.byCategory).forEach(([category, count]) => {
             if (count > 0) {
                 lines.push(`- **${category}**: ${count}`);
             }
         });
-        lines.push('');
+        lines.push("");
         if (report.patterns.length > 0) {
-            lines.push('## Identified Patterns');
-            report.patterns.forEach(pattern => {
+            lines.push("## Identified Patterns");
+            report.patterns.forEach((pattern) => {
                 lines.push(`- ${pattern}`);
             });
-            lines.push('');
+            lines.push("");
         }
         if (report.recommendations.length > 0) {
-            lines.push('## Recommendations');
+            lines.push("## Recommendations");
             report.recommendations.forEach((rec, i) => {
                 lines.push(`${i + 1}. ${rec}`);
             });
-            lines.push('');
+            lines.push("");
         }
-        lines.push('## Problems Detail');
-        lines.push('');
+        lines.push("## Problems Detail");
+        lines.push("");
         report.problems.forEach((problem, i) => {
             lines.push(`### ${i + 1}. ${problem.title} (${problem.severity.toUpperCase()})`);
             lines.push(`**Category:** ${problem.category}`);
-            lines.push(`**Context:** ${problem.context.language}${problem.context.framework ? ` (${problem.context.framework})` : ''}`);
-            lines.push('');
-            lines.push('**Problem:**');
+            lines.push(`**Context:** ${problem.context.language}${problem.context.framework ? ` (${problem.context.framework})` : ""}`);
+            lines.push("");
+            lines.push("**Problem:**");
             lines.push(`- Attempted: ${problem.problem.attempted}`);
             lines.push(`- Error: ${problem.problem.error}`);
             lines.push(`- Root Cause: ${problem.problem.rootCause}`);
-            lines.push('');
-            lines.push('**Solution:**');
+            lines.push("");
+            lines.push("**Solution:**");
             lines.push(`- Implemented: ${problem.solution.implemented}`);
             lines.push(`- Prevention: ${problem.solution.preventionStrategy}`);
-            lines.push('');
+            lines.push("");
             if (problem.mcpImprovement) {
-                lines.push('**MCP Improvement Needed:**');
+                lines.push("**MCP Improvement Needed:**");
                 if (problem.mcpImprovement.toolNeeded) {
                     lines.push(`- New Tool: ${problem.mcpImprovement.toolNeeded}`);
                 }
@@ -231,26 +232,27 @@ class SessionProblemsService {
                     lines.push(`- Enhancement: ${problem.mcpImprovement.enhancementNeeded}`);
                 }
                 lines.push(`- Priority: ${problem.mcpImprovement.priority}`);
-                lines.push('');
+                lines.push("");
             }
             if (problem.metrics) {
-                lines.push('**Metrics:**');
+                lines.push("**Metrics:**");
                 lines.push(`- Attempts: ${problem.metrics.attemptsBeforeSolution}`);
                 if (problem.metrics.timeWasted) {
                     lines.push(`- Time Wasted: ${problem.metrics.timeWasted}`);
                 }
                 if (problem.metrics.toolsUsed.length > 0) {
-                    lines.push(`- Tools Used: ${problem.metrics.toolsUsed.join(', ')}`);
+                    lines.push(`- Tools Used: ${problem.metrics.toolsUsed.join(", ")}`);
                 }
-                if (problem.metrics.toolsShouldHaveUsed && problem.metrics.toolsShouldHaveUsed.length > 0) {
-                    lines.push(`- Should Have Used: ${problem.metrics.toolsShouldHaveUsed.join(', ')}`);
+                if (problem.metrics.toolsShouldHaveUsed &&
+                    problem.metrics.toolsShouldHaveUsed.length > 0) {
+                    lines.push(`- Should Have Used: ${problem.metrics.toolsShouldHaveUsed.join(", ")}`);
                 }
-                lines.push('');
+                lines.push("");
             }
-            lines.push('---');
-            lines.push('');
+            lines.push("---");
+            lines.push("");
         });
-        return lines.join('\n');
+        return lines.join("\n");
     }
     /**
      * Clear all problems (start new session)
@@ -263,18 +265,18 @@ class SessionProblemsService {
      * Get session file path
      */
     getSessionFilePath() {
-        const os = require('os');
-        const path = require('path');
+        const os = require("os");
+        const path = require("path");
         const homeDir = os.homedir();
-        const sessionDir = path.join(homeDir, '.qb64pe-mcp', 'session-problems');
+        const sessionDir = path.join(homeDir, ".qb64pe-mcp", "session-problems");
         return path.join(sessionDir, `${this.sessionId}.json`);
     }
     /**
      * Persist session problems to disk immediately
      */
     persistToFile() {
-        const fs = require('fs');
-        const path = require('path');
+        const fs = require("fs");
+        const path = require("path");
         try {
             const filePath = this.getSessionFilePath();
             const dirPath = path.dirname(filePath);
@@ -286,32 +288,32 @@ class SessionProblemsService {
             const report = this.generateReport();
             // Convert to JSON with proper formatting
             const jsonData = {
-                sessionDate: new Date().toISOString().split('T')[0],
+                sessionDate: new Date().toISOString().split("T")[0],
                 sessionId: this.sessionId,
                 totalProblems: report.totalProblems,
-                problems: report.problems.map(p => ({
+                problems: report.problems.map((p) => ({
                     id: p.id,
                     timestamp: p.timestamp.toISOString(),
                     title: p.title,
                     severity: p.severity,
                     category: p.category,
-                    description: typeof p.description === 'string' ? p.description : '',
+                    description: typeof p.description === "string" ? p.description : "",
                     context: p.context,
                     problem: p.problem,
                     solution: p.solution,
                     mcpImprovement: p.mcpImprovement,
-                    metrics: p.metrics
+                    metrics: p.metrics,
                 })),
                 statistics: {
                     bySeverity: report.bySeverity,
-                    byCategory: report.byCategory
+                    byCategory: report.byCategory,
                 },
                 patterns: report.patterns,
-                recommendations: report.recommendations
+                recommendations: report.recommendations,
             };
             // Write to file atomically
-            const tempPath = filePath + '.tmp';
-            fs.writeFileSync(tempPath, JSON.stringify(jsonData, null, 2), 'utf-8');
+            const tempPath = filePath + ".tmp";
+            fs.writeFileSync(tempPath, JSON.stringify(jsonData, null, 2), "utf-8");
             fs.renameSync(tempPath, filePath);
             console.error(`[Session Problems] Persisted ${report.totalProblems} problem(s) to: ${filePath}`);
         }
@@ -328,22 +330,25 @@ class SessionProblemsService {
         return {
             total: problems.length,
             bySeverity: {
-                critical: problems.filter(p => p.severity === 'critical').length,
-                high: problems.filter(p => p.severity === 'high').length,
-                medium: problems.filter(p => p.severity === 'medium').length,
-                low: problems.filter(p => p.severity === 'low').length,
+                critical: problems.filter((p) => p.severity === "critical").length,
+                high: problems.filter((p) => p.severity === "high").length,
+                medium: problems.filter((p) => p.severity === "medium").length,
+                low: problems.filter((p) => p.severity === "low").length,
             },
             byCategory: {
-                syntax: problems.filter(p => p.category === 'syntax').length,
-                compatibility: problems.filter(p => p.category === 'compatibility').length,
-                workflow: problems.filter(p => p.category === 'workflow').length,
-                tooling: problems.filter(p => p.category === 'tooling').length,
-                architecture: problems.filter(p => p.category === 'architecture').length,
-                other: problems.filter(p => p.category === 'other').length,
+                syntax: problems.filter((p) => p.category === "syntax").length,
+                compatibility: problems.filter((p) => p.category === "compatibility")
+                    .length,
+                workflow: problems.filter((p) => p.category === "workflow").length,
+                tooling: problems.filter((p) => p.category === "tooling").length,
+                architecture: problems.filter((p) => p.category === "architecture")
+                    .length,
+                other: problems.filter((p) => p.category === "other").length,
             },
-            avgAttemptsBeforeSolution: problems.reduce((sum, p) => sum + (p.metrics?.attemptsBeforeSolution || 0), 0) /
-                problems.filter(p => p.metrics?.attemptsBeforeSolution).length || 0,
-            toolsNotUsedCount: problems.filter(p => p.metrics?.toolsShouldHaveUsed && p.metrics.toolsShouldHaveUsed.length > 0).length,
+            avgAttemptsBeforeSolution: problems.reduce((sum, p) => sum + (p.metrics?.attemptsBeforeSolution || 0), 0) / problems.filter((p) => p.metrics?.attemptsBeforeSolution).length ||
+                0,
+            toolsNotUsedCount: problems.filter((p) => p.metrics?.toolsShouldHaveUsed &&
+                p.metrics.toolsShouldHaveUsed.length > 0).length,
         };
     }
 }

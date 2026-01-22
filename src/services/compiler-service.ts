@@ -633,16 +633,21 @@ INPUT "Press Enter to exit...", dummy$
     let outputDir = path.dirname(sourceFilePath);
 
     // Check build context for previous output path
-    const previousContext = await this.buildContextService.getContext(sourceFilePath);
+    const previousContext =
+      await this.buildContextService.getContext(sourceFilePath);
     if (previousContext?.lastUsedCommand?.outputName) {
       outputName = previousContext.lastUsedCommand.outputName;
-      console.error(`[Compiler] Using previous output name from build context: ${outputName}`);
+      console.error(
+        `[Compiler] Using previous output name from build context: ${outputName}`
+      );
     } else {
       // Look for existing .run file in source directory
       const runFile = path.join(outputDir, outputName + ".run");
       if (fs.existsSync(runFile)) {
         outputName = outputName + ".run";
-        console.error(`[Compiler] Found existing .run file, using: ${outputName}`);
+        console.error(
+          `[Compiler] Found existing .run file, using: ${outputName}`
+        );
       } else {
         // Try parsing tasks.json for output path pattern
         try {
@@ -656,7 +661,8 @@ INPUT "Press Enter to exit...", dummy$
             );
             if (buildTask) {
               // Extract output pattern from task command
-              const cmdStr = buildTask.command + " " + (buildTask.args || []).join(" ");
+              const cmdStr =
+                buildTask.command + " " + (buildTask.args || []).join(" ");
               const outputMatch = cmdStr.match(/-o\s+["']?([^\s"']+)["']?/);
               if (outputMatch) {
                 const taskOutput = outputMatch[1]
@@ -664,7 +670,9 @@ INPUT "Press Enter to exit...", dummy$
                   .replace(/\$\{fileBasenameNoExtension\}/g, outputName)
                   .replace(/\$\{workspaceFolder\}/g, workspaceRoot);
                 outputName = path.basename(taskOutput);
-                console.error(`[Compiler] Using output pattern from tasks.json: ${outputName}`);
+                console.error(
+                  `[Compiler] Using output pattern from tasks.json: ${outputName}`
+                );
               }
             }
           }
@@ -810,7 +818,9 @@ INPUT "Press Enter to exit...", dummy$
         // Check if executable was created
         const executableExt = process.platform === "win32" ? ".exe" : "";
         // If outputName already has extension, don't add another
-        const baseOutput = path.extname(outputName) ? outputName : outputName + executableExt;
+        const baseOutput = path.extname(outputName)
+          ? outputName
+          : outputName + executableExt;
         const executablePath = path.join(outputDir, baseOutput);
 
         if (fs.existsSync(executablePath)) {
@@ -991,7 +1001,7 @@ INPUT "Press Enter to exit...", dummy$
   private findWorkspaceRoot(sourceFilePath: string): string {
     const path = require("path");
     const fs = require("fs");
-    
+
     let currentDir = path.dirname(sourceFilePath);
     for (let i = 0; i < 10; i++) {
       const vscodeDir = path.join(currentDir, ".vscode");

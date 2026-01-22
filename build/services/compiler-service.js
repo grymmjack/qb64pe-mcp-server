@@ -629,7 +629,9 @@ INPUT "Press Enter to exit...", dummy$
                 // Check if executable was created
                 const executableExt = process.platform === "win32" ? ".exe" : "";
                 // If outputName already has extension, don't add another
-                const baseOutput = path.extname(outputName) ? outputName : outputName + executableExt;
+                const baseOutput = path.extname(outputName)
+                    ? outputName
+                    : outputName + executableExt;
                 const executablePath = path.join(outputDir, baseOutput);
                 if (fs.existsSync(executablePath)) {
                     result.success = true;

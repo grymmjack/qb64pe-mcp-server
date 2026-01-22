@@ -55,7 +55,7 @@ export class ProjectBuildContextService {
     } catch (error) {
       console.error(
         "[ProjectBuildContext] Failed to initialize storage:",
-        error,
+        error
       );
     }
   }
@@ -83,7 +83,7 @@ export class ProjectBuildContextService {
    * Load context for a project
    */
   async loadContext(
-    sourceFilePath: string,
+    sourceFilePath: string
   ): Promise<ProjectBuildContext | null> {
     const projectHash = this.generateProjectHash(sourceFilePath);
 
@@ -103,7 +103,7 @@ export class ProjectBuildContextService {
       context.updatedAt = new Date(context.updatedAt);
       if (context.lastSuccessfulBuild) {
         context.lastSuccessfulBuild.timestamp = new Date(
-          context.lastSuccessfulBuild.timestamp,
+          context.lastSuccessfulBuild.timestamp
         );
       }
       context.buildHistory = context.buildHistory.map((entry) => ({
@@ -123,7 +123,7 @@ export class ProjectBuildContextService {
    * Get context for a project (alias for loadContext)
    */
   async getContext(
-    sourceFilePath: string,
+    sourceFilePath: string
   ): Promise<ProjectBuildContext | null> {
     return this.loadContext(sourceFilePath);
   }
@@ -137,7 +137,7 @@ export class ProjectBuildContextService {
     compilerFlags: string[],
     outputName: string | undefined,
     success: boolean,
-    executablePath?: string,
+    executablePath?: string
   ): Promise<ProjectBuildContext> {
     const projectHash = this.generateProjectHash(sourceFilePath);
     const projectDir = dirname(sourceFilePath);
@@ -148,7 +148,7 @@ export class ProjectBuildContextService {
       qb64pePath,
       compilerFlags,
       outputName,
-      sourceFilePath,
+      sourceFilePath
     );
 
     if (!context) {
@@ -215,7 +215,7 @@ export class ProjectBuildContextService {
     qb64pePath: string | undefined,
     compilerFlags: string[],
     outputName: string | undefined,
-    sourceFilePath: string,
+    sourceFilePath: string
   ): string {
     const qb64 = qb64pePath || "qb64pe";
     const flags = compilerFlags.join(" ");
@@ -234,7 +234,7 @@ export class ProjectBuildContextService {
       await fs.writeFile(
         contextFile,
         JSON.stringify(context, null, 2),
-        "utf-8",
+        "utf-8"
       );
     } catch (error) {
       console.error("[ProjectBuildContext] Failed to persist context:", error);
@@ -247,7 +247,7 @@ export class ProjectBuildContextService {
   async checkParameterDiff(
     sourceFilePath: string,
     currentFlags: string[],
-    currentOutputName?: string,
+    currentOutputName?: string
   ): Promise<{
     differs: boolean;
     previousFlags?: string[];
@@ -278,10 +278,10 @@ export class ProjectBuildContextService {
 
       if (outputDiffers) {
         suggestions.push(
-          `Previous output: ${prevOutputName || "(auto-generated)"}`,
+          `Previous output: ${prevOutputName || "(auto-generated)"}`
         );
         suggestions.push(
-          `Current output: ${currentOutputName || "(auto-generated)"}`,
+          `Current output: ${currentOutputName || "(auto-generated)"}`
         );
       }
 
@@ -316,7 +316,7 @@ export class ProjectBuildContextService {
 
     const totalBuilds = context.buildHistory.length;
     const successfulBuilds = context.buildHistory.filter(
-      (b) => b.success,
+      (b) => b.success
     ).length;
     const failedBuilds = totalBuilds - successfulBuilds;
     const successRate =
@@ -371,7 +371,7 @@ export class ProjectBuildContextService {
           try {
             const data = await fs.readFile(
               join(this.contextsDir, file),
-              "utf-8",
+              "utf-8"
             );
             const context: ProjectBuildContext = JSON.parse(data);
             contexts.push({
@@ -387,7 +387,7 @@ export class ProjectBuildContextService {
       }
 
       return contexts.sort(
-        (a, b) => b.lastBuildDate.getTime() - a.lastBuildDate.getTime(),
+        (a, b) => b.lastBuildDate.getTime() - a.lastBuildDate.getTime()
       );
     } catch (error) {
       console.error("[ProjectBuildContext] Failed to list projects:", error);

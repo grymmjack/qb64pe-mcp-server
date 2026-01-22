@@ -5,8 +5,8 @@
 export interface SessionProblem {
     id: string;
     timestamp: Date;
-    category: 'syntax' | 'compatibility' | 'workflow' | 'tooling' | 'architecture' | 'other';
-    severity: 'critical' | 'high' | 'medium' | 'low';
+    category: "syntax" | "compatibility" | "workflow" | "tooling" | "architecture" | "other";
+    severity: "critical" | "high" | "medium" | "low";
     title: string;
     description: string;
     context: {
@@ -27,7 +27,7 @@ export interface SessionProblem {
     mcpImprovement?: {
         toolNeeded?: string;
         enhancementNeeded?: string;
-        priority: 'high' | 'medium' | 'low';
+        priority: "high" | "medium" | "low";
     };
     metrics?: {
         attemptsBeforeSolution: number;
@@ -57,7 +57,7 @@ export declare class SessionProblemsService {
     /**
      * Log a new problem and immediately persist to disk
      */
-    logProblem(problem: Omit<SessionProblem, 'id' | 'timestamp'>): SessionProblem;
+    logProblem(problem: Omit<SessionProblem, "id" | "timestamp">): SessionProblem;
     /**
      * Get all problems for current session
      */
@@ -65,11 +65,11 @@ export declare class SessionProblemsService {
     /**
      * Get problems by category
      */
-    getProblemsByCategory(category: SessionProblem['category']): SessionProblem[];
+    getProblemsByCategory(category: SessionProblem["category"]): SessionProblem[];
     /**
      * Get problems by severity
      */
-    getProblemsBySeverity(severity: SessionProblem['severity']): SessionProblem[];
+    getProblemsBySeverity(severity: SessionProblem["severity"]): SessionProblem[];
     /**
      * Generate comprehensive report
      */

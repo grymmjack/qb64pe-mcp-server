@@ -448,12 +448,18 @@ INPUT "Press Enter to exit...", dummy$
     const execAsync = promisify(exec);
 
     try {
-      // Check if we're in a VS Code environment
-      if (
-        !process.env.TERM_PROGRAM ||
-        !process.env.TERM_PROGRAM.includes("vscode")
-      ) {
-        return null; // Not in VS Code
+      // Check if we're in a VS Code environment (multiple detection methods)
+      // We're less strict here since MCP server may not have TERM_PROGRAM set
+      const likelyVSCode =
+        process.env.TERM_PROGRAM?.includes("vscode") ||
+        process.env.VSCODE_IPC_HOOK ||
+        process.env.VSCODE_PID ||
+        process.env.VSCODE_CWD ||
+        // Always try to find .vscode folder as fallback
+        true;
+
+      if (!likelyVSCode) {
+        return null; // Definitely not in VS Code
       }
 
       // Find workspace root (look for .vscode folder)
@@ -464,10 +470,17 @@ INPUT "Press Enter to exit...", dummy$
       // Search up the directory tree for .vscode folder
       for (let i = 0; i < 10; i++) {
         if (fs.existsSync(vscodeDir)) {
+          // Found .vscode folder
+          console.error(
+            `[VS Code Task] Found .vscode at: ${vscodeDir}`
+          );
           break;
         }
         const parent = path.dirname(workspaceRoot);
         if (parent === workspaceRoot) {
+          console.error(
+            "[VS Code Task] Reached filesystem root, no .vscode found"
+          );
           return null; // Reached filesystem root
         }
         workspaceRoot = parent;
@@ -475,14 +488,18 @@ INPUT "Press Enter to exit...", dummy$
       }
 
       if (!fs.existsSync(vscodeDir)) {
+        console.error("[VS Code Task] No .vscode folder found after search");
         return null; // No .vscode folder found
       }
 
       // Check if tasks.json exists
       const tasksFile = path.join(vscodeDir, "tasks.json");
       if (!fs.existsSync(tasksFile)) {
+        console.error(`[VS Code Task] No tasks.json found at: ${tasksFile}`);
         return null; // No tasks.json
       }
+
+      console.error(`[VS Code Task] Found tasks.json at: ${tasksFile}`);
 
       // Read and parse tasks.json
       const tasksContent = fs.readFileSync(tasksFile, "utf-8");
@@ -494,8 +511,14 @@ INPUT "Press Enter to exit...", dummy$
       );
 
       if (!buildTask) {
+        const availableTasks = tasksJson.tasks?.map((t: any) => t.label).join(", ") || "none";
+        console.error(
+          `[VS Code Task] 'BUILD: Compile' task not found. Available tasks: ${availableTasks}`
+        );
         return null; // Task not found
       }
+
+      console.error(`[VS Code Task] Found 'BUILD: Compile' task, executing...`);
 
       // Execute the VS Code task using task runner
       // We'll use the task's command directly since we can't trigger VS Code tasks from Node

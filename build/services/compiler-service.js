@@ -382,7 +382,8 @@ INPUT "Press Enter to exit...", dummy$
         // Check for parameter differences from previous builds
         const flags = compilerFlags || ["-c", "-x", "-w"];
         const outputName = path.basename(sourceFilePath, path.extname(sourceFilePath));
-        const paramDiff = await this.buildContextService.checkParameterDiff(sourceFilePath, flags, undefined);
+        const paramDiff = await this.buildContextService.checkParameterDiff(sourceFilePath, flags, undefined // outputName is auto-generated from source
+        );
         if (paramDiff.differs) {
             result.contextWarning = paramDiff.suggestion;
             result.suggestions.push(`⚠️ Build parameters differ from previous build!`);

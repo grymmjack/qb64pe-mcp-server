@@ -77,20 +77,33 @@ function registerCompilerTools(server, services) {
     server.registerTool("compile_and_verify_qb64pe", {
         title: "Compile and Verify QB64PE Code",
         description: "🎯 WHEN TO USE: After fixing compilation errors, after editing .bas files, or when verifying code changes work.\n\n" +
+            "🚨 **CRITICAL WORKFLOW REQUIREMENT:** This tool MUST be called IMMEDIATELY after ANY code edit operation on QB64PE files.\n\n" +
             "Compiles QB64PE code and returns detailed error analysis with actionable suggestions. " +
             "This tool enables autonomous compile-verify-fix loops by providing structured compilation " +
             "results that can be analyzed and acted upon programmatically.\n\n" +
-            "💡 AUTONOMOUS WORKFLOW:\n" +
-            "1. Apply fixes to source code\n" +
-            "2. Call this tool to compile and verify\n" +
-            "3. Check result.success - if false, analyze result.errors\n" +
-            "4. Apply additional fixes based on errors and suggestions\n" +
-            "5. REPEAT steps 2-4 until result.success = true\n\n" +
-            "⚡ CRITICAL: Use this tool after EVERY code change to verify fixes work. Do NOT wait for user to compile manually!",
+            "💡 MANDATORY AUTO-COMPILE WORKFLOW:\n" +
+            "1. User requests code change OR you detect error in terminal\n" +
+            "2. Apply fixes using replace_string_in_file/multi_replace_string_in_file\n" +
+            "3. **IMMEDIATELY** call THIS tool (compile_and_verify_qb64pe) - DO NOT WAIT\n" +
+            "4. Check result.success - if false, analyze result.errors\n" +
+            "5. Apply additional fixes based on errors and suggestions\n" +
+            "6. REPEAT steps 3-5 until result.success = true\n" +
+            "7. Report final success to user\n\n" +
+            "⚡ CRITICAL: Use this tool after EVERY code change to verify fixes work. Do NOT wait for user to ask 'does it compile?' - this is automatic!\n\n" +
+            "❌ BAD: Edit file → Wait for user to ask if it compiles\n" +
+            "✅ GOOD: Edit file → Immediately compile → Report success/errors → Fix if needed → Repeat",
         inputSchema: {
-            sourceFilePath: zod_1.z.string().describe("Absolute path to the QB64PE source file (.bas) to compile"),
-            qb64pePath: zod_1.z.string().optional().describe("Path to QB64PE executable. If not provided, will search common locations and PATH."),
-            compilerFlags: zod_1.z.array(zod_1.z.string()).optional().describe("Additional compiler flags (default: ['-c', '-x', '-w'] for compile only, no-console, show warnings)"),
+            sourceFilePath: zod_1.z
+                .string()
+                .describe("Absolute path to the QB64PE source file (.bas) to compile"),
+            qb64pePath: zod_1.z
+                .string()
+                .optional()
+                .describe("Path to QB64PE executable. If not provided, will search common locations and PATH."),
+            compilerFlags: zod_1.z
+                .array(zod_1.z.string())
+                .optional()
+                .describe("Additional compiler flags (default: ['-c', '-x', '-w'] for compile only, no-console, show warnings)"),
         },
     }, async ({ sourceFilePath, qb64pePath, compilerFlags }) => {
         try {

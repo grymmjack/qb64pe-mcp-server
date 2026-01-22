@@ -75,6 +75,15 @@ This MCP server provides comprehensive QB64PE development assistance with ${this
 4. **Iterate** - Keep trying compile_and_verify_qb64pe until success (max 5 iterations)
 5. **Report Results** - Only show final outcome, not intermediate steps
 
+### 🔄 CRITICAL WORKFLOW: Auto-Compile After Code Edits
+**MANDATORY RULE:** After ANY file edit operation (replace_string_in_file, multi_replace_string_in_file, create_file) on QB64PE source files (.bas, .bm, .bi):
+1. **IMMEDIATELY** call compile_and_verify_qb64pe with the edited file path
+2. Check result.success - if false, analyze errors and apply fixes
+3. **REPEAT** compile-fix cycle until success OR user explicitly stops you
+4. **DO NOT** wait for user to ask "does it compile?" or "can you test it?"
+
+This is NOT optional - it's a critical workflow requirement that eliminates the need for users to repeatedly request compilation verification.
+
 **💡 Quick Example:**
 User shows: "Compilation failed: Line 15: Type mismatch #qb64pe"
 You should: 1) Use analyze-compilation-error prompt 2) Apply fixes 3) Run compile_and_verify_qb64pe 4) Report success

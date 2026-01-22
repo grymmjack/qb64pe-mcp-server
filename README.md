@@ -61,6 +61,7 @@ qb64pe-mcp-server/
 │   ├── guides/                   # Developer guides
 │   │   ├── HOW_AGENTS_LEARN.md
 │   │   ├── AGENT_INTELLIGENCE_GUIDE.md
+│   │   ├── WORKFLOW_AUTOMATION.md    # 🔄 Auto-compile after edits (MANDATORY)
 │   │   ├── QB64PE_DEBUGGING_SYSTEM_USAGE.md
 │   │   ├── GRAPHICS_MODE_ECHO_REQUIREMENTS.md
 │   │   └── QUICK_REFERENCE.md

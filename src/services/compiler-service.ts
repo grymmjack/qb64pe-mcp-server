@@ -193,7 +193,7 @@ PRINT "Final count: "; count`,
    */
   async getCompilerOptions(
     platform: string = "all",
-    optionType: string = "all",
+    optionType: string = "all"
   ): Promise<CompilerOption[]> {
     let options = this.compilerOptions;
 
@@ -201,7 +201,7 @@ PRINT "Final count: "; count`,
     if (platform !== "all") {
       options = options.filter(
         (option) =>
-          option.platform.includes(platform) || option.platform.includes("all"),
+          option.platform.includes(platform) || option.platform.includes("all")
       );
     }
 
@@ -218,11 +218,11 @@ PRINT "Final count: "; count`,
    */
   async getDebuggingHelp(
     issue: string,
-    platform: string = "all",
+    platform: string = "all"
   ): Promise<string> {
     const relevantTechniques = this.findRelevantDebuggingTechniques(
       issue,
-      platform,
+      platform
     );
 
     let help = `# QB64PE Debugging Help for: "${issue}"\n\n`;
@@ -252,7 +252,7 @@ PRINT "Final count: "; count`,
     reference += "## Compilation Options\n\n";
     const compilationOptions = await this.getCompilerOptions(
       "all",
-      "compilation",
+      "compilation"
     );
     compilationOptions.forEach((option) => {
       reference += `### ${option.flag}\n`;
@@ -273,7 +273,7 @@ PRINT "Final count: "; count`,
     reference += "## Optimization Options\n\n";
     const optimizationOptions = await this.getCompilerOptions(
       "all",
-      "optimization",
+      "optimization"
     );
     optimizationOptions.forEach((option) => {
       reference += `### ${option.flag}\n`;
@@ -292,7 +292,7 @@ PRINT "Final count: "; count`,
    */
   private findRelevantDebuggingTechniques(
     issue: string,
-    platform: string,
+    platform: string
   ): DebuggingTechnique[] {
     const issueLower = issue.toLowerCase();
     const techniques: DebuggingTechnique[] = [];
@@ -302,16 +302,16 @@ PRINT "Final count: "; count`,
       techniques.push(
         ...this.debuggingTechniques.filter(
           (t) =>
-            t.technique.includes("PRINT") || t.technique.includes("$CONSOLE"),
-        ),
+            t.technique.includes("PRINT") || t.technique.includes("$CONSOLE")
+        )
       );
     }
 
     if (issueLower.includes("error") || issueLower.includes("crash")) {
       techniques.push(
         ...this.debuggingTechniques.filter((t) =>
-          t.technique.includes("Error Handling"),
-        ),
+          t.technique.includes("Error Handling")
+        )
       );
     }
 
@@ -320,8 +320,8 @@ PRINT "Final count: "; count`,
         ...this.debuggingTechniques.filter(
           (t) =>
             t.technique.includes("Step-by-Step") ||
-            t.technique.includes("PRINT"),
-        ),
+            t.technique.includes("PRINT")
+        )
       );
     }
 
@@ -330,22 +330,22 @@ PRINT "Final count: "; count`,
         ...this.debuggingTechniques.filter(
           (t) =>
             t.technique.includes("$CONSOLE") ||
-            t.technique.includes("File Logging"),
-        ),
+            t.technique.includes("File Logging")
+        )
       );
     }
 
     // Filter by platform
     if (platform !== "all") {
       return techniques.filter(
-        (t) => t.platform.includes(platform) || t.platform.includes("all"),
+        (t) => t.platform.includes(platform) || t.platform.includes("all")
       );
     }
 
     // Remove duplicates
     return techniques.filter(
       (technique, index, array) =>
-        array.findIndex((t) => t.technique === technique.technique) === index,
+        array.findIndex((t) => t.technique === technique.technique) === index
     );
   }
 
@@ -433,7 +433,7 @@ INPUT "Press Enter to exit...", dummy$
   async compileAndVerify(
     sourceFilePath: string,
     qb64pePath?: string,
-    compilerFlags?: string[],
+    compilerFlags?: string[]
   ): Promise<{
     success: boolean;
     output: string;
@@ -471,26 +471,28 @@ INPUT "Press Enter to exit...", dummy$
     };
 
     // Check for parameter differences from previous builds
-    const flags = compilerFlags || ["-c", "-w"];
+    const flags = compilerFlags || ["-c", "-x", "-w"];
     const outputName = path.basename(
       sourceFilePath,
-      path.extname(sourceFilePath),
+      path.extname(sourceFilePath)
     );
 
     const paramDiff = await this.buildContextService.checkParameterDiff(
       sourceFilePath,
       flags,
-      undefined, // outputName is auto-generated from source
+      undefined // outputName is auto-generated from source
     );
 
     if (paramDiff.differs) {
       result.contextWarning = paramDiff.suggestion;
       result.suggestions.push(
-        `⚠️ Build parameters differ from previous build!`,
+        `⚠️ Build parameters differ from previous build!`
       );
       result.suggestions.push(`Previous command: ${paramDiff.previousCommand}`);
       result.suggestions.push(
-        `Consider using previous flags if they were working: ${JSON.stringify(paramDiff.previousFlags)}`,
+        `Consider using previous flags if they were working: ${JSON.stringify(
+          paramDiff.previousFlags
+        )}`
       );
     }
 
@@ -527,10 +529,10 @@ INPUT "Press Enter to exit...", dummy$
               severity: "error",
             });
             result.suggestions.push(
-              "Install QB64PE or provide the path to the QB64PE executable",
+              "Install QB64PE or provide the path to the QB64PE executable"
             );
             result.suggestions.push(
-              "Use detect_qb64pe_installation tool to find QB64PE on your system",
+              "Use detect_qb64pe_installation tool to find QB64PE on your system"
             );
             return result;
           }
@@ -544,13 +546,31 @@ INPUT "Press Enter to exit...", dummy$
           severity: "error",
         });
         result.suggestions.push(
-          "Ensure the file path is correct and the file exists",
+          "Ensure the file path is correct and the file exists"
+        );
+        return result;
+      }
+
+      // Validate file extension is .bas or .bm
+      const ext = path.extname(sourceFilePath).toLowerCase();
+      if (ext !== ".bas" && ext !== ".bm" && ext !== ".bi") {
+        result.errors.push({
+          message: `Invalid file type: ${ext}. QB64PE can only compile .bas, .bm, or .bi files.`,
+          severity: "error",
+        });
+        result.suggestions.push(
+          `The file "${sourceFilePath}" is not a QB64PE source file.`
+        );
+        result.suggestions.push(
+          "QB64PE source files must have .bas, .bm (module), or .bi (include) extension"
         );
         return result;
       }
 
       // Build compilation command (flags and outputName already defined above for context check)
-      const cmd = `"${qb64peExe}" ${flags.join(" ")} -o "${outputName}" "${sourceFilePath}"`;
+      const cmd = `"${qb64peExe}" ${flags.join(
+        " "
+      )} -o "${outputName}" "${sourceFilePath}"`;
 
       // Execute compilation
       try {
@@ -561,21 +581,21 @@ INPUT "Press Enter to exit...", dummy$
         this.parseCompilationOutput(
           result.output,
           result.errors,
-          result.suggestions,
+          result.suggestions
         );
 
         // Check if executable was created
         const executableExt = process.platform === "win32" ? ".exe" : "";
         const executablePath = path.join(
           path.dirname(sourceFilePath),
-          outputName + executableExt,
+          outputName + executableExt
         );
 
         if (fs.existsSync(executablePath)) {
           result.success = true;
           result.executablePath = executablePath;
           result.suggestions.push(
-            "Compilation successful! Executable created.",
+            "Compilation successful! Executable created."
           );
         } else if (result.errors.length === 0) {
           result.errors.push({
@@ -583,7 +603,7 @@ INPUT "Press Enter to exit...", dummy$
             severity: "warning",
           });
           result.suggestions.push(
-            "Check QB64PE output for additional information",
+            "Check QB64PE output for additional information"
           );
         }
       } catch (execError: any) {
@@ -592,7 +612,7 @@ INPUT "Press Enter to exit...", dummy$
         this.parseCompilationOutput(
           result.output,
           result.errors,
-          result.suggestions,
+          result.suggestions
         );
 
         if (result.errors.length === 0) {
@@ -610,7 +630,7 @@ INPUT "Press Enter to exit...", dummy$
         flags,
         outputName,
         result.success,
-        result.executablePath,
+        result.executablePath
       );
     } catch (error: any) {
       result.errors.push({
@@ -632,7 +652,7 @@ INPUT "Press Enter to exit...", dummy$
       message: string;
       severity: "error" | "warning";
     }>,
-    suggestions: string[],
+    suggestions: string[]
   ): void {
     const lines = output.split("\n");
 
@@ -641,7 +661,7 @@ INPUT "Press Enter to exit...", dummy$
 
       // Parse error patterns: "Error on line X: message" or "Line X: Error: message"
       const errorMatch = trimmed.match(
-        /(?:error|line)\s+(?:on\s+)?(?:line\s+)?(\d+)[:\s]+(.+)/i,
+        /(?:error|line)\s+(?:on\s+)?(?:line\s+)?(\d+)[:\s]+(.+)/i
       );
       if (errorMatch) {
         errors.push({
@@ -657,7 +677,7 @@ INPUT "Press Enter to exit...", dummy$
 
       // Parse warning patterns
       const warningMatch = trimmed.match(
-        /warning[:\s]+(?:line\s+)?(\d+)?[:\s]*(.+)/i,
+        /warning[:\s]+(?:line\s+)?(\d+)?[:\s]*(.+)/i
       );
       if (warningMatch) {
         errors.push({
@@ -681,7 +701,7 @@ INPUT "Press Enter to exit...", dummy$
     // Add general suggestions if errors were found
     if (errors.length > 0) {
       suggestions.push(
-        "Use validate_qb64pe_syntax tool to pre-check syntax before compiling",
+        "Use validate_qb64pe_syntax tool to pre-check syntax before compiling"
       );
       suggestions.push("Review QB64PE wiki documentation for correct syntax");
       suggestions.push("Check variable declarations and type compatibility");
@@ -693,23 +713,23 @@ INPUT "Press Enter to exit...", dummy$
    */
   private addErrorSuggestions(
     errorMessage: string,
-    suggestions: string[],
+    suggestions: string[]
   ): void {
     const lower = errorMessage.toLowerCase();
 
     if (lower.includes("type") || lower.includes("mismatch")) {
       suggestions.push(
-        "Check variable types and ensure they match in assignments and function calls",
+        "Check variable types and ensure they match in assignments and function calls"
       );
       suggestions.push(
-        "Use AS clause for explicit type declarations (e.g., DIM x AS INTEGER)",
+        "Use AS clause for explicit type declarations (e.g., DIM x AS INTEGER)"
       );
     }
 
     if (lower.includes("dim") || lower.includes("undeclared")) {
       suggestions.push("Ensure all variables are declared with DIM statement");
       suggestions.push(
-        "Check variable scoping - use DIM SHARED for global variables",
+        "Check variable scoping - use DIM SHARED for global variables"
       );
     }
 
@@ -719,26 +739,26 @@ INPUT "Press Enter to exit...", dummy$
       lower.includes("end")
     ) {
       suggestions.push(
-        "Verify SUB/FUNCTION blocks are properly closed with END SUB/END FUNCTION",
+        "Verify SUB/FUNCTION blocks are properly closed with END SUB/END FUNCTION"
       );
       suggestions.push(
-        "Ensure SUB/FUNCTION definitions come after main program code",
+        "Ensure SUB/FUNCTION definitions come after main program code"
       );
     }
 
     if (lower.includes("syntax") || lower.includes("expected")) {
       suggestions.push(
-        "Check for missing parentheses, commas, or other syntax elements",
+        "Check for missing parentheses, commas, or other syntax elements"
       );
       suggestions.push("Verify statement syntax matches QB64PE documentation");
     }
 
     if (lower.includes("file") || lower.includes("include")) {
       suggestions.push(
-        "Check that all $INCLUDE files exist and paths are correct",
+        "Check that all $INCLUDE files exist and paths are correct"
       );
       suggestions.push(
-        "Ensure file paths use correct separators for your platform",
+        "Ensure file paths use correct separators for your platform"
       );
     }
   }

@@ -16,7 +16,7 @@ import { ServiceContainer } from "../utils/tool-types.js";
  */
 export function registerCompilerTools(
   server: McpServer,
-  services: ServiceContainer,
+  services: ServiceContainer
 ): void {
   // Compiler options tool
   server.registerTool(
@@ -40,13 +40,13 @@ export function registerCompilerTools(
       try {
         const options = await services.compilerService.getCompilerOptions(
           platform,
-          optionType,
+          optionType
         );
         return createMCPResponse(options);
       } catch (error) {
         return createMCPError(error, "getting compiler options");
       }
-    },
+    }
   );
 
   // Syntax validation tool
@@ -54,7 +54,7 @@ export function registerCompilerTools(
     "validate_qb64pe_syntax",
     {
       title: "Validate QB64PE Syntax",
-      description: 
+      description:
         "⚡ WHEN TO USE: Before compiling, when terminal shows syntax errors, or when analyzing code for issues.\n\n" +
         "Validates QB64PE code syntax and provides corrections. Use this tool to:\n" +
         "- Pre-check code before compilation (faster than compiling)\n" +
@@ -74,13 +74,13 @@ export function registerCompilerTools(
       try {
         const validation = await services.syntaxService.validateSyntax(
           code,
-          checkLevel,
+          checkLevel
         );
         return createMCPResponse(validation);
       } catch (error) {
         return createMCPError(error, "validating syntax");
       }
-    },
+    }
   );
 
   // Debugging help tool
@@ -100,7 +100,7 @@ export function registerCompilerTools(
     },
     createTextToolHandler(async ({ issue, platform = "all" }) => {
       return await services.compilerService.getDebuggingHelp(issue, platform);
-    }, "getting debugging help"),
+    }, "getting debugging help")
   );
 
   // Compile and verify tool - enables autonomous compile-verify-fix loops
@@ -121,13 +121,23 @@ export function registerCompilerTools(
         "5. REPEAT steps 2-4 until result.success = true\n\n" +
         "⚡ CRITICAL: Use this tool after EVERY code change to verify fixes work. Do NOT wait for user to compile manually!",
       inputSchema: {
-        sourceFilePath: z.string().describe("Absolute path to the QB64PE source file (.bas) to compile"),
-        qb64pePath: z.string().optional().describe(
-          "Path to QB64PE executable. If not provided, will search common locations and PATH."
-        ),
-        compilerFlags: z.array(z.string()).optional().describe(
-          "Additional compiler flags (default: ['-c', '-w'] for compile without run, show warnings)"
-        ),
+        sourceFilePath: z
+          .string()
+          .describe(
+            "Absolute path to the QB64PE source file (.bas) to compile"
+          ),
+        qb64pePath: z
+          .string()
+          .optional()
+          .describe(
+            "Path to QB64PE executable. If not provided, will search common locations and PATH."
+          ),
+        compilerFlags: z
+          .array(z.string())
+          .optional()
+          .describe(
+            "Additional compiler flags (default: ['-c', '-x', '-w'] for compile only, no-console, show warnings)"
+          ),
       },
     },
     async ({ sourceFilePath, qb64pePath, compilerFlags }) => {
@@ -135,12 +145,12 @@ export function registerCompilerTools(
         const result = await services.compilerService.compileAndVerify(
           sourceFilePath,
           qb64pePath,
-          compilerFlags,
+          compilerFlags
         );
         return createMCPResponse(result);
       } catch (error) {
         return createMCPError(error, "compiling and verifying code");
       }
-    },
+    }
   );
 }

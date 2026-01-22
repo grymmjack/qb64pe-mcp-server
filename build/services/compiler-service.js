@@ -380,7 +380,7 @@ INPUT "Press Enter to exit...", dummy$
             suggestions: [],
         };
         // Check for parameter differences from previous builds
-        const flags = compilerFlags || ["-c", "-w"];
+        const flags = compilerFlags || ["-c", "-x", "-w"];
         const outputName = path.basename(sourceFilePath, path.extname(sourceFilePath));
         const paramDiff = await this.buildContextService.checkParameterDiff(sourceFilePath, flags, undefined);
         if (paramDiff.differs) {
@@ -432,6 +432,17 @@ INPUT "Press Enter to exit...", dummy$
                     severity: "error",
                 });
                 result.suggestions.push("Ensure the file path is correct and the file exists");
+                return result;
+            }
+            // Validate file extension is .bas or .bm
+            const ext = path.extname(sourceFilePath).toLowerCase();
+            if (ext !== ".bas" && ext !== ".bm" && ext !== ".bi") {
+                result.errors.push({
+                    message: `Invalid file type: ${ext}. QB64PE can only compile .bas, .bm, or .bi files.`,
+                    severity: "error",
+                });
+                result.suggestions.push(`The file "${sourceFilePath}" is not a QB64PE source file.`);
+                result.suggestions.push("QB64PE source files must have .bas, .bm (module), or .bi (include) extension");
                 return result;
             }
             // Build compilation command (flags and outputName already defined above for context check)

@@ -90,7 +90,7 @@ function registerCompilerTools(server, services) {
         inputSchema: {
             sourceFilePath: zod_1.z.string().describe("Absolute path to the QB64PE source file (.bas) to compile"),
             qb64pePath: zod_1.z.string().optional().describe("Path to QB64PE executable. If not provided, will search common locations and PATH."),
-            compilerFlags: zod_1.z.array(zod_1.z.string()).optional().describe("Additional compiler flags (default: ['-c', '-w'] for compile without run, show warnings)"),
+            compilerFlags: zod_1.z.array(zod_1.z.string()).optional().describe("Additional compiler flags (default: ['-c', '-x', '-w'] for compile only, no-console, show warnings)"),
         },
     }, async ({ sourceFilePath, qb64pePath, compilerFlags }) => {
         try {

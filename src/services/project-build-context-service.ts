@@ -120,6 +120,15 @@ export class ProjectBuildContextService {
   }
 
   /**
+   * Get context for a project (alias for loadContext)
+   */
+  async getContext(
+    sourceFilePath: string,
+  ): Promise<ProjectBuildContext | null> {
+    return this.loadContext(sourceFilePath);
+  }
+
+  /**
    * Save or update build context for a project
    */
   async saveContext(

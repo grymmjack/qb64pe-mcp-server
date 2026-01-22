@@ -74,6 +74,10 @@ export declare class QB64PECompilerService {
      */
     private addErrorSuggestions;
     /**
+     * Find workspace root by searching for .vscode folder
+     */
+    private findWorkspaceRoot;
+    /**
      * Get platform-specific compilation notes
      */
     private getPlatformSpecificNotes;

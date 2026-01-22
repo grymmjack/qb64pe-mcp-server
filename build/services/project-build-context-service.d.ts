@@ -51,6 +51,10 @@ export declare class ProjectBuildContextService {
      */
     loadContext(sourceFilePath: string): Promise<ProjectBuildContext | null>;
     /**
+     * Get context for a project (alias for loadContext)
+     */
+    getContext(sourceFilePath: string): Promise<ProjectBuildContext | null>;
+    /**
      * Save or update build context for a project
      */
     saveContext(sourceFilePath: string, qb64pePath: string | undefined, compilerFlags: string[], outputName: string | undefined, success: boolean, executablePath?: string): Promise<ProjectBuildContext>;

@@ -67,7 +67,7 @@ export class SessionProblemsService {
   }
 
   /**
-   * Log a new problem
+   * Log a new problem and immediately persist to disk
    */
   logProblem(problem: Omit<SessionProblem, 'id' | 'timestamp'>): SessionProblem {
     const id = `problem-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
@@ -78,6 +78,10 @@ export class SessionProblemsService {
     };
 
     this.problems.set(id, fullProblem);
+    
+    // Immediately persist to disk
+    this.persistToFile();
+    
     return fullProblem;
   }
 
@@ -374,6 +378,74 @@ export class SessionProblemsService {
   clear(): void {
     this.problems.clear();
     this.sessionId = this.generateSessionId();
+  }
+
+  /**
+   * Get session file path
+   */
+  private getSessionFilePath(): string {
+    const os = require('os');
+    const path = require('path');
+    const homeDir = os.homedir();
+    const sessionDir = path.join(homeDir, '.qb64pe-mcp', 'session-problems');
+    return path.join(sessionDir, `${this.sessionId}.json`);
+  }
+
+  /**
+   * Persist session problems to disk immediately
+   */
+  private persistToFile(): void {
+    const fs = require('fs');
+    const path = require('path');
+    
+    try {
+      const filePath = this.getSessionFilePath();
+      const dirPath = path.dirname(filePath);
+      
+      // Ensure directory exists
+      if (!fs.existsSync(dirPath)) {
+        fs.mkdirSync(dirPath, { recursive: true });
+      }
+      
+      // Generate report data
+      const report = this.generateReport();
+      
+      // Convert to JSON with proper formatting
+      const jsonData = {
+        sessionDate: new Date().toISOString().split('T')[0],
+        sessionId: this.sessionId,
+        totalProblems: report.totalProblems,
+        problems: report.problems.map(p => ({
+          id: p.id,
+          timestamp: p.timestamp.toISOString(),
+          title: p.title,
+          severity: p.severity,
+          category: p.category,
+          description: typeof p.description === 'string' ? p.description : '',
+          context: p.context,
+          problem: p.problem,
+          solution: p.solution,
+          mcpImprovement: p.mcpImprovement,
+          metrics: p.metrics
+        })),
+        statistics: {
+          bySeverity: report.bySeverity,
+          byCategory: report.byCategory
+        },
+        patterns: report.patterns,
+        recommendations: report.recommendations
+      };
+      
+      // Write to file atomically
+      const tempPath = filePath + '.tmp';
+      fs.writeFileSync(tempPath, JSON.stringify(jsonData, null, 2), 'utf-8');
+      fs.renameSync(tempPath, filePath);
+      
+      console.error(`[Session Problems] Persisted ${report.totalProblems} problem(s) to: ${filePath}`);
+    } catch (error) {
+      console.error(`[Session Problems] Failed to persist to disk: ${error}`);
+      // Don't throw - logging failure shouldn't break the tool
+    }
   }
 
   /**

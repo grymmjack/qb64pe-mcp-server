@@ -114,6 +114,12 @@ class ProjectBuildContextService {
         }
     }
     /**
+     * Get context for a project (alias for loadContext)
+     */
+    async getContext(sourceFilePath) {
+        return this.loadContext(sourceFilePath);
+    }
+    /**
      * Save or update build context for a project
      */
     async saveContext(sourceFilePath, qb64pePath, compilerFlags, outputName, success, executablePath) {

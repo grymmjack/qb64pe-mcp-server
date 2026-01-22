@@ -55,7 +55,7 @@ export declare class SessionProblemsService {
      */
     private generateSessionId;
     /**
-     * Log a new problem
+     * Log a new problem and immediately persist to disk
      */
     logProblem(problem: Omit<SessionProblem, 'id' | 'timestamp'>): SessionProblem;
     /**
@@ -94,6 +94,14 @@ export declare class SessionProblemsService {
      * Clear all problems (start new session)
      */
     clear(): void;
+    /**
+     * Get session file path
+     */
+    private getSessionFilePath;
+    /**
+     * Persist session problems to disk immediately
+     */
+    private persistToFile;
     /**
      * Get statistics
      */

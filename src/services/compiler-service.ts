@@ -471,9 +471,7 @@ INPUT "Press Enter to exit...", dummy$
       for (let i = 0; i < 10; i++) {
         if (fs.existsSync(vscodeDir)) {
           // Found .vscode folder
-          console.error(
-            `[VS Code Task] Found .vscode at: ${vscodeDir}`
-          );
+          console.error(`[VS Code Task] Found .vscode at: ${vscodeDir}`);
           break;
         }
         const parent = path.dirname(workspaceRoot);
@@ -511,7 +509,8 @@ INPUT "Press Enter to exit...", dummy$
       );
 
       if (!buildTask) {
-        const availableTasks = tasksJson.tasks?.map((t: any) => t.label).join(", ") || "none";
+        const availableTasks =
+          tasksJson.tasks?.map((t: any) => t.label).join(", ") || "none";
         console.error(
           `[VS Code Task] 'BUILD: Compile' task not found. Available tasks: ${availableTasks}`
         );
@@ -624,12 +623,62 @@ INPUT "Press Enter to exit...", dummy$
       suggestions: [],
     };
 
-    // Check for parameter differences from previous builds
+    // Auto-determine output path if not specified
+    // Priority: 1) Build context, 2) Existing .run file, 3) tasks.json, 4) Default to source directory
     const flags = compilerFlags || ["-c", "-x", "-w"];
-    const outputName = path.basename(
+    let outputName = path.basename(
       sourceFilePath,
       path.extname(sourceFilePath)
     );
+    let outputDir = path.dirname(sourceFilePath);
+
+    // Check build context for previous output path
+    const previousContext = await this.buildContextService.getContext(sourceFilePath);
+    if (previousContext?.lastUsedCommand?.outputName) {
+      outputName = previousContext.lastUsedCommand.outputName;
+      console.error(`[Compiler] Using previous output name from build context: ${outputName}`);
+    } else {
+      // Look for existing .run file in source directory
+      const runFile = path.join(outputDir, outputName + ".run");
+      if (fs.existsSync(runFile)) {
+        outputName = outputName + ".run";
+        console.error(`[Compiler] Found existing .run file, using: ${outputName}`);
+      } else {
+        // Try parsing tasks.json for output path pattern
+        try {
+          const workspaceRoot = this.findWorkspaceRoot(sourceFilePath);
+          const tasksFile = path.join(workspaceRoot, ".vscode", "tasks.json");
+          if (fs.existsSync(tasksFile)) {
+            const tasksContent = fs.readFileSync(tasksFile, "utf-8");
+            const tasksJson = JSON.parse(tasksContent);
+            const buildTask = tasksJson.tasks?.find(
+              (t: any) => t.label === "BUILD: Compile"
+            );
+            if (buildTask) {
+              // Extract output pattern from task command
+              const cmdStr = buildTask.command + " " + (buildTask.args || []).join(" ");
+              const outputMatch = cmdStr.match(/-o\s+["']?([^\s"']+)["']?/);
+              if (outputMatch) {
+                const taskOutput = outputMatch[1]
+                  .replace(/\$\{file\}/g, sourceFilePath)
+                  .replace(/\$\{fileBasenameNoExtension\}/g, outputName)
+                  .replace(/\$\{workspaceFolder\}/g, workspaceRoot);
+                outputName = path.basename(taskOutput);
+                console.error(`[Compiler] Using output pattern from tasks.json: ${outputName}`);
+              }
+            }
+          }
+        } catch (e) {
+          // Ignore errors in task parsing
+        }
+      }
+    }
+
+    // Default: append .run if no extension (for consistency)
+    if (!path.extname(outputName)) {
+      outputName = outputName + ".run";
+      console.error(`[Compiler] Defaulting to .run extension: ${outputName}`);
+    }
 
     const paramDiff = await this.buildContextService.checkParameterDiff(
       sourceFilePath,
@@ -741,9 +790,10 @@ INPUT "Press Enter to exit...", dummy$
       }
 
       // Build compilation command (flags and outputName already defined above for context check)
+      const outputPath = path.join(outputDir, outputName);
       const cmd = `"${qb64peExe}" ${flags.join(
         " "
-      )} -o "${outputName}" "${sourceFilePath}"`;
+      )} -o "${outputPath}" "${sourceFilePath}"`;
 
       // Execute compilation
       try {
@@ -759,10 +809,9 @@ INPUT "Press Enter to exit...", dummy$
 
         // Check if executable was created
         const executableExt = process.platform === "win32" ? ".exe" : "";
-        const executablePath = path.join(
-          path.dirname(sourceFilePath),
-          outputName + executableExt
-        );
+        // If outputName already has extension, don't add another
+        const baseOutput = path.extname(outputName) ? outputName : outputName + executableExt;
+        const executablePath = path.join(outputDir, baseOutput);
 
         if (fs.existsSync(executablePath)) {
           result.success = true;
@@ -934,6 +983,26 @@ INPUT "Press Enter to exit...", dummy$
         "Ensure file paths use correct separators for your platform"
       );
     }
+  }
+
+  /**
+   * Find workspace root by searching for .vscode folder
+   */
+  private findWorkspaceRoot(sourceFilePath: string): string {
+    const path = require("path");
+    const fs = require("fs");
+    
+    let currentDir = path.dirname(sourceFilePath);
+    for (let i = 0; i < 10; i++) {
+      const vscodeDir = path.join(currentDir, ".vscode");
+      if (fs.existsSync(vscodeDir)) {
+        return currentDir;
+      }
+      const parent = path.dirname(currentDir);
+      if (parent === currentDir) break; // Reached root
+      currentDir = parent;
+    }
+    return path.dirname(sourceFilePath); // Fallback to source directory
   }
 
   /**

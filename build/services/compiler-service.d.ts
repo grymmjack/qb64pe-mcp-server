@@ -45,6 +45,11 @@ export declare class QB64PECompilerService {
      */
     private getAdditionalDebuggingTips;
     /**
+     * Try to use VS Code BUILD: Compile task if available
+     * Returns null if task not found or not in VS Code environment
+     */
+    private tryVSCodeTask;
+    /**
      * Compile QB64PE code and return compilation result with errors and suggestions
      * This enables autonomous compile-verify-fix loops
      */

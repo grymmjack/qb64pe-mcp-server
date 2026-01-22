@@ -364,6 +364,97 @@ INPUT "Press Enter to exit...", dummy$
         return tips;
     }
     /**
+     * Try to use VS Code BUILD: Compile task if available
+     * Returns null if task not found or not in VS Code environment
+     */
+    async tryVSCodeTask(sourceFilePath) {
+        const fs = await Promise.resolve().then(() => __importStar(require("fs")));
+        const path = await Promise.resolve().then(() => __importStar(require("path")));
+        const { exec } = await Promise.resolve().then(() => __importStar(require("child_process")));
+        const { promisify } = await Promise.resolve().then(() => __importStar(require("util")));
+        const execAsync = promisify(exec);
+        try {
+            // Check if we're in a VS Code environment
+            if (!process.env.TERM_PROGRAM || !process.env.TERM_PROGRAM.includes("vscode")) {
+                return null; // Not in VS Code
+            }
+            // Find workspace root (look for .vscode folder)
+            const sourceDir = path.dirname(sourceFilePath);
+            let workspaceRoot = sourceDir;
+            let vscodeDir = path.join(workspaceRoot, ".vscode");
+            // Search up the directory tree for .vscode folder
+            for (let i = 0; i < 10; i++) {
+                if (fs.existsSync(vscodeDir)) {
+                    break;
+                }
+                const parent = path.dirname(workspaceRoot);
+                if (parent === workspaceRoot) {
+                    return null; // Reached filesystem root
+                }
+                workspaceRoot = parent;
+                vscodeDir = path.join(workspaceRoot, ".vscode");
+            }
+            if (!fs.existsSync(vscodeDir)) {
+                return null; // No .vscode folder found
+            }
+            // Check if tasks.json exists
+            const tasksFile = path.join(vscodeDir, "tasks.json");
+            if (!fs.existsSync(tasksFile)) {
+                return null; // No tasks.json
+            }
+            // Read and parse tasks.json
+            const tasksContent = fs.readFileSync(tasksFile, "utf-8");
+            const tasksJson = JSON.parse(tasksContent);
+            // Look for "BUILD: Compile" task
+            const buildTask = tasksJson.tasks?.find((t) => t.label === "BUILD: Compile");
+            if (!buildTask) {
+                return null; // Task not found
+            }
+            // Execute the VS Code task using task runner
+            // We'll use the task's command directly since we can't trigger VS Code tasks from Node
+            const result = {
+                success: false,
+                output: "",
+                errors: [],
+                suggestions: [],
+                executablePath: undefined,
+            };
+            // Extract command from task
+            let cmd = buildTask.command || "";
+            if (buildTask.type === "shell" && buildTask.args) {
+                cmd += " " + buildTask.args.join(" ");
+            }
+            // Replace ${file} with actual source file path
+            cmd = cmd.replace(/\$\{file\}/g, sourceFilePath);
+            cmd = cmd.replace(/\$\{workspaceFolder\}/g, workspaceRoot);
+            // Execute the command
+            try {
+                const { stdout, stderr } = await execAsync(cmd, {
+                    cwd: workspaceRoot,
+                    timeout: 30000,
+                });
+                result.output = stdout + stderr;
+                // Check for successful compilation
+                const outputName = path.basename(sourceFilePath, path.extname(sourceFilePath));
+                const executableExt = process.platform === "win32" ? ".exe" : "";
+                const executablePath = path.join(path.dirname(sourceFilePath), outputName + executableExt);
+                if (fs.existsSync(executablePath)) {
+                    result.success = true;
+                    result.executablePath = executablePath;
+                }
+                return result;
+            }
+            catch (execError) {
+                result.output = execError.stdout + execError.stderr || execError.message;
+                return result;
+            }
+        }
+        catch (error) {
+            // Any error in task detection/execution means we fall back to direct compilation
+            return null;
+        }
+    }
+    /**
      * Compile QB64PE code and return compilation result with errors and suggestions
      * This enables autonomous compile-verify-fix loops
      */
@@ -391,6 +482,20 @@ INPUT "Press Enter to exit...", dummy$
             result.suggestions.push(`Consider using previous flags if they were working: ${JSON.stringify(paramDiff.previousFlags)}`);
         }
         try {
+            // Check if we're in VS Code and if a BUILD: Compile task exists
+            const vscodeTaskResult = await this.tryVSCodeTask(sourceFilePath);
+            if (vscodeTaskResult) {
+                // VS Code task was used successfully
+                result.success = vscodeTaskResult.success;
+                result.output = vscodeTaskResult.output;
+                result.errors = vscodeTaskResult.errors;
+                result.suggestions = vscodeTaskResult.suggestions;
+                result.executablePath = vscodeTaskResult.executablePath;
+                if (vscodeTaskResult.success) {
+                    result.suggestions.unshift("✅ Compiled using VS Code 'BUILD: Compile' task");
+                }
+                return result;
+            }
             // Determine QB64PE executable path
             let qb64peExe = qb64pePath;
             if (!qb64peExe) {

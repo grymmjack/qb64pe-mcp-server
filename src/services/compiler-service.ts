@@ -433,7 +433,11 @@ INPUT "Press Enter to exit...", dummy$
   private async tryVSCodeTask(sourceFilePath: string): Promise<{
     success: boolean;
     output: string;
-    errors: Array<{ line?: number; message: string; severity: "error" | "warning" }>;
+    errors: Array<{
+      line?: number;
+      message: string;
+      severity: "error" | "warning";
+    }>;
     suggestions: string[];
     executablePath?: string;
   } | null> {
@@ -445,7 +449,10 @@ INPUT "Press Enter to exit...", dummy$
 
     try {
       // Check if we're in a VS Code environment
-      if (!process.env.TERM_PROGRAM || !process.env.TERM_PROGRAM.includes("vscode")) {
+      if (
+        !process.env.TERM_PROGRAM ||
+        !process.env.TERM_PROGRAM.includes("vscode")
+      ) {
         return null; // Not in VS Code
       }
 
@@ -453,7 +460,7 @@ INPUT "Press Enter to exit...", dummy$
       const sourceDir = path.dirname(sourceFilePath);
       let workspaceRoot = sourceDir;
       let vscodeDir = path.join(workspaceRoot, ".vscode");
-      
+
       // Search up the directory tree for .vscode folder
       for (let i = 0; i < 10; i++) {
         if (fs.existsSync(vscodeDir)) {
@@ -495,7 +502,11 @@ INPUT "Press Enter to exit...", dummy$
       const result = {
         success: false,
         output: "",
-        errors: [] as Array<{ line?: number; message: string; severity: "error" | "warning" }>,
+        errors: [] as Array<{
+          line?: number;
+          message: string;
+          severity: "error" | "warning";
+        }>,
         suggestions: [] as string[],
         executablePath: undefined as string | undefined,
       };
@@ -519,9 +530,15 @@ INPUT "Press Enter to exit...", dummy$
         result.output = stdout + stderr;
 
         // Check for successful compilation
-        const outputName = path.basename(sourceFilePath, path.extname(sourceFilePath));
+        const outputName = path.basename(
+          sourceFilePath,
+          path.extname(sourceFilePath)
+        );
         const executableExt = process.platform === "win32" ? ".exe" : "";
-        const executablePath = path.join(path.dirname(sourceFilePath), outputName + executableExt);
+        const executablePath = path.join(
+          path.dirname(sourceFilePath),
+          outputName + executableExt
+        );
 
         if (fs.existsSync(executablePath)) {
           result.success = true;
@@ -530,7 +547,8 @@ INPUT "Press Enter to exit...", dummy$
 
         return result;
       } catch (execError: any) {
-        result.output = execError.stdout + execError.stderr || execError.message;
+        result.output =
+          execError.stdout + execError.stderr || execError.message;
         return result;
       }
     } catch (error) {
@@ -619,11 +637,13 @@ INPUT "Press Enter to exit...", dummy$
         result.errors = vscodeTaskResult.errors;
         result.suggestions = vscodeTaskResult.suggestions;
         result.executablePath = vscodeTaskResult.executablePath;
-        
+
         if (vscodeTaskResult.success) {
-          result.suggestions.unshift("✅ Compiled using VS Code 'BUILD: Compile' task");
+          result.suggestions.unshift(
+            "✅ Compiled using VS Code 'BUILD: Compile' task"
+          );
         }
-        
+
         return result;
       }
 

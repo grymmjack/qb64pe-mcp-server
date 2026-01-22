@@ -109,10 +109,28 @@ class ToolDiscoveryMCPServer extends mcp_js_1.McpServer {
                         content: [
                             {
                                 type: "text",
-                                text: `🎓 **IMPORTANT: QB64PE MCP Server Tool Discovery**
+                                text: `🎓 **CRITICAL: QB64PE MCP Server Workflow Requirements**
 
-Before processing your request, you must review all available tools in this MCP server.
-This ensures you can make the most effective use of the capabilities available to you.
+⚠️ **READ THIS CAREFULLY - MANDATORY BEHAVIOR PATTERNS:**
+
+**1. AUTO-COMPILE AFTER EDITS (REQUIRED):**
+When you edit ANY QB64PE source file (.bas, .bm, .bi):
+- ✅ DO: Edit → IMMEDIATELY compile → Report result
+- ❌ DON'T: Edit → Wait for user to ask if it compiles
+- ❌ DON'T: Edit → Say "changes made" → Stop without compiling
+
+**2. TOOL NAME DETECTION (REQUIRED):**
+When user types tool names like 'mcp_qb64pe_*':
+- Recognize this as implicit request to USE that tool
+- Call the tool with reasonable defaults
+- Explain what it does and show results
+
+**3. ERROR FIXING (REQUIRED):**
+When terminal shows compilation errors:
+- Detect error context automatically
+- Apply fixes WITHOUT asking permission
+- Compile to verify fixes work
+- Repeat until success (max 5 iterations)
 
 ${toolSummary}
 

@@ -1492,7 +1492,8 @@ MIT License - see LICENSE file for details.
 ### v2.0.1 - Compatibility Rules Correction & Intelligent Keyword Lookup (January 21, 2026)
 
 #### Compatibility Corrections
-- **🔧 CORRECTED**: Boolean constants validation - _TRUE and _FALSE are RESERVED WORDS (always available)
+
+- **🔧 CORRECTED**: Boolean constants validation - \_TRUE and \_FALSE are RESERVED WORDS (always available)
 - **🔧 CORRECTED**: DECLARE statement validation - DECLARE is ONLY for C library imports, not for SUBs/FUNCTIONs
 - **📚 UPDATED**: Knowledge base now correctly reflects QB64PE language facts
 - **✅ IMPROVED**: Best practices updated with correct boolean and DECLARE guidance
@@ -1500,6 +1501,7 @@ MIT License - see LICENSE file for details.
 - **🎯 LESSON LEARNED**: Always verify using MCP tools when working on MCP server itself
 
 #### Intelligent Keyword Lookup System
+
 - **✨ NEW**: `lookup_qb64pe_keyword` now includes intelligent fallback searches
 - **🔍 SMART**: Automatically infers semantic terms when keyword not found
 - **📚 AUTO**: Performs related searches (e.g., TRUE/FALSE → searches "boolean", "constants")
@@ -1508,6 +1510,7 @@ MIT License - see LICENSE file for details.
 - **🤖 LLM**: Optimized for autonomous agent workflows
 
 Semantic categories supported:
+
 - Boolean (`true`/`false` → `BOOLEAN`, `CONSTANTS`)
 - Graphics (`screen`/`pixel`/`draw` → `SCREEN`, `GRAPHICS`, `_DISPLAY`)
 - File I/O (`file`/`open`/`read` → `OPEN`, `FILE`, `INPUT`, `OUTPUT`)
@@ -1516,7 +1519,8 @@ Semantic categories supported:
 - Sound (`sound`/`audio`/`play` → `SOUND`, `PLAY`, `_SNDOPEN`)
 
 Key corrections based on actual QB64PE behavior:
-- _TRUE and _FALSE are reserved words, always available (not user-defined)
+
+- \_TRUE and \_FALSE are reserved words, always available (not user-defined)
 - TRUE/FALSE can be user-defined but are not built-in
 - DECLARE is only for DECLARE LIBRARY (C function imports)
 - QB64PE handles all SUB/FUNCTION forward references automatically

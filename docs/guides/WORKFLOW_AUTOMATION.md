@@ -3,9 +3,11 @@
 ## 🔄 Auto-Compile After Edit - MANDATORY Workflow
 
 ### The Problem
+
 Users were repeatedly having to ask "does it compile?" after code changes, creating unnecessary back-and-forth and frustration.
 
 ### The Solution
+
 **AUTOMATIC COMPILATION VERIFICATION** - The AI MUST compile code immediately after ANY edit operation on QB64PE source files.
 
 ---
@@ -16,7 +18,7 @@ Users were repeatedly having to ask "does it compile?" after code changes, creat
 
 **MANDATORY BEHAVIOR:** After ANY file edit operation on QB64PE source files:
 
-1. **IMMEDIATELY** call `compile_and_verify_qb64pe` 
+1. **IMMEDIATELY** call `compile_and_verify_qb64pe`
 2. **DO NOT WAIT** for user to ask if it compiles
 3. **DO NOT ASK** permission to compile
 4. **AUTOMATICALLY** fix errors if compilation fails
@@ -26,6 +28,7 @@ Users were repeatedly having to ask "does it compile?" after code changes, creat
 ### When This Applies
 
 **ALL** of these operations REQUIRE immediate compilation:
+
 - `replace_string_in_file` on `.bas`, `.bm`, or `.bi` files
 - `multi_replace_string_in_file` on QB64PE source files
 - `create_file` creating new QB64PE source files
@@ -43,6 +46,7 @@ Users were repeatedly having to ask "does it compile?" after code changes, creat
 ## 📋 Correct Workflow Example
 
 ### ❌ WRONG - Old Behavior (BAD)
+
 ```
 User: "Fix the type mismatch error on line 15"
 AI: [applies fix using replace_string_in_file]
@@ -53,6 +57,7 @@ AI: "Yes, it compiles successfully!"
 ```
 
 ### ✅ CORRECT - New Behavior (GOOD)
+
 ```
 User: "Fix the type mismatch error on line 15"
 AI: [applies fix using replace_string_in_file]
@@ -71,12 +76,12 @@ AI: "Fixed! The variable is now correctly declared as INTEGER. ✅ Compilation s
 await replace_string_in_file({
   filePath: "/path/to/file.bas",
   oldString: "...",
-  newString: "..."
+  newString: "...",
 });
 
 // 2. IMMEDIATELY compile (DO NOT SKIP THIS STEP)
 const result = await compile_and_verify_qb64pe({
-  sourceFilePath: "/path/to/file.bas"
+  sourceFilePath: "/path/to/file.bas",
 });
 
 // 3. Check result and handle errors
@@ -115,6 +120,7 @@ graph TD
 ```
 
 ### Maximum Iterations
+
 - Default: **5 compile attempts**
 - After 5 failed attempts, report detailed error information to user
 - Do NOT continue infinitely - prevent infinite loops
@@ -124,12 +130,14 @@ graph TD
 ## 📊 Workflow Metrics
 
 ### Success Criteria
+
 - ✅ Compilation succeeds within 5 attempts
 - ✅ User never has to ask "does it compile?"
 - ✅ Errors are automatically detected and fixed
 - ✅ Final result is clearly reported
 
 ### Failure Scenarios
+
 - ⚠️ Complex syntax error requiring manual intervention
 - ⚠️ Missing dependencies or files
 - ⚠️ Platform-specific compilation issues
@@ -142,11 +150,13 @@ graph TD
 ### Example 1: Simple Type Mismatch
 
 **User Input:**
+
 ```
 "Fix the type mismatch on line 42"
 ```
 
 **Correct AI Response:**
+
 1. Analyze line 42
 2. Apply fix (e.g., add `AS INTEGER` type suffix)
 3. **IMMEDIATELY** compile
@@ -155,11 +165,13 @@ graph TD
 ### Example 2: Multiple Errors
 
 **User Input:**
+
 ```
 "The compilation failed with 3 errors #qb64pe"
 ```
 
 **Correct AI Response:**
+
 1. Analyze all 3 errors
 2. Apply fixes for all errors
 3. **IMMEDIATELY** compile
@@ -169,11 +181,13 @@ graph TD
 ### Example 3: User Requests Code Enhancement
 
 **User Input:**
+
 ```
 "Add bounds checking to the array access"
 ```
 
 **Correct AI Response:**
+
 1. Add bounds checking code
 2. **IMMEDIATELY** compile
 3. IF compilation fails: Fix errors and try again
@@ -185,26 +199,28 @@ graph TD
 
 ### Tools That Require Auto-Compile
 
-| Tool | Requires Compilation | Notes |
-|------|---------------------|-------|
-| `replace_string_in_file` | ✅ Yes (if .bas/.bm/.bi) | Most common edit operation |
-| `multi_replace_string_in_file` | ✅ Yes (if QB64PE files) | Multiple edits in one call |
-| `create_file` | ✅ Yes (if creating .bas) | New source files |
-| `validate_qb64pe_syntax` | ❌ No | Pre-check only, doesn't modify files |
-| `analyze_qbasic_compatibility` | ❌ No | Analysis only |
-| `port_qbasic_to_qb64pe` | ⚠️ Optional | Should compile after porting |
+| Tool                           | Requires Compilation      | Notes                                |
+| ------------------------------ | ------------------------- | ------------------------------------ |
+| `replace_string_in_file`       | ✅ Yes (if .bas/.bm/.bi)  | Most common edit operation           |
+| `multi_replace_string_in_file` | ✅ Yes (if QB64PE files)  | Multiple edits in one call           |
+| `create_file`                  | ✅ Yes (if creating .bas) | New source files                     |
+| `validate_qb64pe_syntax`       | ❌ No                     | Pre-check only, doesn't modify files |
+| `analyze_qbasic_compatibility` | ❌ No                     | Analysis only                        |
+| `port_qbasic_to_qb64pe`        | ⚠️ Optional               | Should compile after porting         |
 
 ---
 
 ## 📈 Benefits
 
 ### For Users
+
 - ⏱️ **Saves Time** - No more asking "does it compile?"
 - 🎯 **Reduces Frustration** - Immediate feedback on changes
 - ✅ **Increases Confidence** - Know changes work immediately
 - 🔄 **Faster Iteration** - Errors caught and fixed automatically
 
 ### For AI Assistants
+
 - 🤖 **Autonomous Operation** - Fix issues without constant user input
 - 📊 **Better Metrics** - Track success rates of automatic fixes
 - 🧠 **Learning** - Build knowledge of common error patterns
@@ -215,12 +231,15 @@ graph TD
 ## 🔧 Configuration
 
 ### Default Compiler Flags
+
 - `-c` - Compile only (don't auto-run)
 - `-x` - No console window during compilation
 - `-w` - Show warnings
 
 ### Customization
+
 Users can override flags in `compile_and_verify_qb64pe` call:
+
 ```typescript
 {
   sourceFilePath: "/path/to/file.bas",
@@ -257,6 +276,7 @@ For AI assistant developers:
 ### "AI Still Waits for User to Ask About Compilation"
 
 **Solution:** Check that:
+
 1. VS Code window has been reloaded after MCP server rebuild
 2. Tool discovery system is injecting workflow hints
 3. AI is reading the tool descriptions carefully
@@ -264,6 +284,7 @@ For AI assistant developers:
 ### "Compilation Runs But Errors Not Fixed Automatically"
 
 **Solution:**
+
 1. Check error analysis logic
 2. Verify `analyze-compilation-error` prompt is being used
 3. Ensure iteration limit (5) hasn't been reached
@@ -272,6 +293,7 @@ For AI assistant developers:
 ### "Infinite Compilation Loop"
 
 **Solution:**
+
 1. Verify max iteration limit is enforced
 2. Check that new errors are different from previous errors
 3. Add error deduplication logic

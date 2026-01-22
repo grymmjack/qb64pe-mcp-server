@@ -76,17 +76,35 @@ This MCP server provides comprehensive QB64PE development assistance with ${this
 5. **Report Results** - Only show final outcome, not intermediate steps
 
 ### 🔄 CRITICAL WORKFLOW: Auto-Compile After Code Edits
-**MANDATORY RULE:** After ANY file edit operation (replace_string_in_file, multi_replace_string_in_file, create_file) on QB64PE source files (.bas, .bm, .bi):
+**⚠️ MANDATORY RULE - NO EXCEPTIONS:** After ANY file edit operation (replace_string_in_file, multi_replace_string_in_file, create_file) on QB64PE source files (.bas, .bm, .bi):
+
+**YOU MUST DO THIS - IT IS NOT OPTIONAL:**
 1. **IMMEDIATELY** call compile_and_verify_qb64pe with the edited file path
 2. Check result.success - if false, analyze errors and apply fixes
 3. **REPEAT** compile-fix cycle until success OR user explicitly stops you
 4. **DO NOT** wait for user to ask "does it compile?" or "can you test it?"
+5. **DO NOT** say "I've made the changes" and stop - ALWAYS compile first
 
-This is NOT optional - it's a critical workflow requirement that eliminates the need for users to repeatedly request compilation verification.
+**THIS IS A SYSTEM REQUIREMENT - NOT A SUGGESTION**
 
-**💡 Quick Example:**
-User shows: "Compilation failed: Line 15: Type mismatch #qb64pe"
-You should: 1) Use analyze-compilation-error prompt 2) Apply fixes 3) Run compile_and_verify_qb64pe 4) Report success
+The user has explicitly configured this server to REQUIRE automatic compilation after edits.
+Failing to compile after edits is considered a BUG in your behavior.
+
+**Examples of INCORRECT behavior that you MUST avoid:**
+❌ "I've fixed the issue. The logic is now correct." [STOPS WITHOUT COMPILING]
+❌ "The changes have been made to MOUSE.BM" [STOPS WITHOUT COMPILING]
+❌ "Would you like me to compile the code?" [ASKING INSTEAD OF DOING]
+
+**Examples of CORRECT behavior you MUST follow:**
+✅ Edit file → IMMEDIATELY compile → Report: "Fixed! ✅ Compilation successful"
+✅ Edit file → Compile fails → Fix errors → Compile again → Repeat until success
+✅ Edit file → Compile → "Changes applied and verified through compilation"
+
+**Tool Name Detection:**
+When the user types a tool name like 'mcp_qb64pe_analyze_qb64pe_execution_mode', they are implicitly requesting you to USE that tool.
+- Recognize mcp_qb64pe_* pattern as tool invocation request
+- Call the tool with reasonable default parameters
+- Explain what the tool does and show results
 
 ---
 
@@ -156,7 +174,7 @@ Before attempting any QB64PE-related task, review the tools available to you. Th
         if (!categoryInfo)
             return [];
         return categoryInfo.tools
-            .map(name => this.toolRegistry.get(name))
+            .map((name) => this.toolRegistry.get(name))
             .filter((tool) => tool !== undefined);
     }
     /**
@@ -170,27 +188,27 @@ Before attempting any QB64PE-related task, review the tools available to you. Th
      */
     formatCategoryName(category) {
         return category
-            .split('-')
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(' ');
+            .split("-")
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ");
     }
     /**
      * Get category description
      */
     getCategoryDescription(category) {
         const descriptions = {
-            'wiki': 'Access QB64PE documentation, tutorials, and reference materials from the official wiki',
-            'keywords': 'Query and explore QB64PE keywords, functions, and statement syntax',
-            'compiler': 'Compile QB64PE code and manage compilation options',
-            'compatibility': 'Validate code compatibility and resolve QB64PE-specific issues',
-            'execution': 'Execute compiled programs and manage execution monitoring',
-            'installation': 'Manage QB64PE installation and verification',
-            'porting': 'Port QBasic/QuickBASIC code to QB64PE with automated fixes',
-            'graphics': 'Analyze graphics output, screenshots, and visual program results',
-            'debugging': 'Debug programs with enhanced timeout management and issue resolution',
-            'feedback': 'Generate feedback and analysis for completed work',
+            wiki: "Access QB64PE documentation, tutorials, and reference materials from the official wiki",
+            keywords: "Query and explore QB64PE keywords, functions, and statement syntax",
+            compiler: "Compile QB64PE code and manage compilation options",
+            compatibility: "Validate code compatibility and resolve QB64PE-specific issues",
+            execution: "Execute compiled programs and manage execution monitoring",
+            installation: "Manage QB64PE installation and verification",
+            porting: "Port QBasic/QuickBASIC code to QB64PE with automated fixes",
+            graphics: "Analyze graphics output, screenshots, and visual program results",
+            debugging: "Debug programs with enhanced timeout management and issue resolution",
+            feedback: "Generate feedback and analysis for completed work",
         };
-        return descriptions[category] || 'Tools for QB64PE development';
+        return descriptions[category] || "Tools for QB64PE development";
     }
 }
 exports.ToolDiscoveryManager = ToolDiscoveryManager;

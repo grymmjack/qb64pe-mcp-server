@@ -33,10 +33,22 @@ export declare class KeywordsService {
     private originalKeywords;
     private wikiCategoriesData;
     /**
+     * Search through MCP documentation files for keyword references
+     */
+    searchMCPDocs(keyword: string): Array<{
+        file: string;
+        context: string;
+        line: number;
+    }>;
+    /**
      * Calculate Levenshtein distance between two strings for fuzzy matching
      */
     private levenshteinDistance;
     constructor();
+    /**
+     * Parse platform availability from description text
+     */
+    private parsePlatformAvailability;
     private loadWikiCategoriesData;
     private loadKeywordsData;
     private categorizeKeyword;
@@ -77,5 +89,20 @@ export declare class KeywordsService {
      * Search keywords by wiki category with optional filtering
      */
     searchByWikiCategory(category: string, searchTerm?: string): KeywordInfo[];
+    /**
+     * Update platform availability for a keyword based on wiki data
+     */
+    updatePlatformAvailability(keywordName: string, windows: boolean, linux: boolean, macos: boolean): boolean;
+    /**
+     * Batch update platform availability from wiki parsing results
+     */
+    batchUpdatePlatformAvailability(platformData: Map<string, {
+        windows: boolean;
+        linux: boolean;
+        macos: boolean;
+    }>): {
+        updated: number;
+        failed: string[];
+    };
 }
 //# sourceMappingURL=keywords-service.d.ts.map

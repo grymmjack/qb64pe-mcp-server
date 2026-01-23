@@ -41,6 +41,53 @@ class KeywordsService {
     originalKeywords = {};
     wikiCategoriesData = {};
     /**
+     * Search through MCP documentation files for keyword references
+     */
+    searchMCPDocs(keyword) {
+        const results = [];
+        const docsDir = path.join(__dirname, "../../docs");
+        const lowerKeyword = keyword.toLowerCase();
+        try {
+            // Search through markdown files in docs directory
+            const searchDocs = (dir) => {
+                const files = fs.readdirSync(dir);
+                for (const file of files) {
+                    const fullPath = path.join(dir, file);
+                    const stat = fs.statSync(fullPath);
+                    if (stat.isDirectory() &&
+                        !file.startsWith(".") &&
+                        file !== "node_modules") {
+                        searchDocs(fullPath);
+                    }
+                    else if (file.endsWith(".md")) {
+                        try {
+                            const content = fs.readFileSync(fullPath, "utf-8");
+                            const lines = content.split("\n");
+                            lines.forEach((line, idx) => {
+                                if (line.toLowerCase().includes(lowerKeyword)) {
+                                    const relativePath = path.relative(path.join(__dirname, "../.."), fullPath);
+                                    results.push({
+                                        file: relativePath,
+                                        context: line.trim(),
+                                        line: idx + 1,
+                                    });
+                                }
+                            });
+                        }
+                        catch (err) {
+                            // Skip files that can't be read
+                        }
+                    }
+                }
+            };
+            searchDocs(docsDir);
+        }
+        catch (error) {
+            console.error("Error searching MCP docs:", error);
+        }
+        return results.slice(0, 10); // Limit to top 10 results
+    }
+    /**
      * Calculate Levenshtein distance between two strings for fuzzy matching
      */
     levenshteinDistance(str1, str2) {
@@ -67,6 +114,41 @@ class KeywordsService {
     constructor() {
         this.loadKeywordsData();
         this.loadWikiCategoriesData();
+    }
+    /**
+     * Parse platform availability from description text
+     */
+    parsePlatformAvailability(description) {
+        const lower = description.toLowerCase();
+        // Check for explicit platform mentions
+        if (lower.includes("windows-only") ||
+            (lower.includes("windows") && lower.includes("only"))) {
+            return "Windows";
+        }
+        if (lower.includes("linux-only") ||
+            (lower.includes("linux") && lower.includes("only"))) {
+            return "Linux";
+        }
+        if (lower.includes("macos-only") ||
+            lower.includes("mac-only") ||
+            (lower.includes("macos") && lower.includes("only"))) {
+            return "macOS";
+        }
+        // Check for "not available on" patterns
+        if (lower.includes("not") && lower.includes("macos")) {
+            // Available on Windows and Linux, not macOS
+            return "All platforms"; // We'll handle this better with structured data later
+        }
+        if (lower.includes("not") && lower.includes("windows")) {
+            return "Linux"; // Simplified - could be Linux or macOS
+        }
+        // Check for "available on Windows and Linux"
+        if ((lower.includes("windows") && lower.includes("linux")) ||
+            (lower.includes("windows") && lower.includes("unix"))) {
+            return "All platforms"; // Simplified representation
+        }
+        // Default to all platforms if no restrictions mentioned
+        return "All platforms";
     }
     loadWikiCategoriesData() {
         try {
@@ -228,16 +310,35 @@ class KeywordsService {
         return "QBasic";
     }
     extractAvailability(name, description) {
-        if (description.includes("Windows only") ||
-            description.includes("Windows-only")) {
+        const lower = description.toLowerCase();
+        // Check for explicit "only" patterns
+        if (lower.includes("windows only") || lower.includes("windows-only")) {
             return "Windows";
         }
-        if (description.includes("Linux only")) {
+        if (lower.includes("linux only") || lower.includes("linux-only")) {
             return "Linux";
         }
-        if (description.includes("macOS only")) {
+        if (lower.includes("macos only") ||
+            lower.includes("macos-only") ||
+            lower.includes("mac only") ||
+            lower.includes("mac-only")) {
             return "macOS";
         }
+        // Check for "not available on" or "not [platform]" patterns
+        if ((lower.includes("not") || lower.includes("not available")) &&
+            (lower.includes("macos") || lower.includes("mac"))) {
+            // Available on Windows and Linux, not macOS - default to "All platforms" for now
+            // This could be refined to support multi-platform availability in the future
+            return "All platforms";
+        }
+        // Check for explicit multi-platform support
+        if ((lower.includes("windows") && lower.includes("linux")) ||
+            (lower.includes("windows") && lower.includes("unix")) ||
+            lower.includes("cross-platform") ||
+            lower.includes("all platforms")) {
+            return "All platforms";
+        }
+        // Default to all platforms if no restrictions mentioned
         return "All platforms";
     }
     generateSyntax(name, description, type) {
@@ -895,6 +996,52 @@ class KeywordsService {
             return (lowerName.includes(lowerSearchTerm) ||
                 lowerDesc.includes(lowerSearchTerm));
         });
+    }
+    /**
+     * Update platform availability for a keyword based on wiki data
+     */
+    updatePlatformAvailability(keywordName, windows, linux, macos) {
+        const keyword = this.keywordsData.keywords[keywordName];
+        if (!keyword)
+            return false;
+        // Determine availability string
+        let availability;
+        if (windows && linux && macos) {
+            availability = "All platforms";
+        }
+        else if (windows && !linux && !macos) {
+            availability = "Windows";
+        }
+        else if (!windows && linux && !macos) {
+            availability = "Linux";
+        }
+        else if (!windows && !linux && macos) {
+            availability = "macOS";
+        }
+        else {
+            // Mixed availability - default to "All platforms" for now
+            // Could be enhanced to support "Windows and Linux" etc.
+            availability = "All platforms";
+        }
+        keyword.availability = availability;
+        return true;
+    }
+    /**
+     * Batch update platform availability from wiki parsing results
+     */
+    batchUpdatePlatformAvailability(platformData) {
+        let updated = 0;
+        const failed = [];
+        for (const [keywordName, data] of platformData.entries()) {
+            const success = this.updatePlatformAvailability(keywordName, data.windows, data.linux, data.macos);
+            if (success) {
+                updated++;
+            }
+            else {
+                failed.push(keywordName);
+            }
+        }
+        return { updated, failed };
     }
 }
 exports.KeywordsService = KeywordsService;

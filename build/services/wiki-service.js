@@ -425,6 +425,192 @@ Visit the full wiki at: https://qb64phoenix.com/qb64wiki/
 `;
     }
     /**
+     * Parse platform availability from QB64PE wiki pages
+     * Extracts Windows/Linux/macOS support information from wiki tables
+     */
+    async parsePlatformAvailability(keywordName) {
+        const cacheKey = `platform:${keywordName}`;
+        const cached = this.getCachedResult(cacheKey);
+        if (cached)
+            return cached;
+        try {
+            // Clean up the keyword name for URL
+            const cleanName = this.cleanPageTitle(keywordName);
+            const url = `${this.baseUrl}/${cleanName}`;
+            const response = await axios_1.default.get(url, {
+                timeout: 10000,
+                headers: {
+                    'User-Agent': 'QB64PE-MCP-Server/1.0.0'
+                }
+            });
+            const $ = cheerio.load(response.data);
+            // Look for platform availability information in various formats
+            const availability = this.extractPlatformInfo($, keywordName, response.data);
+            if (availability) {
+                this.setCachedResult(cacheKey, availability);
+                return availability;
+            }
+            return null;
+        }
+        catch (error) {
+            console.error(`Platform availability parse error for ${keywordName}:`, error);
+            return null;
+        }
+    }
+    /**
+     * Batch parse platform availability for multiple keywords
+     */
+    async batchParsePlatformAvailability(keywords) {
+        const results = new Map();
+        // Process in batches to avoid overwhelming the server
+        const batchSize = 5;
+        for (let i = 0; i < keywords.length; i += batchSize) {
+            const batch = keywords.slice(i, i + batchSize);
+            const promises = batch.map(kw => this.parsePlatformAvailability(kw));
+            const batchResults = await Promise.all(promises);
+            batchResults.forEach((result, idx) => {
+                if (result) {
+                    results.set(batch[idx], result);
+                }
+            });
+            // Small delay between batches to be nice to the server
+            if (i + batchSize < keywords.length) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+        }
+        return results;
+    }
+    /**
+     * Extract platform availability information from page HTML
+     */
+    extractPlatformInfo($, keywordName, html) {
+        let windows = true;
+        let linux = true;
+        let macos = true;
+        // Strategy 1: Look for explicit "Availability" or "Platform" tables
+        $('table').each((_, table) => {
+            const $table = $(table);
+            const tableText = $table.text().toLowerCase();
+            if (tableText.includes('availab') || tableText.includes('platform') ||
+                tableText.includes('windows') || tableText.includes('linux') || tableText.includes('macos')) {
+                // Parse table headers to find platform columns
+                const headers = [];
+                $table.find('th').each((_, th) => {
+                    headers.push($(th).text().trim().toLowerCase());
+                });
+                const winIdx = headers.findIndex(h => h.includes('win'));
+                const linIdx = headers.findIndex(h => h.includes('lin') || h.includes('unix'));
+                const macIdx = headers.findIndex(h => h.includes('mac') || h.includes('osx'));
+                if (winIdx >= 0 || linIdx >= 0 || macIdx >= 0) {
+                    // Found platform columns - look for checkmarks/crosses in the keyword's row
+                    $table.find('tr').each((_, tr) => {
+                        const $tr = $(tr);
+                        const rowText = $tr.text().toLowerCase();
+                        if (rowText.includes(keywordName.toLowerCase().replace(/_/g, ''))) {
+                            const cells = $tr.find('td');
+                            if (winIdx >= 0 && winIdx < cells.length) {
+                                const cell = $(cells[winIdx]).text().trim();
+                                windows = this.isAvailable(cell);
+                            }
+                            if (linIdx >= 0 && linIdx < cells.length) {
+                                const cell = $(cells[linIdx]).text().trim();
+                                linux = this.isAvailable(cell);
+                            }
+                            if (macIdx >= 0 && macIdx < cells.length) {
+                                const cell = $(cells[macIdx]).text().trim();
+                                macos = this.isAvailable(cell);
+                            }
+                        }
+                    });
+                }
+            }
+        });
+        // Strategy 2: Look for text patterns in the page content
+        const pageText = $.text().toLowerCase();
+        // Check for "not available" or "not supported" patterns
+        if (pageText.includes('not available') || pageText.includes('not supported') ||
+            pageText.includes('windows only') || pageText.includes('windows-only')) {
+            if (pageText.includes('linux') || pageText.includes('macos') || pageText.includes('mac')) {
+                // Parse which platforms are excluded
+                if (pageText.match(/not.*(?:available|supported).*(?:on|in).*linux/)) {
+                    linux = false;
+                }
+                if (pageText.match(/not.*(?:available|supported).*(?:on|in).*(?:macos|mac|osx)/)) {
+                    macos = false;
+                }
+                if (pageText.match(/not.*(?:available|supported).*(?:on|in).*windows/)) {
+                    windows = false;
+                }
+            }
+            else if (pageText.includes('windows only') || pageText.includes('windows-only')) {
+                linux = false;
+                macos = false;
+            }
+        }
+        // Strategy 3: Look for positive availability mentions
+        if (pageText.match(/available.*(?:on|in).*windows.*(?:and|,).*linux/)) {
+            windows = true;
+            linux = true;
+            // Check if macOS is explicitly excluded
+            if (pageText.match(/not.*(?:on|in).*(?:macos|mac|osx)/)) {
+                macos = false;
+            }
+        }
+        // Strategy 4: Check meta information sections
+        const metaSections = ['availability', 'platform support', 'compatibility'];
+        metaSections.forEach(section => {
+            $(`h2, h3, h4`).each((_, heading) => {
+                const $heading = $(heading);
+                if ($heading.text().toLowerCase().includes(section)) {
+                    const $content = $heading.nextUntil('h2, h3, h4');
+                    const contentText = $content.text().toLowerCase();
+                    if (contentText.includes('windows') && contentText.includes('linux')) {
+                        windows = true;
+                        linux = true;
+                    }
+                    if (contentText.match(/not.*(?:macos|mac)/)) {
+                        macos = false;
+                    }
+                    if (contentText.match(/windows.*only/)) {
+                        linux = false;
+                        macos = false;
+                    }
+                    if (contentText.match(/linux.*only/)) {
+                        windows = false;
+                        macos = false;
+                    }
+                }
+            });
+        });
+        return {
+            keyword: keywordName,
+            windows,
+            linux,
+            macos,
+            source: 'wiki'
+        };
+    }
+    /**
+     * Determine if a table cell indicates availability
+     * Checks for checkmarks (✓, ✔, yes, y) vs crosses (✗, ✘, no, n, -)
+     */
+    isAvailable(cellText) {
+        const text = cellText.toLowerCase().trim();
+        // Check for positive indicators
+        if (text.includes('✓') || text.includes('✔') || text.includes('yes') ||
+            text === 'y' || text.includes('supported') || text.includes('available')) {
+            return true;
+        }
+        // Check for negative indicators
+        if (text.includes('✗') || text.includes('✘') || text.includes('no') ||
+            text === 'n' || text === '-' || text === 'x' ||
+            text.includes('not supported') || text.includes('unavailable')) {
+            return false;
+        }
+        // Default to true if ambiguous (assume available unless explicitly marked otherwise)
+        return true;
+    }
+    /**
      * Cache management
      */
     getCachedResult(key) {

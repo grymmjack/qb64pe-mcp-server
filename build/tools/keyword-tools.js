@@ -57,10 +57,19 @@ function registerKeywordTools(server, services) {
                         }
                     }
                 }
-                // Strategy 2: Provide wiki search URL
+                // Strategy 2: Search MCP documentation
+                const mcpDocsResults = services.keywordsService.searchMCPDocs(keyword);
+                if (mcpDocsResults.length > 0) {
+                    response += `\n### 📖 Found in MCP Documentation:\n`;
+                    mcpDocsResults.forEach((result, idx) => {
+                        response += `${idx + 1}. **${result.file}** (line ${result.line})\n`;
+                        response += `   \`${result.context}\`\n\n`;
+                    });
+                }
+                // Strategy 3: Provide wiki search URL
                 const wikiSearchUrl = `https://qb64phoenix.com/qb64wiki/index.php?search=${encodeURIComponent(keyword)}&title=Special%3ASearch&profile=default&fulltext=1`;
                 response += `\n📚 **Direct Wiki Search:** [${keyword}](${wikiSearchUrl})\n\n`;
-                // Strategy 3: Show any suggestions from validation
+                // Strategy 4: Show any suggestions from validation
                 if (validation.suggestions && validation.suggestions.length > 0) {
                     response += `💡 **Did you mean:** ${validation.suggestions.join(", ")}?\n\n`;
                 }

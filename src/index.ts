@@ -32,6 +32,7 @@ import { registerFeedbackTools } from "./tools/feedback-tools.js";
 import { registerSessionProblemsTools } from "./tools/session-problems-tools.js";
 import { registerProjectBuildContextTools } from "./tools/project-build-context-tools.js";
 import { registerFileStructureTools } from "./tools/file-structure-tools.js";
+import { registerWikiPlatformTools } from "./tools/wiki-platform-tools.js";
 import { ServiceContainer } from "./utils/tool-types.js";
 import { toolDiscoveryManager } from "./utils/tool-discovery.js";
 
@@ -282,6 +283,7 @@ class QB64PEMCPServer {
     registerSessionProblemsTools(this.server, services);
     registerProjectBuildContextTools(this.server, services);
     registerFileStructureTools(this.server, services);
+    registerWikiPlatformTools(this.server, services);
   }
 
   private async setupResources(): Promise<void> {

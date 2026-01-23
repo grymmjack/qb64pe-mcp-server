@@ -10,6 +10,13 @@ export interface WikiPageContent {
     examples: string[];
     relatedPages: string[];
 }
+export interface PlatformAvailability {
+    keyword: string;
+    windows: boolean;
+    linux: boolean;
+    macos: boolean;
+    source: string;
+}
 /**
  * Service for interacting with the QB64PE wiki
  */
@@ -60,6 +67,24 @@ export declare class QB64PEWikiService {
     private getFallbackResults;
     private getFallbackPageContent;
     private getFallbackWikiIndex;
+    /**
+     * Parse platform availability from QB64PE wiki pages
+     * Extracts Windows/Linux/macOS support information from wiki tables
+     */
+    parsePlatformAvailability(keywordName: string): Promise<PlatformAvailability | null>;
+    /**
+     * Batch parse platform availability for multiple keywords
+     */
+    batchParsePlatformAvailability(keywords: string[]): Promise<Map<string, PlatformAvailability>>;
+    /**
+     * Extract platform availability information from page HTML
+     */
+    private extractPlatformInfo;
+    /**
+     * Determine if a table cell indicates availability
+     * Checks for checkmarks (✓, ✔, yes, y) vs crosses (✗, ✘, no, n, -)
+     */
+    private isAvailable;
     /**
      * Cache management
      */

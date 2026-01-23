@@ -1,6 +1,6 @@
 export interface KeywordInfo {
     name: string;
-    type: 'statement' | 'function' | 'operator' | 'metacommand' | 'opengl' | 'type' | 'constant' | 'legacy';
+    type: "statement" | "function" | "operator" | "metacommand" | "opengl" | "type" | "constant" | "legacy";
     category: string;
     description: string;
     syntax: string;
@@ -8,8 +8,8 @@ export interface KeywordInfo {
     returns: string | null;
     example: string;
     related: string[];
-    version: 'QBasic' | 'QB64' | 'QB64PE';
-    availability: 'All platforms' | 'Windows' | 'Linux' | 'macOS';
+    version: "QBasic" | "QB64" | "QB64PE";
+    availability: "All platforms" | "Windows" | "Linux" | "macOS";
     aliases?: string[];
     deprecated?: boolean;
     tags?: string[];
@@ -26,12 +26,16 @@ export interface KeywordSearchResult {
     keyword: string;
     info: KeywordInfo;
     relevance: number;
-    matchType: 'exact' | 'prefix' | 'contains' | 'related';
+    matchType: "exact" | "prefix" | "contains" | "related";
 }
 export declare class KeywordsService {
     private keywordsData;
     private originalKeywords;
     private wikiCategoriesData;
+    /**
+     * Calculate Levenshtein distance between two strings for fuzzy matching
+     */
+    private levenshteinDistance;
     constructor();
     private loadWikiCategoriesData;
     private loadKeywordsData;
@@ -54,8 +58,8 @@ export declare class KeywordsService {
         keyword?: KeywordInfo;
         suggestions?: string[];
     };
-    getKeywordsByType(type: KeywordInfo['type']): KeywordInfo[];
-    getKeywordsByVersion(version: KeywordInfo['version']): KeywordInfo[];
+    getKeywordsByType(type: KeywordInfo["type"]): KeywordInfo[];
+    getKeywordsByVersion(version: KeywordInfo["version"]): KeywordInfo[];
     getDeprecatedKeywords(): KeywordInfo[];
     regenerateKeywordsData(): void;
     getKeywordCount(): number;

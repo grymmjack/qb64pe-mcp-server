@@ -138,7 +138,7 @@ class SessionProblemsService {
             recommendations.push("Add workflow guidance: Validate → Generate → Test pattern");
         }
         // Documentation recommendations
-        const docNeeded = problems.filter((p) => p.solution.preventionStrategy.toLowerCase().includes("documentation"));
+        const docNeeded = problems.filter((p) => p.solution?.preventionStrategy?.toLowerCase().includes("documentation"));
         if (docNeeded.length > 0) {
             recommendations.push(`Update documentation: ${docNeeded.length} problems could be prevented with better docs`);
         }
@@ -154,7 +154,7 @@ class SessionProblemsService {
         // Extract common patterns (simple approach)
         strings.forEach((str1) => {
             strings.forEach((str2) => {
-                if (str1 !== str2) {
+                if (str1 !== str2 && str1 && str2) {
                     const words1 = str1.toLowerCase().split(/\s+/);
                     const words2 = str2.toLowerCase().split(/\s+/);
                     words1.forEach((word) => {

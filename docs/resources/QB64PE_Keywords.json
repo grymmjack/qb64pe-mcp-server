@@ -320,7 +320,7 @@
     "_WHEEL": "(function) returns -1 when a control device wheel is scrolled up and 1 when scrolled down. Zero indicates no activity.",
     "_WIDTH (function)": "returns the width of a SCREEN or image handle.",
     "_WINDOWHANDLE": "(function) returns the window handle assigned to the current program by the OS. Windows-only.",
-    "_WINDOWHASFOCUS": "(function) returns true (-1) if the current program's window has focus. Windows-only.",
+    "_WINDOWHASFOCUS": "(function) returns true (-1) if the current program's window has focus. Available on Windows and Linux (not macOS).",
     "_WRITEFILE": "(statement) directly write a string into a file, without OPEN/CLOSE overhead.",
     "ABS": "(function) converts any negative numerical value to a positive value.",
     "ABSOLUTE": "(statement) is used to access computer interrupt registers.",

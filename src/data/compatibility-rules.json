@@ -6,12 +6,8 @@
       "function_return_types": {
         "title": "Function Return Type Declaration",
         "description": "QB64PE doesn't support AS TYPE syntax for function return types",
-        "invalid_patterns": [
-          "FUNCTION\\s+\\w+\\([^)]*\\)\\s+AS\\s+\\w+"
-        ],
-        "error_messages": [
-          "Expected )"
-        ],
+        "invalid_patterns": ["FUNCTION\\s+\\w+\\([^)]*\\)\\s+AS\\s+\\w+"],
+        "error_messages": ["Expected )"],
         "corrections": [
           {
             "problem": "FUNCTION name(params) AS TYPE",
@@ -36,12 +32,8 @@
       "console_directives": {
         "title": "Console Mode Directives",
         "description": "Invalid console directive syntax",
-        "invalid_patterns": [
-          "\\$CONSOLE:OFF"
-        ],
-        "error_messages": [
-          "Syntax error - Caused by (or after):$ CONSOLE"
-        ],
+        "invalid_patterns": ["\\$CONSOLE:OFF"],
+        "error_messages": ["Syntax error - Caused by (or after):$ CONSOLE"],
         "valid_directives": {
           "$CONSOLE": "Shows both console and graphics windows",
           "$CONSOLE:ONLY": "Console mode only (no graphics)",
@@ -58,12 +50,8 @@
       "multi_statement_lines": {
         "title": "Multiple IF Statements on One Line",
         "description": "Chained control structures cause parsing errors",
-        "invalid_patterns": [
-          "IF\\s+.+\\s+THEN\\s+.+:\\s*IF\\s+.+\\s+THEN"
-        ],
-        "error_messages": [
-          "THEN without IF"
-        ],
+        "invalid_patterns": ["IF\\s+.+\\s+THEN\\s+.+:\\s*IF\\s+.+\\s+THEN"],
+        "error_messages": ["THEN without IF"],
         "rule": "Avoid complex multi-statement lines, especially with control structures",
         "examples": [
           {
@@ -78,9 +66,7 @@
         "invalid_patterns": [
           "DIM\\s+\\w+\\([^)]+\\)\\s+AS\\s+\\w+,\\s*\\w+\\([^)]+\\)\\s+AS\\s+\\w+"
         ],
-        "error_messages": [
-          "DIM: Expected ,"
-        ],
+        "error_messages": ["DIM: Expected ,"],
         "examples": [
           {
             "incorrect": "DIM er#(0 TO w) AS DOUBLE, eg#(0 TO w) AS DOUBLE, eb#(0 TO w) AS DOUBLE",
@@ -91,9 +77,7 @@
       "variable_operations": {
         "title": "Multiple Variable Operations on One Line",
         "description": "Combining declarations and assignments causes parsing issues",
-        "invalid_patterns": [
-          "DIM\\s+\\w+\\s+AS\\s+\\w+:\\s*\\w+\\s*="
-        ],
+        "invalid_patterns": ["DIM\\s+\\w+\\s+AS\\s+\\w+:\\s*\\w+\\s*="],
         "examples": [
           {
             "incorrect": "DIM oldS AS LONG: oldS = _SOURCE: _SOURCE img",
@@ -104,10 +88,7 @@
       "missing_functions": {
         "title": "Missing String Functions",
         "description": "Some expected BASIC string functions don't exist in QB64PE",
-        "missing_functions": [
-          "_WORD$",
-          "_TRIM$"
-        ],
+        "missing_functions": ["_WORD$", "_TRIM$"],
         "alternatives": {
           "_WORD$": "Use INSTR, MID$, LEFT$, RIGHT$ for string parsing",
           "_TRIM$": "Use LTRIM$ and RTRIM$ or implement custom trim function"
@@ -125,13 +106,13 @@
         "title": "Legacy BASIC Keywords Not Supported",
         "keywords": [
           "ALIAS",
-          "ANY", 
+          "ANY",
           "BYVAL",
           "CALLS",
           "CDECL",
           "DECLARE",
           "DEF FN",
-          "EXIT DEF", 
+          "EXIT DEF",
           "END DEF",
           "ERDEV",
           "ERDEV$",
@@ -163,11 +144,7 @@
           "TROFF",
           "WIDTH LPRINT"
         ],
-        "device_opens": [
-          "LPT:",
-          "CON:",
-          "KBRD:"
-        ],
+        "device_opens": ["LPT:", "CON:", "KBRD:"],
         "notes": {
           "OPEN devices": "LPRINT and OPEN COM are supported",
           "PLAY": "PLAY music is supported, but not PLAY(n) ON/OFF/STOP"
@@ -178,14 +155,14 @@
         "linux_macos_unsupported": {
           "desktop_operations": [
             "_ACCEPTFILEDROP",
-            "_TOTALDROPPEDFILES", 
+            "_TOTALDROPPEDFILES",
             "_DROPPEDFILE",
             "_FINISHDROP",
             "_SCREENPRINT",
             "_SCREENCLICK",
             "_WINDOWHANDLE",
             "_CAPSLOCK",
-            "_NUMLOCK", 
+            "_NUMLOCK",
             "_SCROLLLOCK"
           ],
           "console_operations": [
@@ -195,23 +172,13 @@
             "_CONSOLEINPUT",
             "_CINP"
           ],
-          "program_control": [
-            "CHAIN",
-            "RUN"
-          ],
-          "printing": [
-            "LPRINT",
-            "_PRINTIMAGE"
-          ],
-          "hardware_access": [
-            "OPEN COM",
-            "LOCK",
-            "UNLOCK"
-          ]
+          "program_control": ["CHAIN", "RUN"],
+          "printing": ["LPRINT", "_PRINTIMAGE"],
+          "hardware_access": ["OPEN COM", "LOCK", "UNLOCK"]
         },
         "partial_support": {
           "_SCREENMOVE": "Available in macOS, not Linux",
-          "_WINDOWHASFOCUS": "Available in Linux, not macOS"
+          "_WINDOWHASFOCUS": "Available on Windows and Linux, not macOS"
         }
       }
     },
@@ -651,7 +618,7 @@
             "' Main program demonstrating safe array operations",
             "InitializeInventory",
             "AddItem \"Sword\"",
-            "AddItem \"Shield\"", 
+            "AddItem \"Shield\"",
             "AddItem \"Potion\"",
             "ShowInventory",
             "ResizeInventory 10",
@@ -813,7 +780,7 @@
       "coding_guidelines": [
         "Keep it simple: Avoid complex multi-statement lines",
         "One operation per line: Especially for declarations and assignments",
-        "Use type sigils: For function return types instead of AS clauses", 
+        "Use type sigils: For function return types instead of AS clauses",
         "Initialize early: Set up arrays and variables before use",
         "Test incrementally: Build up complexity gradually",
         "Separate concerns: Split complex operations into multiple lines",
@@ -823,7 +790,7 @@
       ],
       "syntax_rules": [
         "Functions must use type sigils for return types, not AS clauses",
-        "Console directives: $CONSOLE, $CONSOLE:ONLY (not $CONSOLE:OFF)", 
+        "Console directives: $CONSOLE, $CONSOLE:ONLY (not $CONSOLE:OFF)",
         "Avoid chaining multiple control structures on one line",
         "Array declarations should be separate when using dimensions",
         "Variable assignments should be on separate lines from declarations",
@@ -855,10 +822,7 @@
           "IF flag = TRUE THEN",
           "result = FALSE"
         ],
-        "numeric": [
-          "IF flag = -1 THEN",
-          "result = 0"
-        ]
+        "numeric": ["IF flag = -1 THEN", "result = 0"]
       },
       "rationale": "QB64PE provides _TRUE and _FALSE as reserved words. Traditional TRUE/FALSE are not built-in but can be user-defined. The value -1 represents true (all bits 1) and 0 represents false."
     },
@@ -896,7 +860,7 @@
       "mandatory_order": {
         "sequence": [
           "1. Types, Constants, and SHARED Variables",
-          "2. Main Program Code", 
+          "2. Main Program Code",
           "3. SUB and FUNCTION Definitions"
         ],
         "rules": {
@@ -935,7 +899,11 @@
           "master_include": {
             "purpose": "Single include file that brings in entire library",
             "example": "_GJ_LIB.BI includes all library components with $INCLUDEONCE",
-            "benefits": ["Unified testing", "Simplified usage", "Dependency management"]
+            "benefits": [
+              "Unified testing",
+              "Simplified usage",
+              "Dependency management"
+            ]
           },
           "modular_includes": {
             "purpose": "Individual library components can be included separately",
@@ -964,7 +932,7 @@
             "' Documentation and usage notes",
             "$INCLUDEONCE '_GJ_LIB_COMMON.BI' - Common definitions first",
             "TYPE definitions for ANSI structures",
-            "CONST declarations for ANSI codes and colors", 
+            "CONST declarations for ANSI codes and colors",
             "SHARED variable declarations",
             "SUB and FUNCTION declarations (headers only)"
           ],
@@ -1005,7 +973,7 @@
             "",
             "TYPE Point             ' ERROR: TYPE after main code",
             "    x AS INTEGER",
-            "    y AS INTEGER", 
+            "    y AS INTEGER",
             "END TYPE",
             "",
             "SUB ShowPoint(p AS Point)  ' SUB definition",
@@ -1022,7 +990,7 @@
             "    y AS INTEGER",
             "END TYPE",
             "",
-            "' Main program code", 
+            "' Main program code",
             "DIM p AS Point",
             "p.x = 10: p.y = 20",
             "ShowPoint p",
@@ -1043,7 +1011,7 @@
               "",
               "' Main program code",
               "DIM p AS Point",
-              "p.x = 10: p.y = 20", 
+              "p.x = 10: p.y = 20",
               "ShowPoint p",
               "",
               "$INCLUDE 'procedures.bm'    ' Include procedure implementations"
@@ -1056,7 +1024,7 @@
               "END TYPE"
             ],
             "procedures.bi": [
-              "' Procedure declarations only", 
+              "' Procedure declarations only",
               "DECLARE SUB ShowPoint(pt AS Point)"
             ],
             "procedures.bm": [
@@ -1074,12 +1042,12 @@
       "Invalid console directives ($CONSOLE:OFF)",
       "Multiple IF statements on one line with colons",
       "Multiple array declarations with dimensions on one line",
-      "Complex multi-statement lines with declarations", 
+      "Complex multi-statement lines with declarations",
       "Usage of non-existent string functions (_WORD$, etc.)",
       "Uninitialized SHARED arrays in included modules",
       "Legacy BASIC keywords (DEF FN, TRON, TROFF, etc.)",
       "Device access statements (OPEN LPT:, PEN, etc.)",
-      "Platform-specific functions on wrong platforms", 
+      "Platform-specific functions on wrong platforms",
       "Hardware access functions (SETMEM, SIGNAL, etc.)",
       "Unsupported PRINT combinations (WIDTH LPRINT)",
       "TYPE definitions appearing after main program code",
@@ -1090,7 +1058,7 @@
       "Improper include file organization (.BI/.BM pattern violations)",
       "Variables accessed in SUB/FUNCTION without proper SHARED declaration",
       "Dynamic arrays without $DYNAMIC directive",
-      "SHARED keyword used without DIM statement", 
+      "SHARED keyword used without DIM statement",
       "Local variables shadowing SHARED variables with same names",
       "Arrays not properly shared between procedures",
       "Missing SHARED declarations for global variable access in procedures",
@@ -1229,7 +1197,7 @@
         "lbound_function": {
           "purpose": "Returns the lower boundary (minimum valid index) of an array dimension",
           "syntax": [
-            "lowerBound = LBOUND(arrayName) ' Single dimension", 
+            "lowerBound = LBOUND(arrayName) ' Single dimension",
             "lowerBound = LBOUND(arrayName, dimensionNumber) ' Specific dimension"
           ],
           "behavior": [
@@ -1410,7 +1378,13 @@
     "debugging": {
       "error_handling": {
         "traditional": {
-          "keywords": ["ON ERROR GOTO", "ERR", "RESUME", "RESUME NEXT", "_ERRORLINE"],
+          "keywords": [
+            "ON ERROR GOTO",
+            "ERR",
+            "RESUME",
+            "RESUME NEXT",
+            "_ERRORLINE"
+          ],
           "description": "Classic BASIC error handling with error codes and resume options"
         },
         "modern_assertions": {
@@ -1418,7 +1392,12 @@
           "description": "Modern assertion-based debugging for development testing"
         },
         "console_debugging": {
-          "keywords": ["$CONSOLE", "$CONSOLE:ONLY", "_DEST _CONSOLE", "_DEST 0"],
+          "keywords": [
+            "$CONSOLE",
+            "$CONSOLE:ONLY",
+            "_DEST _CONSOLE",
+            "_DEST 0"
+          ],
           "description": "Console window alongside graphics for debugging output"
         },
         "logging_system": {
@@ -1428,7 +1407,7 @@
       },
       "common_error_codes": {
         "52": "Bad file name or number",
-        "53": "File not found", 
+        "53": "File not found",
         "55": "File already open",
         "62": "Input past end of file",
         "64": "Bad file name",
@@ -1447,7 +1426,7 @@
     },
     "console_off_directive": {
       "regex": "\\$CONSOLE\\s*:\\s*OFF",
-      "severity": "error", 
+      "severity": "error",
       "message": "$CONSOLE:OFF is not valid syntax",
       "suggestion": "Use $CONSOLE or $CONSOLE:ONLY instead"
     },
@@ -1460,7 +1439,7 @@
     "multi_array_declaration": {
       "regex": "DIM\\s+\\w+\\s*\\([^)]+\\)\\s+AS\\s+\\w+\\s*,\\s*\\w+\\s*\\([^)]+\\)\\s+AS\\s+\\w+",
       "severity": "error",
-      "message": "Multiple array declarations with dimensions on one line not supported", 
+      "message": "Multiple array declarations with dimensions on one line not supported",
       "suggestion": "Declare each array on a separate line"
     },
     "missing_string_functions": {
@@ -1489,7 +1468,7 @@
     },
     "const_after_main": {
       "regex": "(?:PRINT|INPUT|FOR|WHILE|IF|DO|_|SCREEN|PSET|LINE|CIRCLE)[\\s\\S]*?CONST\\s+\\w+",
-      "severity": "error", 
+      "severity": "error",
       "message": "CONST declaration found after main program code",
       "suggestion": "Move all CONST declarations to the beginning of the file or use $INCLUDE files"
     },
@@ -1614,7 +1593,7 @@
         },
         "LONG": {
           "sigil": "&",
-          "size": "4 bytes", 
+          "size": "4 bytes",
           "memory_bytes": 4,
           "range": "-2,147,483,648 to 2,147,483,647",
           "example": "bigNum&",
@@ -1777,7 +1756,7 @@
     "default_type_commands": {
       "legacy_qbasic": {
         "DEFINT": "Set default type to INTEGER for variable name ranges",
-        "DEFSNG": "Set default type to SINGLE for variable name ranges", 
+        "DEFSNG": "Set default type to SINGLE for variable name ranges",
         "DEFDBL": "Set default type to DOUBLE for variable name ranges",
         "DEFSTR": "Set default type to STRING for variable name ranges",
         "DEFLNG": "Set default type to LONG for variable name ranges"
@@ -1796,7 +1775,7 @@
       "automatic_promotion": "Smaller types automatically promote to larger types",
       "casting_functions": [
         "CINT() - Convert to INTEGER",
-        "CLNG() - Convert to LONG", 
+        "CLNG() - Convert to LONG",
         "CSNG() - Convert to SINGLE",
         "CDBL() - Convert to DOUBLE"
       ],
@@ -1807,7 +1786,12 @@
       }
     },
     "performance_characteristics": {
-      "fastest_types": ["_BYTE", "_UNSIGNED _BYTE", "INTEGER", "_UNSIGNED INTEGER"],
+      "fastest_types": [
+        "_BYTE",
+        "_UNSIGNED _BYTE",
+        "INTEGER",
+        "_UNSIGNED INTEGER"
+      ],
       "standard_types": ["LONG", "_UNSIGNED LONG", "SINGLE"],
       "precision_types": ["DOUBLE", "_INTEGER64", "_UNSIGNED _INTEGER64"],
       "slowest_types": ["_FLOAT"],

@@ -82,33 +82,60 @@ function registerKeywordTools(server, services) {
         const terms = [];
         const lower = keyword.toLowerCase();
         // Boolean-related
-        if (lower.includes('true') || lower.includes('false')) {
-            terms.push('BOOLEAN', 'CONSTANTS');
+        if (lower.includes("true") || lower.includes("false")) {
+            terms.push("BOOLEAN", "CONSTANTS");
         }
         // Graphics-related
-        if (lower.includes('screen') || lower.includes('pixel') || lower.includes('draw') ||
-            lower.includes('color') || lower.includes('graphics') || lower.includes('image')) {
-            terms.push('SCREEN', 'GRAPHICS', '_DISPLAY');
+        if (lower.includes("screen") ||
+            lower.includes("pixel") ||
+            lower.includes("draw") ||
+            lower.includes("color") ||
+            lower.includes("graphics") ||
+            lower.includes("image")) {
+            terms.push("SCREEN", "GRAPHICS", "_DISPLAY");
         }
         // File-related
-        if (lower.includes('file') || lower.includes('open') || lower.includes('read') ||
-            lower.includes('write') || lower.includes('load') || lower.includes('save')) {
-            terms.push('OPEN', 'FILE', 'INPUT', 'OUTPUT');
+        if (lower.includes("file") ||
+            lower.includes("open") ||
+            lower.includes("read") ||
+            lower.includes("write") ||
+            lower.includes("load") ||
+            lower.includes("save")) {
+            terms.push("OPEN", "FILE", "INPUT", "OUTPUT");
         }
         // String-related
-        if (lower.includes('string') || lower.includes('text') || lower.includes('chr') ||
-            lower.includes('asc')) {
-            terms.push('STRING', 'CHR$', 'ASC');
+        if (lower.includes("string") ||
+            lower.includes("text") ||
+            lower.includes("chr") ||
+            lower.includes("asc")) {
+            terms.push("STRING", "CHR$", "ASC");
         }
         // Math-related
-        if (lower.includes('math') || lower.includes('calc') || lower.includes('sin') ||
-            lower.includes('cos') || lower.includes('sqrt')) {
-            terms.push('SIN', 'COS', 'SQR', 'ABS');
+        if (lower.includes("math") ||
+            lower.includes("calc") ||
+            lower.includes("sin") ||
+            lower.includes("cos") ||
+            lower.includes("sqrt")) {
+            terms.push("SIN", "COS", "SQR", "ABS");
         }
         // Sound-related
-        if (lower.includes('sound') || lower.includes('audio') || lower.includes('play') ||
-            lower.includes('music')) {
-            terms.push('SOUND', 'PLAY', '_SNDOPEN');
+        if (lower.includes("sound") ||
+            lower.includes("audio") ||
+            lower.includes("play") ||
+            lower.includes("music")) {
+            terms.push("SOUND", "PLAY", "_SNDOPEN");
+        }
+        // Window/Focus-related
+        if (lower.includes("window") ||
+            lower.includes("focus") ||
+            lower.includes("hasfocus")) {
+            terms.push("WINDOW", "FOCUS", "_WINDOWHASFOCUS", "_SCREENHIDE", "_SCREENSHOW");
+        }
+        // Mouse-related
+        if (lower.includes("mouse") ||
+            lower.includes("cursor") ||
+            lower.includes("click")) {
+            terms.push("_MOUSEINPUT", "_MOUSEX", "_MOUSEY", "_MOUSEBUTTON", "_MOUSEWHEEL");
         }
         // Always try the keyword itself if no terms found
         if (terms.length === 0) {

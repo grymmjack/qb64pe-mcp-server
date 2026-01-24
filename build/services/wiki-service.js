@@ -43,14 +43,14 @@ const cheerio = __importStar(require("cheerio"));
  * Service for interacting with the QB64PE wiki
  */
 class QB64PEWikiService {
-    baseUrl = 'https://qb64phoenix.com/qb64wiki/index.php';
+    baseUrl = "https://qb64phoenix.com/qb64wiki/index.php";
     cache = new Map();
     cacheTimeout = 10 * 60 * 1000; // 10 minutes
     /**
      * Search the QB64PE wiki for content
      */
     async searchWiki(query, category) {
-        const cacheKey = `search:${query}:${category || 'all'}`;
+        const cacheKey = `search:${query}:${category || "all"}`;
         const cached = this.getCachedResult(cacheKey);
         if (cached)
             return cached;
@@ -67,7 +67,7 @@ class QB64PEWikiService {
             return searchResults;
         }
         catch (error) {
-            console.error('Wiki search error:', error);
+            console.error("Wiki search error:", error);
             // Return fallback results
             return this.getFallbackResults(query, category);
         }
@@ -87,19 +87,19 @@ class QB64PEWikiService {
             const response = await axios_1.default.get(url, {
                 timeout: 10000,
                 headers: {
-                    'User-Agent': 'QB64PE-MCP-Server/1.0.0'
-                }
+                    "User-Agent": "QB64PE-MCP-Server/1.0.0",
+                },
             });
             const $ = cheerio.load(response.data);
             // Extract main content
-            const title = $('h1').first().text().trim();
+            const title = $("h1").first().text().trim();
             const content = this.extractPageContent($, includeExamples);
             const result = `# ${title}\n\n${content}`;
             this.setCachedResult(cacheKey, result);
             return result;
         }
         catch (error) {
-            console.error('Page fetch error:', error);
+            console.error("Page fetch error:", error);
             return this.getFallbackPageContent(pageTitle);
         }
     }
@@ -107,7 +107,7 @@ class QB64PEWikiService {
      * Get the wiki index/overview
      */
     async getWikiIndex() {
-        const cacheKey = 'wiki-index';
+        const cacheKey = "wiki-index";
         const cached = this.getCachedResult(cacheKey);
         if (cached)
             return cached;
@@ -115,8 +115,8 @@ class QB64PEWikiService {
             const response = await axios_1.default.get(`${this.baseUrl}/Main_Page`, {
                 timeout: 10000,
                 headers: {
-                    'User-Agent': 'QB64PE-MCP-Server/1.0.0'
-                }
+                    "User-Agent": "QB64PE-MCP-Server/1.0.0",
+                },
             });
             const $ = cheerio.load(response.data);
             const index = this.extractWikiIndex($);
@@ -124,7 +124,7 @@ class QB64PEWikiService {
             return index;
         }
         catch (error) {
-            console.error('Wiki index fetch error:', error);
+            console.error("Wiki index fetch error:", error);
             return this.getFallbackWikiIndex();
         }
     }
@@ -135,29 +135,29 @@ class QB64PEWikiService {
         const searchUrl = `${this.baseUrl}/Special:Search`;
         const params = new URLSearchParams({
             search: query,
-            go: 'Go'
+            go: "Go",
         });
         const response = await axios_1.default.get(`${searchUrl}?${params}`, {
             timeout: 10000,
             headers: {
-                'User-Agent': 'QB64PE-MCP-Server/1.0.0'
-            }
+                "User-Agent": "QB64PE-MCP-Server/1.0.0",
+            },
         });
         const $ = cheerio.load(response.data);
         const results = [];
         // Parse search results
-        $('.mw-search-result').each((_, element) => {
+        $(".mw-search-result").each((_, element) => {
             const $result = $(element);
-            const titleElement = $result.find('.mw-search-result-heading a');
+            const titleElement = $result.find(".mw-search-result-heading a");
             const title = titleElement.text().trim();
-            const url = titleElement.attr('href') || '';
-            const snippet = $result.find('.searchresult').text().trim();
+            const url = titleElement.attr("href") || "";
+            const snippet = $result.find(".searchresult").text().trim();
             if (title && url) {
                 results.push({
                     title,
                     url: this.resolveUrl(url),
                     snippet,
-                    category: this.categorizeResult(title, snippet)
+                    category: this.categorizeResult(title, snippet),
                 });
             }
         });
@@ -172,12 +172,12 @@ class QB64PEWikiService {
         const results = [];
         for (const page of commonPages) {
             if (page.title.toLowerCase().includes(query.toLowerCase()) ||
-                page.keywords.some(keyword => keyword.toLowerCase().includes(query.toLowerCase()))) {
+                page.keywords.some((keyword) => keyword.toLowerCase().includes(query.toLowerCase()))) {
                 results.push({
                     title: page.title,
                     url: page.url,
                     snippet: page.description,
-                    category: page.category
+                    category: page.category,
                 });
             }
         }
@@ -187,18 +187,18 @@ class QB64PEWikiService {
      * Extract content from a wiki page
      */
     extractPageContent($, includeExamples) {
-        let content = '';
+        let content = "";
         // Extract main content from the page
-        const contentDiv = $('#mw-content-text');
+        const contentDiv = $("#mw-content-text");
         // Remove navigation and other non-content elements
-        contentDiv.find('.navbox, .infobox, .metadata, .ambox').remove();
+        contentDiv.find(".navbox, .infobox, .metadata, .ambox").remove();
         // Extract paragraphs and headings
-        contentDiv.find('p, h2, h3, h4, h5, h6').each((_, element) => {
+        contentDiv.find("p, h2, h3, h4, h5, h6").each((_, element) => {
             const $element = $(element);
             const text = $element.text().trim();
             if (text) {
-                if ($element.is('h2, h3, h4, h5, h6')) {
-                    const level = '#'.repeat(parseInt($element.prop('tagName')?.slice(1) || '1'));
+                if ($element.is("h2, h3, h4, h5, h6")) {
+                    const level = "#".repeat(parseInt($element.prop("tagName")?.slice(1) || "1"));
                     content += `\n${level} ${text}\n\n`;
                 }
                 else {
@@ -210,7 +210,7 @@ class QB64PEWikiService {
         if (includeExamples) {
             const examples = this.extractCodeExamples($);
             if (examples.length > 0) {
-                content += '\n## Code Examples\n\n';
+                content += "\n## Code Examples\n\n";
                 examples.forEach((example, index) => {
                     content += `### Example ${index + 1}\n\n\`\`\`basic\n${example}\n\`\`\`\n\n`;
                 });
@@ -224,17 +224,17 @@ class QB64PEWikiService {
     extractCodeExamples($) {
         const examples = [];
         // Look for code blocks in various formats
-        $('pre, code').each((_, element) => {
+        $("pre, code").each((_, element) => {
             const $element = $(element);
             const code = $element.text().trim();
             // Filter for QB64PE code (basic heuristics)
             if (code.length > 20 &&
-                (code.includes('PRINT') ||
-                    code.includes('DIM') ||
-                    code.includes('FOR') ||
-                    code.includes('IF') ||
-                    code.includes('SUB') ||
-                    code.includes('FUNCTION'))) {
+                (code.includes("PRINT") ||
+                    code.includes("DIM") ||
+                    code.includes("FOR") ||
+                    code.includes("IF") ||
+                    code.includes("SUB") ||
+                    code.includes("FUNCTION"))) {
                 examples.push(code);
             }
         });
@@ -244,24 +244,26 @@ class QB64PEWikiService {
      * Extract wiki index content
      */
     extractWikiIndex($) {
-        let index = '# QB64PE Wiki Index\n\n';
+        let index = "# QB64PE Wiki Index\n\n";
         // Extract main sections and links
-        $('#mw-content-text').find('h2, h3, ul').each((_, element) => {
+        $("#mw-content-text")
+            .find("h2, h3, ul")
+            .each((_, element) => {
             const $element = $(element);
-            if ($element.is('h2, h3')) {
-                const level = '#'.repeat(parseInt($element.prop('tagName')?.slice(1) || '1'));
+            if ($element.is("h2, h3")) {
+                const level = "#".repeat(parseInt($element.prop("tagName")?.slice(1) || "1"));
                 index += `${level} ${$element.text().trim()}\n\n`;
             }
-            else if ($element.is('ul')) {
-                $element.find('li a').each((_, link) => {
+            else if ($element.is("ul")) {
+                $element.find("li a").each((_, link) => {
                     const $link = $(link);
                     const title = $link.text().trim();
-                    const href = $link.attr('href');
+                    const href = $link.attr("href");
                     if (title && href) {
                         index += `- [${title}](${this.resolveUrl(href)})\n`;
                     }
                 });
-                index += '\n';
+                index += "\n";
             }
         });
         return index;
@@ -271,45 +273,45 @@ class QB64PEWikiService {
      */
     cleanPageTitle(title) {
         // Remove URL scheme if present
-        if (title.startsWith('http')) {
+        if (title.startsWith("http")) {
             const url = new URL(title);
-            return url.pathname.split('/').pop() || title;
+            return url.pathname.split("/").pop() || title;
         }
         // Replace spaces with underscores
-        return title.replace(/\s+/g, '_');
+        return title.replace(/\s+/g, "_");
     }
     resolveUrl(url) {
-        if (url.startsWith('http')) {
+        if (url.startsWith("http")) {
             return url;
         }
-        if (url.startsWith('/')) {
+        if (url.startsWith("/")) {
             return `https://qb64phoenix.com${url}`;
         }
         return `https://qb64phoenix.com/qb64wiki/index.php/${url}`;
     }
     categorizeResult(title, snippet) {
-        const text = (title + ' ' + snippet).toLowerCase();
-        if (text.includes('function') || text.includes('sub'))
-            return 'functions';
-        if (text.includes('statement') || text.includes('command'))
-            return 'statements';
-        if (text.includes('operator'))
-            return 'operators';
-        if (text.includes('data type') || text.includes('variable'))
-            return 'data-types';
-        if (text.includes('tutorial') || text.includes('guide'))
-            return 'tutorials';
-        if (text.includes('example'))
-            return 'examples';
-        if (text.includes('keyword'))
-            return 'keywords';
-        return 'general';
+        const text = (title + " " + snippet).toLowerCase();
+        if (text.includes("function") || text.includes("sub"))
+            return "functions";
+        if (text.includes("statement") || text.includes("command"))
+            return "statements";
+        if (text.includes("operator"))
+            return "operators";
+        if (text.includes("data type") || text.includes("variable"))
+            return "data-types";
+        if (text.includes("tutorial") || text.includes("guide"))
+            return "tutorials";
+        if (text.includes("example"))
+            return "examples";
+        if (text.includes("keyword"))
+            return "keywords";
+        return "general";
     }
     filterByCategory(results, category) {
-        if (!category || category === 'all') {
+        if (!category || category === "all") {
             return results;
         }
-        return results.filter(result => result.category === category);
+        return results.filter((result) => result.category === category);
     }
     getCommonPages() {
         return [
@@ -318,56 +320,56 @@ class QB64PEWikiService {
                 url: `${this.baseUrl}/PRINT`,
                 description: "Display text and values on the screen",
                 keywords: ["print", "output", "display", "text"],
-                category: "statements"
+                category: "statements",
             },
             {
                 title: "DIM",
                 url: `${this.baseUrl}/DIM`,
                 description: "Declare variables and arrays",
                 keywords: ["dim", "variable", "array", "declare"],
-                category: "statements"
+                category: "statements",
             },
             {
                 title: "FOR...NEXT",
                 url: `${this.baseUrl}/FOR...NEXT`,
                 description: "Loop structure for repetitive tasks",
                 keywords: ["for", "next", "loop", "iteration"],
-                category: "statements"
+                category: "statements",
             },
             {
                 title: "IF...THEN",
                 url: `${this.baseUrl}/IF...THEN`,
                 description: "Conditional execution statement",
                 keywords: ["if", "then", "else", "conditional"],
-                category: "statements"
+                category: "statements",
             },
             {
                 title: "SUB",
                 url: `${this.baseUrl}/SUB`,
                 description: "Define subroutines",
                 keywords: ["sub", "subroutine", "procedure"],
-                category: "statements"
+                category: "statements",
             },
             {
                 title: "FUNCTION",
                 url: `${this.baseUrl}/FUNCTION`,
                 description: "Define functions that return values",
                 keywords: ["function", "return", "value"],
-                category: "statements"
-            }
+                category: "statements",
+            },
         ];
     }
     getFallbackResults(query, category) {
         const commonPages = this.getCommonPages();
         return commonPages
-            .filter(page => page.title.toLowerCase().includes(query.toLowerCase()) ||
-            page.keywords.some(k => k.toLowerCase().includes(query.toLowerCase())))
-            .filter(page => !category || category === 'all' || page.category === category)
-            .map(page => ({
+            .filter((page) => page.title.toLowerCase().includes(query.toLowerCase()) ||
+            page.keywords.some((k) => k.toLowerCase().includes(query.toLowerCase())))
+            .filter((page) => !category || category === "all" || page.category === category)
+            .map((page) => ({
             title: page.title,
             url: page.url,
             snippet: page.description,
-            category: page.category
+            category: page.category,
         }));
     }
     getFallbackPageContent(pageTitle) {
@@ -440,8 +442,8 @@ Visit the full wiki at: https://qb64phoenix.com/qb64wiki/
             const response = await axios_1.default.get(url, {
                 timeout: 10000,
                 headers: {
-                    'User-Agent': 'QB64PE-MCP-Server/1.0.0'
-                }
+                    "User-Agent": "QB64PE-MCP-Server/1.0.0",
+                },
             });
             const $ = cheerio.load(response.data);
             // Look for platform availability information in various formats
@@ -466,7 +468,7 @@ Visit the full wiki at: https://qb64phoenix.com/qb64wiki/
         const batchSize = 5;
         for (let i = 0; i < keywords.length; i += batchSize) {
             const batch = keywords.slice(i, i + batchSize);
-            const promises = batch.map(kw => this.parsePlatformAvailability(kw));
+            const promises = batch.map((kw) => this.parsePlatformAvailability(kw));
             const batchResults = await Promise.all(promises);
             batchResults.forEach((result, idx) => {
                 if (result) {
@@ -475,7 +477,7 @@ Visit the full wiki at: https://qb64phoenix.com/qb64wiki/
             });
             // Small delay between batches to be nice to the server
             if (i + batchSize < keywords.length) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise((resolve) => setTimeout(resolve, 1000));
             }
         }
         return results;
@@ -488,26 +490,29 @@ Visit the full wiki at: https://qb64phoenix.com/qb64wiki/
         let linux = true;
         let macos = true;
         // Strategy 1: Look for explicit "Availability" or "Platform" tables
-        $('table').each((_, table) => {
+        $("table").each((_, table) => {
             const $table = $(table);
             const tableText = $table.text().toLowerCase();
-            if (tableText.includes('availab') || tableText.includes('platform') ||
-                tableText.includes('windows') || tableText.includes('linux') || tableText.includes('macos')) {
+            if (tableText.includes("availab") ||
+                tableText.includes("platform") ||
+                tableText.includes("windows") ||
+                tableText.includes("linux") ||
+                tableText.includes("macos")) {
                 // Parse table headers to find platform columns
                 const headers = [];
-                $table.find('th').each((_, th) => {
+                $table.find("th").each((_, th) => {
                     headers.push($(th).text().trim().toLowerCase());
                 });
-                const winIdx = headers.findIndex(h => h.includes('win'));
-                const linIdx = headers.findIndex(h => h.includes('lin') || h.includes('unix'));
-                const macIdx = headers.findIndex(h => h.includes('mac') || h.includes('osx'));
+                const winIdx = headers.findIndex((h) => h.includes("win"));
+                const linIdx = headers.findIndex((h) => h.includes("lin") || h.includes("unix"));
+                const macIdx = headers.findIndex((h) => h.includes("mac") || h.includes("osx"));
                 if (winIdx >= 0 || linIdx >= 0 || macIdx >= 0) {
                     // Found platform columns - look for checkmarks/crosses in the keyword's row
-                    $table.find('tr').each((_, tr) => {
+                    $table.find("tr").each((_, tr) => {
                         const $tr = $(tr);
                         const rowText = $tr.text().toLowerCase();
-                        if (rowText.includes(keywordName.toLowerCase().replace(/_/g, ''))) {
-                            const cells = $tr.find('td');
+                        if (rowText.includes(keywordName.toLowerCase().replace(/_/g, ""))) {
+                            const cells = $tr.find("td");
                             if (winIdx >= 0 && winIdx < cells.length) {
                                 const cell = $(cells[winIdx]).text().trim();
                                 windows = this.isAvailable(cell);
@@ -528,9 +533,13 @@ Visit the full wiki at: https://qb64phoenix.com/qb64wiki/
         // Strategy 2: Look for text patterns in the page content
         const pageText = $.text().toLowerCase();
         // Check for "not available" or "not supported" patterns
-        if (pageText.includes('not available') || pageText.includes('not supported') ||
-            pageText.includes('windows only') || pageText.includes('windows-only')) {
-            if (pageText.includes('linux') || pageText.includes('macos') || pageText.includes('mac')) {
+        if (pageText.includes("not available") ||
+            pageText.includes("not supported") ||
+            pageText.includes("windows only") ||
+            pageText.includes("windows-only")) {
+            if (pageText.includes("linux") ||
+                pageText.includes("macos") ||
+                pageText.includes("mac")) {
                 // Parse which platforms are excluded
                 if (pageText.match(/not.*(?:available|supported).*(?:on|in).*linux/)) {
                     linux = false;
@@ -542,7 +551,8 @@ Visit the full wiki at: https://qb64phoenix.com/qb64wiki/
                     windows = false;
                 }
             }
-            else if (pageText.includes('windows only') || pageText.includes('windows-only')) {
+            else if (pageText.includes("windows only") ||
+                pageText.includes("windows-only")) {
                 linux = false;
                 macos = false;
             }
@@ -557,14 +567,15 @@ Visit the full wiki at: https://qb64phoenix.com/qb64wiki/
             }
         }
         // Strategy 4: Check meta information sections
-        const metaSections = ['availability', 'platform support', 'compatibility'];
-        metaSections.forEach(section => {
+        const metaSections = ["availability", "platform support", "compatibility"];
+        metaSections.forEach((section) => {
             $(`h2, h3, h4`).each((_, heading) => {
                 const $heading = $(heading);
                 if ($heading.text().toLowerCase().includes(section)) {
-                    const $content = $heading.nextUntil('h2, h3, h4');
+                    const $content = $heading.nextUntil("h2, h3, h4");
                     const contentText = $content.text().toLowerCase();
-                    if (contentText.includes('windows') && contentText.includes('linux')) {
+                    if (contentText.includes("windows") &&
+                        contentText.includes("linux")) {
                         windows = true;
                         linux = true;
                     }
@@ -587,7 +598,7 @@ Visit the full wiki at: https://qb64phoenix.com/qb64wiki/
             windows,
             linux,
             macos,
-            source: 'wiki'
+            source: "wiki",
         };
     }
     /**
@@ -597,14 +608,23 @@ Visit the full wiki at: https://qb64phoenix.com/qb64wiki/
     isAvailable(cellText) {
         const text = cellText.toLowerCase().trim();
         // Check for positive indicators
-        if (text.includes('✓') || text.includes('✔') || text.includes('yes') ||
-            text === 'y' || text.includes('supported') || text.includes('available')) {
+        if (text.includes("✓") ||
+            text.includes("✔") ||
+            text.includes("yes") ||
+            text === "y" ||
+            text.includes("supported") ||
+            text.includes("available")) {
             return true;
         }
         // Check for negative indicators
-        if (text.includes('✗') || text.includes('✘') || text.includes('no') ||
-            text === 'n' || text === '-' || text === 'x' ||
-            text.includes('not supported') || text.includes('unavailable')) {
+        if (text.includes("✗") ||
+            text.includes("✘") ||
+            text.includes("no") ||
+            text === "n" ||
+            text === "-" ||
+            text === "x" ||
+            text.includes("not supported") ||
+            text.includes("unavailable")) {
             return false;
         }
         // Default to true if ambiguous (assume available unless explicitly marked otherwise)
@@ -623,7 +643,7 @@ Visit the full wiki at: https://qb64phoenix.com/qb64wiki/
     setCachedResult(key, data) {
         this.cache.set(key, {
             data,
-            timestamp: Date.now()
+            timestamp: Date.now(),
         });
     }
 }

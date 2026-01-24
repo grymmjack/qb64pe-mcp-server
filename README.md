@@ -329,6 +329,8 @@ Comprehensive guides in [`docs/`](docs/):
 
 - [QB64PE Debugging Enhancement System](docs/QB64PE_DEBUGGING_ENHANCEMENT_SYSTEM.md)
 - [QB64PE Execution Monitoring](docs/QB64PE_EXECUTION_MONITORING.md)
+- [QB64PE Graphics Statements Guide](docs/QB64PE_GRAPHICS_STATEMENTS_GUIDE.md)
+- [Pixel Perfect Drawing Guide](docs/PIXEL_PERFECT_DRAWING_GUIDE.md) - **NEW!** Transparency, corner smoothing, canvas state patterns
 - [LLM Usage Guide](docs/LLM_USAGE_GUIDE.md)
 - [Compatibility Integration Guide](docs/COMPATIBILITY_INTEGRATION.md)
 - [Keywords Integration Guide](docs/KEYWORDS_INTEGRATION.md)

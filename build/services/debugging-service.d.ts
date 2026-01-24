@@ -99,6 +99,10 @@ export declare class QB64PEDebuggingService {
     private injectLoggingSystem;
     /**
      * Inject automated screenshot system for graphics programs
+     *
+     * IMPROVEMENT: Includes visual debugging markers alongside screenshots.
+     * Session Problem: Console output confirms execution but doesn't prove pixels
+     * are drawn. Visual markers (colored lines/boxes) confirm both execution AND rendering.
      */
     private injectScreenshotSystem;
     /**

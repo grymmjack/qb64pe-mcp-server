@@ -499,6 +499,10 @@ CALL LogInit
     }
     /**
      * Inject automated screenshot system for graphics programs
+     *
+     * IMPROVEMENT: Includes visual debugging markers alongside screenshots.
+     * Session Problem: Console output confirms execution but doesn't prove pixels
+     * are drawn. Visual markers (colored lines/boxes) confirm both execution AND rendering.
      */
     injectScreenshotSystem(sourceCode) {
         const modifications = [];
@@ -506,13 +510,31 @@ CALL LogInit
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const screenshotBase = path.join(process.cwd(), 'qb64pe-screenshots', `debug_${timestamp}`);
         const screenshotSystem = `
-' === DEBUGGING ENHANCEMENT: Screenshot System ===
+' === DEBUGGING ENHANCEMENT: Screenshot System with Visual Markers ===
 DIM SHARED ScreenshotCounter AS INTEGER
 DIM SHARED ScreenshotBase AS STRING
+DIM SHARED DebugMarkerColor~& 
 
 SUB ScreenshotInit
     ScreenshotCounter = 0
     ScreenshotBase = "${screenshotBase.replace(/\\/g, '/')}"
+    DebugMarkerColor~& = _RGB32(0, 255, 0)  ' Bright green for visibility
+END SUB
+
+' Draw visual marker to confirm code path executes AND renders
+SUB DrawDebugMarker (x%, y%, label$)
+    IF _DEST <> _CONSOLE THEN
+        DIM oldDest AS LONG
+        oldDest = _DEST
+        
+        ' Draw obvious colored marker at location
+        LINE (x% - 2, y% - 2)-(x% + 2, y% + 2), DebugMarkerColor~&, BF
+        
+        ' Draw label line at screen edge for visibility
+        LINE (0, y%)-(10, y%), DebugMarkerColor~&
+        
+        _DEST oldDest
+    END IF
 END SUB
 
 SUB TakeDebugScreenshot (label AS STRING)
@@ -532,7 +554,7 @@ END SUB
 CALL ScreenshotInit
 `;
         code = screenshotSystem + '\n' + code;
-        modifications.push('Added automated screenshot system');
+        modifications.push('Added automated screenshot system with visual debugging markers');
         // Add automatic screenshots after graphics operations
         code = code.replace(/(CIRCLE\s*\([^)]+\)[^.\n]*)/gi, '$1\nCALL AutoScreenshot');
         code = code.replace(/(LINE\s*\([^)]+\)[^.\n]*)/gi, '$1\nCALL AutoScreenshot');

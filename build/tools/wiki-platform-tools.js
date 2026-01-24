@@ -75,7 +75,8 @@ function registerWikiPlatformTools(server, services) {
                         macos: data.macos,
                     });
                 }
-                updateResult = services.keywordsService.batchUpdatePlatformAvailability(dataForUpdate);
+                updateResult =
+                    services.keywordsService.batchUpdatePlatformAvailability(dataForUpdate);
             }
             return (0, mcp_helpers_js_1.createMCPResponse)({
                 success: true,

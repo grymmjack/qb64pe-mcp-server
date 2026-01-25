@@ -3,7 +3,7 @@ export interface CompatibilityIssue {
     column: number;
     pattern: string;
     message: string;
-    severity: 'error' | 'warning' | 'info';
+    severity: "error" | "warning" | "info";
     category: string;
     suggestion: string;
     examples?: {
@@ -13,7 +13,7 @@ export interface CompatibilityIssue {
 }
 export interface CompatibilityRule {
     pattern: RegExp;
-    severity: 'error' | 'warning' | 'info';
+    severity: "error" | "warning" | "info";
     category: string;
     message: string;
     suggestion: string;

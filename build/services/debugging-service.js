@@ -52,26 +52,26 @@ class QB64PEDebuggingService {
             enableResourceTracking: true,
             timeoutSeconds: 30,
             autoExit: true,
-            verboseOutput: true
+            verboseOutput: true,
         };
     }
     /**
      * Create a new debugging session with enhanced monitoring
      */
-    createDebuggingSession(sourceCode, projectPath = '.', config = {}) {
+    createDebuggingSession(sourceCode, projectPath = ".", config = {}) {
         const sessionId = `debug_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         const mergedConfig = { ...this.defaultConfig, ...config };
         const session = {
             id: sessionId,
             projectPath,
             sourceCode,
-            debugMode: 'automated',
+            debugMode: "automated",
             startTime: new Date(),
             lastActivity: new Date(),
             issues: [],
             solutions: [],
-            status: 'active',
-            executionMode: this.detectExecutionMode(sourceCode)
+            status: "active",
+            executionMode: this.detectExecutionMode(sourceCode),
         };
         // Analyze code for potential issues
         const detectedIssues = this.analyzeCodeForIssues(sourceCode);
@@ -89,7 +89,7 @@ class QB64PEDebuggingService {
      */
     enhanceCodeForDebugging(sourceCode, config = {}) {
         const mergedConfig = { ...this.defaultConfig, ...config };
-        const session = this.createDebuggingSession(sourceCode, '.', mergedConfig);
+        const session = this.createDebuggingSession(sourceCode, ".", mergedConfig);
         let enhancedCode = sourceCode;
         const modifications = [];
         const debugFeatures = [];
@@ -98,49 +98,52 @@ class QB64PEDebuggingService {
             const consoleEnhancement = this.injectConsoleManagement(enhancedCode, mergedConfig);
             enhancedCode = consoleEnhancement.code;
             modifications.push(...consoleEnhancement.modifications);
-            debugFeatures.push('Console Management');
+            debugFeatures.push("Console Management");
         }
         // 2. Flow Control Enhancement (prevents hanging)
         if (mergedConfig.enableFlowControl) {
             const flowEnhancement = this.injectFlowControl(enhancedCode, mergedConfig);
             enhancedCode = flowEnhancement.code;
             modifications.push(...flowEnhancement.modifications);
-            debugFeatures.push('Flow Control');
+            debugFeatures.push("Flow Control");
         }
         // 3. Resource Management Enhancement (Issue #4 fix)
         if (mergedConfig.enableResourceTracking) {
             const resourceEnhancement = this.injectResourceManagement(enhancedCode);
             enhancedCode = resourceEnhancement.code;
             modifications.push(...resourceEnhancement.modifications);
-            debugFeatures.push('Resource Management');
+            debugFeatures.push("Resource Management");
         }
         // 4. Graphics Context Enhancement (Issue #6 fix)
-        if (session.executionMode === 'graphics' || session.executionMode === 'mixed') {
+        if (session.executionMode === "graphics" ||
+            session.executionMode === "mixed") {
             const graphicsEnhancement = this.injectGraphicsContextManagement(enhancedCode);
             enhancedCode = graphicsEnhancement.code;
             modifications.push(...graphicsEnhancement.modifications);
-            debugFeatures.push('Graphics Context Management');
+            debugFeatures.push("Graphics Context Management");
         }
         // 5. Logging and Monitoring
         if (mergedConfig.enableLogging) {
             const loggingEnhancement = this.injectLoggingSystem(enhancedCode, mergedConfig);
             enhancedCode = loggingEnhancement.code;
             modifications.push(...loggingEnhancement.modifications);
-            debugFeatures.push('Logging System');
+            debugFeatures.push("Logging System");
         }
         // 6. Screenshot Automation
-        if (mergedConfig.enableScreenshots && (session.executionMode === 'graphics' || session.executionMode === 'mixed')) {
+        if (mergedConfig.enableScreenshots &&
+            (session.executionMode === "graphics" ||
+                session.executionMode === "mixed")) {
             const screenshotEnhancement = this.injectScreenshotSystem(enhancedCode);
             enhancedCode = screenshotEnhancement.code;
             modifications.push(...screenshotEnhancement.modifications);
-            debugFeatures.push('Screenshot System');
+            debugFeatures.push("Screenshot System");
         }
         return {
             enhancedCode,
             modifications,
             debugFeatures,
             issues: session.issues,
-            solutions: session.solutions
+            solutions: session.solutions,
         };
     }
     /**
@@ -151,14 +154,14 @@ class QB64PEDebuggingService {
         const modifications = [];
         let code = sourceCode;
         // Force console activation for shell redirection compatibility
-        if (!code.includes('$CONSOLE')) {
+        if (!code.includes("$CONSOLE")) {
             code = `$CONSOLE:ONLY\n${code}`;
-            modifications.push('Added $CONSOLE:ONLY directive for shell redirection compatibility');
+            modifications.push("Added $CONSOLE:ONLY directive for shell redirection compatibility");
         }
-        else if (code.includes('$CONSOLE') && !code.includes('$CONSOLE:ONLY')) {
+        else if (code.includes("$CONSOLE") && !code.includes("$CONSOLE:ONLY")) {
             // Replace existing $CONSOLE with $CONSOLE:ONLY for better automation compatibility
-            code = code.replace(/\$CONSOLE(?!:)/g, '$CONSOLE:ONLY');
-            modifications.push('Updated $CONSOLE to $CONSOLE:ONLY for shell redirection compatibility');
+            code = code.replace(/\$CONSOLE(?!:)/g, "$CONSOLE:ONLY");
+            modifications.push("Updated $CONSOLE to $CONSOLE:ONLY for shell redirection compatibility");
         }
         // Add explicit console activation for Windows
         const consoleActivation = `
@@ -193,11 +196,13 @@ SUB DebugExit (message AS STRING)
 END SUB
 `;
         // Insert after any existing metacommands but before main code
-        const lines = code.split('\n');
+        const lines = code.split("\n");
         let insertIndex = 0;
         // Find the end of metacommands
         for (let i = 0; i < lines.length; i++) {
-            if (lines[i].trim().startsWith('$') || lines[i].trim().startsWith("'") || lines[i].trim() === '') {
+            if (lines[i].trim().startsWith("$") ||
+                lines[i].trim().startsWith("'") ||
+                lines[i].trim() === "") {
                 insertIndex = i + 1;
             }
             else {
@@ -205,13 +210,13 @@ END SUB
             }
         }
         lines.splice(insertIndex, 0, consoleActivation);
-        code = lines.join('\n');
-        modifications.push('Injected console management system');
+        code = lines.join("\n");
+        modifications.push("Injected console management system");
         // Replace problematic SLEEP and END statements
         code = code.replace(/PRINT\s+"Press any key[^"]*"\s*[\r\n]+\s*SLEEP/gi, 'CALL DebugPause("Press any key to continue...")');
-        modifications.push('Replaced blocking SLEEP statements with conditional pauses');
+        modifications.push("Replaced blocking SLEEP statements with conditional pauses");
         code = code.replace(/\bEND\s*$/gm, 'CALL DebugExit("Program completed")');
-        modifications.push('Replaced END statements with explicit debugging exit');
+        modifications.push("Replaced END statements with explicit debugging exit");
         return { code, modifications };
     }
     /**
@@ -270,14 +275,14 @@ END SUB
 CALL ResourceManager_Init
 `;
         // Add the resource management system
-        code = resourceManagement + '\n' + code;
-        modifications.push('Added resource management system');
+        code = resourceManagement + "\n" + code;
+        modifications.push("Added resource management system");
         // Replace FREEFILE usage with tracked version
-        code = code.replace(/FREEFILE/g, 'ResourceManager_GetFileHandle%');
-        modifications.push('Replaced FREEFILE with tracked resource allocation');
+        code = code.replace(/FREEFILE/g, "ResourceManager_GetFileHandle%");
+        modifications.push("Replaced FREEFILE with tracked resource allocation");
         // Add cleanup before SYSTEM calls
-        code = code.replace(/SYSTEM/g, 'CALL ResourceManager_Cleanup\nSYSTEM');
-        modifications.push('Added resource cleanup before program exit');
+        code = code.replace(/SYSTEM/g, "CALL ResourceManager_Cleanup\nSYSTEM");
+        modifications.push("Added resource cleanup before program exit");
         return { code, modifications };
     }
     /**
@@ -336,14 +341,14 @@ END SUB
 CALL GraphicsManager_Init
 `;
         // Add graphics management system
-        code = graphicsManagement + '\n' + code;
-        modifications.push('Added graphics context management system');
+        code = graphicsManagement + "\n" + code;
+        modifications.push("Added graphics context management system");
         // Replace _NEWIMAGE with tracked version
-        code = code.replace(/_NEWIMAGE\s*\(\s*([^,]+),\s*([^,]+),\s*([^)]+)\)/g, 'GraphicsManager_CreateImage&($1, $2)');
-        modifications.push('Replaced _NEWIMAGE with tracked image creation');
+        code = code.replace(/_NEWIMAGE\s*\(\s*([^,]+),\s*([^,]+),\s*([^)]+)\)/g, "GraphicsManager_CreateImage&($1, $2)");
+        modifications.push("Replaced _NEWIMAGE with tracked image creation");
         // Replace risky PSET operations with bounds-checked version
-        code = code.replace(/PSET\s*\(\s*([^,]+),\s*([^)]+)\)\s*,\s*([^\n\r]+)/g, 'CALL GraphicsManager_SafePSET($1, $2, $3)');
-        modifications.push('Replaced PSET with bounds-checked version');
+        code = code.replace(/PSET\s*\(\s*([^,]+),\s*([^)]+)\)\s*,\s*([^\n\r]+)/g, "CALL GraphicsManager_SafePSET($1, $2, $3)");
+        modifications.push("Replaced PSET with bounds-checked version");
         return { code, modifications };
     }
     /**
@@ -368,27 +373,32 @@ SUB OriginalMainProgram
     ' Original program code will be moved here
 `;
         // Find the main execution code (not SUBs/FUNCTIONs)
-        const lines = code.split('\n');
+        const lines = code.split("\n");
         const functionLines = [];
         const mainLines = [];
         let inFunction = false;
         let hasMainCode = false;
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i].trim().toUpperCase();
-            if (line.startsWith('SUB ') || line.startsWith('FUNCTION ')) {
+            if (line.startsWith("SUB ") || line.startsWith("FUNCTION ")) {
                 inFunction = true;
                 functionLines.push(lines[i]);
             }
-            else if (line.startsWith('END SUB') || line.startsWith('END FUNCTION')) {
+            else if (line.startsWith("END SUB") ||
+                line.startsWith("END FUNCTION")) {
                 inFunction = false;
                 functionLines.push(lines[i]);
             }
             else if (inFunction) {
                 functionLines.push(lines[i]);
             }
-            else if (line.startsWith('$') || line.startsWith("'") || line === '' ||
-                line.startsWith('CONST ') || line.startsWith('DIM SHARED') ||
-                line.startsWith('DEFINT') || line.startsWith('OPTION')) {
+            else if (line.startsWith("$") ||
+                line.startsWith("'") ||
+                line === "" ||
+                line.startsWith("CONST ") ||
+                line.startsWith("DIM SHARED") ||
+                line.startsWith("DEFINT") ||
+                line.startsWith("OPTION")) {
                 // Keep metacommands and declarations at the top
                 mainLines.push(lines[i]);
             }
@@ -405,30 +415,34 @@ SUB OriginalMainProgram
             let inDeclarations = true;
             for (const line of mainLines) {
                 const trimmed = line.trim().toUpperCase();
-                if (inDeclarations && (trimmed.startsWith('$') || trimmed.startsWith("'") ||
-                    trimmed === '' || trimmed.startsWith('CONST ') ||
-                    trimmed.startsWith('DIM SHARED') || trimmed.startsWith('DEFINT') ||
-                    trimmed.startsWith('OPTION'))) {
+                if (inDeclarations &&
+                    (trimmed.startsWith("$") ||
+                        trimmed.startsWith("'") ||
+                        trimmed === "" ||
+                        trimmed.startsWith("CONST ") ||
+                        trimmed.startsWith("DIM SHARED") ||
+                        trimmed.startsWith("DEFINT") ||
+                        trimmed.startsWith("OPTION"))) {
                     topDeclarations.push(line);
                 }
                 else {
                     inDeclarations = false;
-                    mainExecution.push('    ' + line); // Indent for SUB
+                    mainExecution.push("    " + line); // Indent for SUB
                 }
             }
             code = [
                 ...topDeclarations,
                 mainWrapper,
                 ...mainExecution,
-                'END SUB',
-                '',
+                "END SUB",
+                "",
                 ...functionLines,
-                '',
-                '\'Call the wrapper instead of original main code',
-                'CALL AutoTestWrapper'
-            ].join('\n');
-            modifications.push('Wrapped main execution in automated test framework');
-            modifications.push('Added timeout and flow control management');
+                "",
+                "'Call the wrapper instead of original main code",
+                "CALL AutoTestWrapper",
+            ].join("\n");
+            modifications.push("Wrapped main execution in automated test framework");
+            modifications.push("Added timeout and flow control management");
         }
         return { code, modifications };
     }
@@ -438,16 +452,16 @@ SUB OriginalMainProgram
     injectLoggingSystem(sourceCode, config) {
         const modifications = [];
         let code = sourceCode;
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const logFile = path.join(process.cwd(), 'qb64pe-logs', `debug_${timestamp}.log`);
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+        const logFile = path.join(process.cwd(), "qb64pe-logs", `debug_${timestamp}.log`);
         const loggingSystem = `
 ' === DEBUGGING ENHANCEMENT: Logging System ===
 DIM SHARED LogFile AS STRING
 DIM SHARED LogEnabled AS INTEGER
 
 SUB LogInit
-    LogFile = "${logFile.replace(/\\/g, '/')}"
-    LogEnabled = ${config.verboseOutput ? '1' : '0'}
+    LogFile = "${logFile.replace(/\\/g, "/")}"
+    LogEnabled = ${config.verboseOutput ? "1" : "0"}
     IF LogEnabled THEN
         OPEN LogFile FOR OUTPUT AS #98
         PRINT #98, "=== QB64PE DEBUG SESSION STARTED ==="
@@ -490,11 +504,11 @@ END SUB
 
 CALL LogInit
 `;
-        code = loggingSystem + '\n' + code;
-        modifications.push('Added comprehensive logging system');
+        code = loggingSystem + "\n" + code;
+        modifications.push("Added comprehensive logging system");
         // Add logging to critical points
         code = code.replace(/(OPEN\s+[^}]+FOR\s+[A-Z]+\s+AS\s+#\d+)/gi, '$1\nCALL LogMessage("FILE", "Opened file: " + filename)');
-        modifications.push('Added file operation logging');
+        modifications.push("Added file operation logging");
         return { code, modifications };
     }
     /**
@@ -507,8 +521,8 @@ CALL LogInit
     injectScreenshotSystem(sourceCode) {
         const modifications = [];
         let code = sourceCode;
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const screenshotBase = path.join(process.cwd(), 'qb64pe-screenshots', `debug_${timestamp}`);
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+        const screenshotBase = path.join(process.cwd(), "qb64pe-screenshots", `debug_${timestamp}`);
         const screenshotSystem = `
 ' === DEBUGGING ENHANCEMENT: Screenshot System with Visual Markers ===
 DIM SHARED ScreenshotCounter AS INTEGER
@@ -517,7 +531,7 @@ DIM SHARED DebugMarkerColor~&
 
 SUB ScreenshotInit
     ScreenshotCounter = 0
-    ScreenshotBase = "${screenshotBase.replace(/\\/g, '/')}"
+    ScreenshotBase = "${screenshotBase.replace(/\\/g, "/")}"
     DebugMarkerColor~& = _RGB32(0, 255, 0)  ' Bright green for visibility
 END SUB
 
@@ -553,13 +567,13 @@ END SUB
 
 CALL ScreenshotInit
 `;
-        code = screenshotSystem + '\n' + code;
-        modifications.push('Added automated screenshot system with visual debugging markers');
+        code = screenshotSystem + "\n" + code;
+        modifications.push("Added automated screenshot system with visual debugging markers");
         // Add automatic screenshots after graphics operations
-        code = code.replace(/(CIRCLE\s*\([^)]+\)[^.\n]*)/gi, '$1\nCALL AutoScreenshot');
-        code = code.replace(/(LINE\s*\([^)]+\)[^.\n]*)/gi, '$1\nCALL AutoScreenshot');
-        code = code.replace(/(_PUTIMAGE\s*\([^)]+\)[^.\n]*)/gi, '$1\nCALL AutoScreenshot');
-        modifications.push('Added automatic screenshots after graphics operations');
+        code = code.replace(/(CIRCLE\s*\([^)]+\)[^.\n]*)/gi, "$1\nCALL AutoScreenshot");
+        code = code.replace(/(LINE\s*\([^)]+\)[^.\n]*)/gi, "$1\nCALL AutoScreenshot");
+        code = code.replace(/(_PUTIMAGE\s*\([^)]+\)[^.\n]*)/gi, "$1\nCALL AutoScreenshot");
+        modifications.push("Added automatic screenshots after graphics operations");
         return { code, modifications };
     }
     /**
@@ -569,42 +583,51 @@ CALL ScreenshotInit
         const hasConsole = /\$CONSOLE/i.test(sourceCode);
         const hasGraphics = /\b(SCREEN|CIRCLE|LINE|PSET|POINT|PAINT|PUT|GET|_NEWIMAGE|_PUTIMAGE|_LOADIMAGE)\b/i.test(sourceCode);
         if (hasGraphics && hasConsole)
-            return 'mixed';
+            return "mixed";
         if (hasGraphics)
-            return 'graphics';
-        return 'console';
+            return "graphics";
+        return "console";
     }
     /**
      * Analyze code for potential debugging issues
      */
     analyzeCodeForIssues(sourceCode) {
         const issues = [];
-        const lines = sourceCode.split('\n');
+        const lines = sourceCode.split("\n");
         // Issue #1: Console visibility problems
-        if (!sourceCode.includes('$CONSOLE') && this.detectExecutionMode(sourceCode) !== 'graphics') {
+        if (!sourceCode.includes("$CONSOLE") &&
+            this.detectExecutionMode(sourceCode) !== "graphics") {
             issues.push({
-                id: 'console_visibility_1',
-                type: 'console_visibility',
-                severity: 'high',
-                description: 'Program may exit immediately without showing console output',
-                symptoms: ['Program compiles but no output visible', 'Process exits immediately', 'Console window not visible'],
+                id: "console_visibility_1",
+                type: "console_visibility",
+                severity: "high",
+                description: "Program may exit immediately without showing console output",
+                symptoms: [
+                    "Program compiles but no output visible",
+                    "Process exits immediately",
+                    "Console window not visible",
+                ],
                 detectedAt: new Date(),
                 resolved: false,
-                autoFixable: true
+                autoFixable: true,
             });
         }
         // Issue #1b: Blocking SLEEP statements
         const blockingSleepPattern = /PRINT\s+"Press any key[^"]*"\s*[\r\n]+\s*SLEEP/gi;
         if (blockingSleepPattern.test(sourceCode)) {
             issues.push({
-                id: 'console_visibility_2',
-                type: 'flow_control',
-                severity: 'high',
+                id: "console_visibility_2",
+                type: "flow_control",
+                severity: "high",
                 description: 'Program contains blocking "Press any key" prompts that prevent automation',
-                symptoms: ['Program hangs waiting for user input', 'Automated testing fails', 'LLM cannot continue execution'],
+                symptoms: [
+                    "Program hangs waiting for user input",
+                    "Automated testing fails",
+                    "LLM cannot continue execution",
+                ],
                 detectedAt: new Date(),
                 resolved: false,
-                autoFixable: true
+                autoFixable: true,
             });
         }
         // Issue #4: File handle management
@@ -612,42 +635,53 @@ CALL ScreenshotInit
         const fileHandleCount = (sourceCode.match(fileHandlePattern) || []).length;
         if (fileHandleCount > 0) {
             issues.push({
-                id: 'file_handle_1',
-                type: 'file_handle',
-                severity: 'medium',
+                id: "file_handle_1",
+                type: "file_handle",
+                severity: "medium",
                 description: `Code uses ${fileHandleCount} file handles without tracking or cleanup`,
-                symptoms: ['Cannot CREATE because file is already in use', 'Compilation errors after failed runs', 'File locking issues'],
+                symptoms: [
+                    "Cannot CREATE because file is already in use",
+                    "Compilation errors after failed runs",
+                    "File locking issues",
+                ],
                 detectedAt: new Date(),
                 resolved: false,
-                autoFixable: true
+                autoFixable: true,
             });
         }
         // Issue #6: Graphics context management
         const newImagePattern = /_NEWIMAGE/g;
         const newImageCount = (sourceCode.match(newImagePattern) || []).length;
-        if (newImageCount > 0 && !sourceCode.includes('_FREEIMAGE')) {
+        if (newImageCount > 0 && !sourceCode.includes("_FREEIMAGE")) {
             issues.push({
-                id: 'graphics_context_1',
-                type: 'graphics_context',
-                severity: 'medium',
+                id: "graphics_context_1",
+                type: "graphics_context",
+                severity: "medium",
                 description: `Code creates ${newImageCount} images without proper cleanup`,
-                symptoms: ['Memory leaks', 'Graphics operations fail', 'Image handle errors'],
+                symptoms: [
+                    "Memory leaks",
+                    "Graphics operations fail",
+                    "Image handle errors",
+                ],
                 detectedAt: new Date(),
                 resolved: false,
-                autoFixable: true
+                autoFixable: true,
             });
         }
         // Process management issues
-        if (sourceCode.includes('SYSTEM') && !sourceCode.includes('_DELAY')) {
+        if (sourceCode.includes("SYSTEM") && !sourceCode.includes("_DELAY")) {
             issues.push({
-                id: 'process_management_1',
-                type: 'process_management',
-                severity: 'low',
-                description: 'Program exits immediately without allowing observation',
-                symptoms: ['Process terminates too quickly to see output', 'No time to analyze graphics'],
+                id: "process_management_1",
+                type: "process_management",
+                severity: "low",
+                description: "Program exits immediately without allowing observation",
+                symptoms: [
+                    "Process terminates too quickly to see output",
+                    "No time to analyze graphics",
+                ],
                 detectedAt: new Date(),
                 resolved: false,
-                autoFixable: true
+                autoFixable: true,
             });
         }
         return issues;
@@ -658,84 +692,84 @@ CALL ScreenshotInit
     generateSolutions(issue, config) {
         const solutions = [];
         switch (issue.type) {
-            case 'console_visibility':
+            case "console_visibility":
                 solutions.push({
                     issueId: issue.id,
-                    strategy: 'code_injection',
+                    strategy: "code_injection",
                     priority: 1,
-                    description: 'Inject console management system with $CONSOLE directive and Windows console activation',
+                    description: "Inject console management system with $CONSOLE directive and Windows console activation",
                     implementation: {
                         codeChanges: [
-                            'Add $CONSOLE metacommand',
-                            'Add _CONSOLE ON for Windows compatibility',
-                            'Add DEBUG_MODE constant for flow control'
-                        ]
+                            "Add $CONSOLE metacommand",
+                            "Add _CONSOLE ON for Windows compatibility",
+                            "Add DEBUG_MODE constant for flow control",
+                        ],
                     },
-                    rationale: 'QB64PE programs need explicit console activation to ensure output visibility'
+                    rationale: "QB64PE programs need explicit console activation to ensure output visibility",
                 });
                 break;
-            case 'flow_control':
+            case "flow_control":
                 solutions.push({
                     issueId: issue.id,
-                    strategy: 'template_replacement',
+                    strategy: "template_replacement",
                     priority: 1,
-                    description: 'Replace blocking user input with conditional automation-friendly pauses',
+                    description: "Replace blocking user input with conditional automation-friendly pauses",
                     implementation: {
                         codeChanges: [
-                            'Replace SLEEP with conditional DebugPause function',
-                            'Add automated timeout for DEBUG_MODE',
-                            'Maintain interactive behavior for non-debug use'
-                        ]
+                            "Replace SLEEP with conditional DebugPause function",
+                            "Add automated timeout for DEBUG_MODE",
+                            "Maintain interactive behavior for non-debug use",
+                        ],
                     },
-                    rationale: 'Automated systems need timeout mechanisms to prevent indefinite hanging'
+                    rationale: "Automated systems need timeout mechanisms to prevent indefinite hanging",
                 });
                 break;
-            case 'file_handle':
+            case "file_handle":
                 solutions.push({
                     issueId: issue.id,
-                    strategy: 'code_injection',
+                    strategy: "code_injection",
                     priority: 2,
-                    description: 'Implement resource management system to track and cleanup file handles',
+                    description: "Implement resource management system to track and cleanup file handles",
                     implementation: {
                         codeChanges: [
-                            'Add ResourceManager system',
-                            'Replace FREEFILE with tracked allocation',
-                            'Add cleanup on program exit'
-                        ]
+                            "Add ResourceManager system",
+                            "Replace FREEFILE with tracked allocation",
+                            "Add cleanup on program exit",
+                        ],
                     },
-                    rationale: 'Proper resource management prevents file locking and compilation errors'
+                    rationale: "Proper resource management prevents file locking and compilation errors",
                 });
                 break;
-            case 'graphics_context':
+            case "graphics_context":
                 solutions.push({
                     issueId: issue.id,
-                    strategy: 'code_injection',
+                    strategy: "code_injection",
                     priority: 2,
-                    description: 'Add graphics context management with automatic cleanup and bounds checking',
+                    description: "Add graphics context management with automatic cleanup and bounds checking",
                     implementation: {
                         codeChanges: [
-                            'Add GraphicsManager system',
-                            'Track image handles for cleanup',
-                            'Add bounds checking for graphics operations'
-                        ]
+                            "Add GraphicsManager system",
+                            "Track image handles for cleanup",
+                            "Add bounds checking for graphics operations",
+                        ],
                     },
-                    rationale: 'Graphics programs need careful resource management to prevent memory leaks and crashes'
+                    rationale: "Graphics programs need careful resource management to prevent memory leaks and crashes",
                 });
                 break;
-            case 'process_management':
+            case "process_management":
                 solutions.push({
                     issueId: issue.id,
-                    strategy: 'code_injection',
+                    strategy: "code_injection",
                     priority: 3,
-                    description: 'Add process management with delays and controlled exit',
+                    description: "Add process management with delays and controlled exit",
                     implementation: {
                         codeChanges: [
-                            'Add delays before SYSTEM calls',
-                            'Add cleanup routines',
-                            'Add debug output for process state'
-                        ]
+                            "Add delays before SYSTEM calls",
+                            "Add cleanup routines",
+                            "Add debug output for process state",
+                        ],
                     },
-                    rationale: 'Controlled program termination allows proper observation and cleanup'
+                    rationale: "Controlled program termination allows proper observation and cleanup",
                 });
                 break;
         }
@@ -960,7 +994,7 @@ Common issues and auto-fixes:
      * List all active debug sessions
      */
     getActiveSessions() {
-        return Array.from(this.debugSessions.values()).filter(session => session.status === 'active');
+        return Array.from(this.debugSessions.values()).filter((session) => session.status === "active");
     }
     /**
      * Close debug session
@@ -968,7 +1002,7 @@ Common issues and auto-fixes:
     closeSession(sessionId) {
         const session = this.debugSessions.get(sessionId);
         if (session) {
-            session.status = 'completed';
+            session.status = "completed";
             session.lastActivity = new Date();
             return true;
         }

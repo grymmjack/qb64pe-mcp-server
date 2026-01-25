@@ -25,9 +25,7 @@ class FileStructureService {
             const line = lines[i].trim();
             const lineNum = i + 1;
             // Skip comments and blank lines
-            if (line.startsWith("''") ||
-                line.startsWith("'") ||
-                line.length === 0) {
+            if (line.startsWith("''") || line.startsWith("'") || line.length === 0) {
                 continue;
             }
             // Check for SUB/FUNCTION implementation start
@@ -85,6 +83,16 @@ class FileStructureService {
                     severity: "info",
                 });
             }
+            // ERROR: REDIM _PRESERVE on SHARED arrays in .BI files (can silently shrink arrays)
+            if (/^REDIM\s+_PRESERVE\s+SHARED/i.test(line)) {
+                issues.push({
+                    line: lineNum,
+                    content: line,
+                    issue: `REDIM _PRESERVE on SHARED array in .BI file - can silently shrink arrays`,
+                    suggestion: `CRITICAL: REDIM _PRESERVE can shrink arrays, not just grow them. Do NOT resize SHARED arrays in include files. Handle array sizing in one authoritative location only.`,
+                    severity: "error",
+                });
+            }
         }
         const summary = this.calculateSummary(issues);
         return {
@@ -115,8 +123,7 @@ class FileStructureService {
                 continue;
             }
             // Track when inside SUB/FUNCTION
-            if (/^SUB\s+\w+/i.test(line) ||
-                /^FUNCTION\s+\w+/i.test(line)) {
+            if (/^SUB\s+\w+/i.test(line) || /^FUNCTION\s+\w+/i.test(line)) {
                 inSubFunction = true;
             }
             if (/^END\s+(SUB|FUNCTION)/i.test(line)) {
@@ -158,8 +165,7 @@ class FileStructureService {
                 !line.startsWith("$") &&
                 !/^(SUB|FUNCTION|END)/i.test(line)) {
                 // Allow blank lines and certain keywords
-                if (!/^(DIM|CONST|TYPE|DECLARE)/i.test(line) &&
-                    line.length > 0) {
+                if (!/^(DIM|CONST|TYPE|DECLARE)/i.test(line) && line.length > 0) {
                     issues.push({
                         line: lineNum,
                         content: line,

@@ -1,9 +1,9 @@
 /**
  * QB64PE File Structure Validation Service
- * 
+ *
  * Validates QB64_GJ_LIB .BI/.BM file structure conventions
  * Ensures proper separation of declarations and implementations
- * 
+ *
  * @author grymmjack
  * @version 1.0
  */
@@ -47,11 +47,7 @@ export class FileStructureService {
       const lineNum = i + 1;
 
       // Skip comments and blank lines
-      if (
-        line.startsWith("''") ||
-        line.startsWith("'") ||
-        line.length === 0
-      ) {
+      if (line.startsWith("''") || line.startsWith("'") || line.length === 0) {
         continue;
       }
 
@@ -60,9 +56,7 @@ export class FileStructureService {
         /^SUB\s+\w+/i.test(line) ||
         /^FUNCTION\s+\w+[%&$!#]?\s*(\(|$)/i.test(line)
       ) {
-        const match = line.match(
-          /^(SUB|FUNCTION)\s+(\w+[%&$!#]?)/i
-        );
+        const match = line.match(/^(SUB|FUNCTION)\s+(\w+[%&$!#]?)/i);
         if (match) {
           subFunctionName = match[2];
           inSubFunction = true;
@@ -120,6 +114,17 @@ export class FileStructureService {
           severity: "info",
         });
       }
+
+      // ERROR: REDIM _PRESERVE on SHARED arrays in .BI files (can silently shrink arrays)
+      if (/^REDIM\s+_PRESERVE\s+SHARED/i.test(line)) {
+        issues.push({
+          line: lineNum,
+          content: line,
+          issue: `REDIM _PRESERVE on SHARED array in .BI file - can silently shrink arrays`,
+          suggestion: `CRITICAL: REDIM _PRESERVE can shrink arrays, not just grow them. Do NOT resize SHARED arrays in include files. Handle array sizing in one authoritative location only.`,
+          severity: "error",
+        });
+      }
     }
 
     const summary = this.calculateSummary(issues);
@@ -159,10 +164,7 @@ export class FileStructureService {
       }
 
       // Track when inside SUB/FUNCTION
-      if (
-        /^SUB\s+\w+/i.test(line) ||
-        /^FUNCTION\s+\w+/i.test(line)
-      ) {
+      if (/^SUB\s+\w+/i.test(line) || /^FUNCTION\s+\w+/i.test(line)) {
         inSubFunction = true;
       }
 
@@ -211,10 +213,7 @@ export class FileStructureService {
         !/^(SUB|FUNCTION|END)/i.test(line)
       ) {
         // Allow blank lines and certain keywords
-        if (
-          !/^(DIM|CONST|TYPE|DECLARE)/i.test(line) &&
-          line.length > 0
-        ) {
+        if (!/^(DIM|CONST|TYPE|DECLARE)/i.test(line) && line.length > 0) {
           issues.push({
             line: lineNum,
             content: line,
@@ -243,7 +242,7 @@ export class FileStructureService {
    */
   validateFile(
     filename: string,
-    content: string
+    content: string,
   ): FileStructureValidationResult {
     if (filename.endsWith(".BI")) {
       return this.validateBIFile(content);
@@ -265,9 +264,7 @@ export class FileStructureService {
   /**
    * Calculate issue summary
    */
-  private calculateSummary(
-    issues: FileStructureIssue[]
-  ): {
+  private calculateSummary(issues: FileStructureIssue[]): {
     totalIssues: number;
     errors: number;
     warnings: number;
@@ -284,31 +281,26 @@ export class FileStructureService {
   /**
    * Generate recommendations for .BI files
    */
-  private generateBIRecommendations(
-    issues: FileStructureIssue[]
-  ): string[] {
+  private generateBIRecommendations(issues: FileStructureIssue[]): string[] {
     const recommendations: string[] = [];
 
     const hasImplementations = issues.some(
-      (i) =>
-        i.issue.includes("implementation") && i.severity === "error"
+      (i) => i.issue.includes("implementation") && i.severity === "error",
     );
-    const hasDeclarations = issues.some((i) =>
-      i.issue.includes("DECLARE")
-    );
+    const hasDeclarations = issues.some((i) => i.issue.includes("DECLARE"));
 
     if (hasImplementations) {
       recommendations.push(
-        "Move all SUB/FUNCTION implementations to corresponding .BM file"
+        "Move all SUB/FUNCTION implementations to corresponding .BM file",
       );
       recommendations.push(
-        ".BI files should contain: TYPE definitions, CONST declarations, DIM SHARED variables"
+        ".BI files should contain: TYPE definitions, CONST declarations, DIM SHARED variables",
       );
     }
 
     if (hasDeclarations) {
       recommendations.push(
-        "Consider removing DECLARE statements (optional in QB64PE)"
+        "Consider removing DECLARE statements (optional in QB64PE)",
       );
     }
 
@@ -322,20 +314,16 @@ export class FileStructureService {
   /**
    * Generate recommendations for .BM files
    */
-  private generateBMRecommendations(
-    issues: FileStructureIssue[]
-  ): string[] {
+  private generateBMRecommendations(issues: FileStructureIssue[]): string[] {
     const recommendations: string[] = [];
 
-    const hasDimShared = issues.some((i) =>
-      i.issue.includes("DIM SHARED")
-    );
+    const hasDimShared = issues.some((i) => i.issue.includes("DIM SHARED"));
     const hasTypes = issues.some((i) => i.issue.includes("TYPE"));
     const hasConsts = issues.some((i) => i.issue.includes("CONST"));
 
     if (hasDimShared) {
       recommendations.push(
-        "CRITICAL: Move all DIM SHARED declarations to .BI file to avoid compilation errors"
+        "CRITICAL: Move all DIM SHARED declarations to .BI file to avoid compilation errors",
       );
     }
 
@@ -345,7 +333,7 @@ export class FileStructureService {
 
     if (hasConsts) {
       recommendations.push(
-        "Move global CONST declarations to .BI file (local constants inside functions are OK)"
+        "Move global CONST declarations to .BI file (local constants inside functions are OK)",
       );
     }
 
@@ -361,7 +349,7 @@ export class FileStructureService {
    */
   followsGJLibConventions(
     biContent: string,
-    bmContent: string
+    bmContent: string,
   ): {
     follows: boolean;
     issues: string[];
@@ -374,16 +362,12 @@ export class FileStructureService {
     const bmResult = this.validateBMFile(bmContent);
 
     if (!biResult.isValid) {
-      issues.push(
-        `.BI file has ${biResult.summary.errors} structural errors`
-      );
+      issues.push(`.BI file has ${biResult.summary.errors} structural errors`);
       suggestions.push(...biResult.recommendations);
     }
 
     if (!bmResult.isValid) {
-      issues.push(
-        `.BM file has ${bmResult.summary.errors} structural errors`
-      );
+      issues.push(`.BM file has ${bmResult.summary.errors} structural errors`);
       suggestions.push(...bmResult.recommendations);
     }
 

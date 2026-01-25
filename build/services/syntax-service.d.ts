@@ -1,5 +1,5 @@
-import { KeywordInfo } from './keywords-service';
-import { QB64PE_SYNTAX_PATTERNS, QB64PE_REPOSITORY_PATTERNS } from '../constants/syntax-patterns';
+import { KeywordInfo } from "./keywords-service";
+import { QB64PE_SYNTAX_PATTERNS, QB64PE_REPOSITORY_PATTERNS } from "../constants/syntax-patterns";
 export interface SyntaxValidationResult {
     isValid: boolean;
     errors: SyntaxError[];
@@ -14,7 +14,7 @@ export interface KeywordIssue {
     column: number;
     keyword: string;
     message: string;
-    severity: 'error' | 'warning' | 'info';
+    severity: "error" | "warning" | "info";
     suggestions: string[];
     keywordInfo?: KeywordInfo;
 }
@@ -22,7 +22,7 @@ export interface SyntaxError {
     line: number;
     column: number;
     message: string;
-    severity: 'error' | 'warning' | 'info';
+    severity: "error" | "warning" | "info";
     rule: string;
     suggestion?: string;
 }
@@ -38,7 +38,7 @@ export interface CompatibilityIssue {
     column: number;
     pattern: string;
     message: string;
-    severity: 'error' | 'warning';
+    severity: "error" | "warning";
     category: string;
     suggestion: string;
     examples?: {
@@ -74,6 +74,11 @@ export declare class QB64PESyntaxService {
      * Check for compatibility issues using known patterns
      */
     private checkCompatibilityIssues;
+    /**
+     * Check for variable naming mismatch between DIM AS and sigil usage (critical bug)
+     * Example: DIM x AS INTEGER creates 'x', but code using 'x%' creates a different variable
+     */
+    private checkVariableNamingMismatch;
     /**
      * Check for non-QB64PE syntax (VB, QBasic, etc.)
      */

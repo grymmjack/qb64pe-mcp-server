@@ -1,6 +1,15 @@
-import { KeywordsService, KeywordInfo } from './keywords-service';
-import { QB64PE_RESERVED_WORDS, isReservedWord } from '../constants/reserved-words';
-import { QB64PE_SYNTAX_PATTERNS, QB64PE_REPOSITORY_PATTERNS, getSyntaxHelp, validateSyntax, getSyntaxHighlighting } from '../constants/syntax-patterns';
+import { KeywordsService, KeywordInfo } from "./keywords-service";
+import {
+  QB64PE_RESERVED_WORDS,
+  isReservedWord,
+} from "../constants/reserved-words";
+import {
+  QB64PE_SYNTAX_PATTERNS,
+  QB64PE_REPOSITORY_PATTERNS,
+  getSyntaxHelp,
+  validateSyntax,
+  getSyntaxHighlighting,
+} from "../constants/syntax-patterns";
 
 export interface SyntaxValidationResult {
   isValid: boolean;
@@ -17,7 +26,7 @@ export interface KeywordIssue {
   column: number;
   keyword: string;
   message: string;
-  severity: 'error' | 'warning' | 'info';
+  severity: "error" | "warning" | "info";
   suggestions: string[];
   keywordInfo?: KeywordInfo;
 }
@@ -26,7 +35,7 @@ export interface SyntaxError {
   line: number;
   column: number;
   message: string;
-  severity: 'error' | 'warning' | 'info';
+  severity: "error" | "warning" | "info";
   rule: string;
   suggestion?: string;
 }
@@ -44,7 +53,7 @@ export interface CompatibilityIssue {
   column: number;
   pattern: string;
   message: string;
-  severity: 'error' | 'warning';
+  severity: "error" | "warning";
   category: string;
   suggestion: string;
   examples?: {
@@ -58,86 +67,210 @@ export interface CompatibilityIssue {
  */
 export class QB64PESyntaxService {
   private keywordsService: KeywordsService;
-  
+
   constructor() {
     this.keywordsService = new KeywordsService();
   }
 
   private readonly qb64Keywords: Set<string> = new Set([
     // Core statements
-    'PRINT', 'INPUT', 'DIM', 'FOR', 'NEXT', 'IF', 'THEN', 'ELSE', 'END', 'SUB', 'FUNCTION',
-    'WHILE', 'WEND', 'DO', 'LOOP', 'SELECT', 'CASE', 'GOTO', 'GOSUB', 'RETURN', 'EXIT',
-    
+    "PRINT",
+    "INPUT",
+    "DIM",
+    "FOR",
+    "NEXT",
+    "IF",
+    "THEN",
+    "ELSE",
+    "END",
+    "SUB",
+    "FUNCTION",
+    "WHILE",
+    "WEND",
+    "DO",
+    "LOOP",
+    "SELECT",
+    "CASE",
+    "GOTO",
+    "GOSUB",
+    "RETURN",
+    "EXIT",
+
     // Data types
-    'INTEGER', 'LONG', 'SINGLE', 'DOUBLE', 'STRING', 'BYTE', '_BYTE', '_INTEGER64',
-    '_FLOAT', '_UNSIGNED', 'AS', 'TYPE', 'CONST', 'STATIC', 'SHARED', 'REDIM',
-    
+    "INTEGER",
+    "LONG",
+    "SINGLE",
+    "DOUBLE",
+    "STRING",
+    "BYTE",
+    "_BYTE",
+    "_INTEGER64",
+    "_FLOAT",
+    "_UNSIGNED",
+    "AS",
+    "TYPE",
+    "CONST",
+    "STATIC",
+    "SHARED",
+    "REDIM",
+
     // Operators
-    'AND', 'OR', 'XOR', 'NOT', 'MOD', 'EQV', 'IMP',
-    
+    "AND",
+    "OR",
+    "XOR",
+    "NOT",
+    "MOD",
+    "EQV",
+    "IMP",
+
     // QB64PE specific
-    '_DISPLAY', '_AUTODISPLAY', '_CONSOLE', '_SCREENMOVE', '_RESIZE', '_TITLE',
-    '_ICON', '_RGB', '_RGB32', '_RGBA', '_RGBA32', '_ALPHA', '_RED', '_GREEN', '_BLUE',
-    '_NEWIMAGE', '_FREEIMAGE', '_PUTIMAGE', '_SOURCE', '_DEST', '_WIDTH', '_HEIGHT',
-    '_MOUSEX', '_MOUSEY', '_MOUSEBUTTON', '_MOUSEINPUT', '_KEYHIT', '_KEYDOWN',
-    '_SNDOPEN', '_SNDPLAY', '_SNDSTOP', '_SNDCLOSE', '_SNDVOL',
-    
+    "_DISPLAY",
+    "_AUTODISPLAY",
+    "_CONSOLE",
+    "_SCREENMOVE",
+    "_RESIZE",
+    "_TITLE",
+    "_ICON",
+    "_RGB",
+    "_RGB32",
+    "_RGBA",
+    "_RGBA32",
+    "_ALPHA",
+    "_RED",
+    "_GREEN",
+    "_BLUE",
+    "_NEWIMAGE",
+    "_FREEIMAGE",
+    "_PUTIMAGE",
+    "_SOURCE",
+    "_DEST",
+    "_WIDTH",
+    "_HEIGHT",
+    "_MOUSEX",
+    "_MOUSEY",
+    "_MOUSEBUTTON",
+    "_MOUSEINPUT",
+    "_KEYHIT",
+    "_KEYDOWN",
+    "_SNDOPEN",
+    "_SNDPLAY",
+    "_SNDSTOP",
+    "_SNDCLOSE",
+    "_SNDVOL",
+
     // File operations
-    'OPEN', 'CLOSE', 'GET', 'PUT', 'SEEK', 'LOF', 'EOF', 'FREEFILE',
-    
+    "OPEN",
+    "CLOSE",
+    "GET",
+    "PUT",
+    "SEEK",
+    "LOF",
+    "EOF",
+    "FREEFILE",
+
     // Math functions
-    'ABS', 'ATN', 'COS', 'EXP', 'FIX', 'INT', 'LOG', 'RND', 'SGN', 'SIN', 'SQR', 'TAN',
-    
+    "ABS",
+    "ATN",
+    "COS",
+    "EXP",
+    "FIX",
+    "INT",
+    "LOG",
+    "RND",
+    "SGN",
+    "SIN",
+    "SQR",
+    "TAN",
+
     // String functions
-    'ASC', 'CHR$', 'INSTR', 'LCASE$', 'LEFT$', 'LEN', 'LTRIM$', 'MID$', 'RIGHT$', 
-    'RTRIM$', 'SPACE$', 'STR$', 'STRING$', 'TRIM$', 'UCASE$', 'VAL',
-    
+    "ASC",
+    "CHR$",
+    "INSTR",
+    "LCASE$",
+    "LEFT$",
+    "LEN",
+    "LTRIM$",
+    "MID$",
+    "RIGHT$",
+    "RTRIM$",
+    "SPACE$",
+    "STR$",
+    "STRING$",
+    "TRIM$",
+    "UCASE$",
+    "VAL",
+
     // Date/Time
-    'DATE$', 'TIME$', 'TIMER',
-    
+    "DATE$",
+    "TIME$",
+    "TIMER",
+
     // Graphics
-    'CLS', 'COLOR', 'LOCATE', 'PSET', 'PRESET', 'LINE', 'CIRCLE', 'PAINT', 'DRAW', 'VIEW', 'WINDOW',
-    'SCREEN', 'PALETTE', 'POINT', 'POS', 'CSRLIN', 'STEP'
+    "CLS",
+    "COLOR",
+    "LOCATE",
+    "PSET",
+    "PRESET",
+    "LINE",
+    "CIRCLE",
+    "PAINT",
+    "DRAW",
+    "VIEW",
+    "WINDOW",
+    "SCREEN",
+    "PALETTE",
+    "POINT",
+    "POS",
+    "CSRLIN",
+    "STEP",
   ]);
 
-  private readonly nonQB64Constructs: Array<{pattern: RegExp, message: string, suggestion: string}> = [
+  private readonly nonQB64Constructs: Array<{
+    pattern: RegExp;
+    message: string;
+    suggestion: string;
+  }> = [
     {
       pattern: /\bMsgBox\b/gi,
       message: "MsgBox is Visual Basic syntax, not QB64PE",
-      suggestion: "Use INPUT or PRINT statements instead"
+      suggestion: "Use INPUT or PRINT statements instead",
     },
     {
       pattern: /\bDeclare\s+Function\b/gi,
       message: "VB-style Declare Function syntax not used in QB64PE",
-      suggestion: "Use $INCLUDE or built-in QB64PE functions"
+      suggestion: "Use $INCLUDE or built-in QB64PE functions",
     },
     {
       pattern: /\bByVal\b|\bByRef\b/gi,
       message: "ByVal/ByRef are Visual Basic keywords",
-      suggestion: "QB64PE passes by value by default, use BYVAL only when needed"
+      suggestion:
+        "QB64PE passes by value by default, use BYVAL only when needed",
     },
     {
       pattern: /\bPrivate\b|\bPublic\b/gi,
       message: "Private/Public are Visual Basic keywords",
-      suggestion: "Use SHARED for global variables or SUB/FUNCTION parameters"
+      suggestion: "Use SHARED for global variables or SUB/FUNCTION parameters",
     },
     {
       pattern: /\bLet\b\s*=/gi,
       message: "LET statement is QBasic/Visual Basic style",
-      suggestion: "Direct assignment is preferred in QB64PE"
+      suggestion: "Direct assignment is preferred in QB64PE",
     },
     {
       pattern: /\bOption\s+Explicit\b/gi,
       message: "Option Explicit is Visual Basic syntax",
-      suggestion: "QB64PE doesn't require variable declaration by default"
-    }
+      suggestion: "QB64PE doesn't require variable declaration by default",
+    },
   ];
 
   /**
    * Validate QB64PE syntax
    */
-  async validateSyntax(code: string, checkLevel: string = "basic"): Promise<SyntaxValidationResult> {
-    const lines = code.split('\n');
+  async validateSyntax(
+    code: string,
+    checkLevel: string = "basic",
+  ): Promise<SyntaxValidationResult> {
+    const lines = code.split("\n");
     const errors: SyntaxError[] = [];
     const warnings: SyntaxWarning[] = [];
     const suggestions: string[] = [];
@@ -150,7 +283,12 @@ export class QB64PESyntaxService {
         this.performStrictValidation(lines, errors, warnings, suggestions);
         break;
       case "best-practices":
-        this.performBestPracticesValidation(lines, errors, warnings, suggestions);
+        this.performBestPracticesValidation(
+          lines,
+          errors,
+          warnings,
+          suggestions,
+        );
         break;
       default:
         this.performBasicValidation(lines, errors, warnings, suggestions);
@@ -163,6 +301,9 @@ export class QB64PESyntaxService {
     // Check compatibility issues using built-in patterns
     this.checkCompatibilityIssues(lines, compatibilityIssues);
 
+    // Check for DIM AS vs sigil mismatch (critical bug)
+    this.checkVariableNamingMismatch(lines, compatibilityIssues);
+
     // Validate keywords
     this.validateKeywords(lines, keywordIssues);
 
@@ -170,13 +311,15 @@ export class QB64PESyntaxService {
     const score = this.calculateSyntaxScore(lines, errors, warnings);
 
     return {
-      isValid: errors.filter(e => e.severity === 'error').length === 0 && keywordIssues.filter(k => k.severity === 'error').length === 0,
+      isValid:
+        errors.filter((e) => e.severity === "error").length === 0 &&
+        keywordIssues.filter((k) => k.severity === "error").length === 0,
       errors,
       warnings,
       suggestions,
       score,
       compatibilityIssues,
-      keywordIssues
+      keywordIssues,
     };
   }
 
@@ -184,20 +327,28 @@ export class QB64PESyntaxService {
    * Perform basic syntax validation
    */
   private performBasicValidation(
-    lines: string[], 
-    errors: SyntaxError[], 
-    warnings: SyntaxWarning[], 
-    suggestions: string[]
+    lines: string[],
+    errors: SyntaxError[],
+    warnings: SyntaxWarning[],
+    suggestions: string[],
   ): void {
-    const loopStack: Array<{type: string, line: number}> = [];
-    const subFunctionStack: Array<{type: string, name: string, line: number}> = [];
+    const loopStack: Array<{ type: string; line: number }> = [];
+    const subFunctionStack: Array<{
+      type: string;
+      name: string;
+      line: number;
+    }> = [];
 
     lines.forEach((line, index) => {
       const lineNum = index + 1;
       const trimmedLine = line.trim().toUpperCase();
 
       // Skip comments and empty lines
-      if (trimmedLine.startsWith("'") || trimmedLine.startsWith("REM") || trimmedLine === "") {
+      if (
+        trimmedLine.startsWith("'") ||
+        trimmedLine.startsWith("REM") ||
+        trimmedLine === ""
+      ) {
         return;
       }
 
@@ -208,7 +359,12 @@ export class QB64PESyntaxService {
       this.checkLoopStructures(trimmedLine, lineNum, loopStack, errors);
 
       // Check SUB/FUNCTION structures
-      this.checkSubFunctionStructures(trimmedLine, lineNum, subFunctionStack, errors);
+      this.checkSubFunctionStructures(
+        trimmedLine,
+        lineNum,
+        subFunctionStack,
+        errors,
+      );
 
       // Check variable declarations
       this.checkVariableDeclarations(line, lineNum, warnings, suggestions);
@@ -222,10 +378,10 @@ export class QB64PESyntaxService {
    * Perform strict validation (includes all basic checks plus more)
    */
   private performStrictValidation(
-    lines: string[], 
-    errors: SyntaxError[], 
-    warnings: SyntaxWarning[], 
-    suggestions: string[]
+    lines: string[],
+    errors: SyntaxError[],
+    warnings: SyntaxWarning[],
+    suggestions: string[],
   ): void {
     // First perform basic validation
     this.performBasicValidation(lines, errors, warnings, suggestions);
@@ -233,13 +389,13 @@ export class QB64PESyntaxService {
     // Additional strict checks
     lines.forEach((line, index) => {
       const lineNum = index + 1;
-      
+
       // Check for undeclared variables (stricter)
       this.checkUndeclaredVariables(line, lineNum, warnings);
-      
+
       // Check for deprecated constructs
       this.checkDeprecatedConstructs(line, lineNum, warnings);
-      
+
       // Check for potential type mismatches
       this.checkTypeMismatches(line, lineNum, warnings);
     });
@@ -249,10 +405,10 @@ export class QB64PESyntaxService {
    * Perform best practices validation
    */
   private performBestPracticesValidation(
-    lines: string[], 
-    errors: SyntaxError[], 
-    warnings: SyntaxWarning[], 
-    suggestions: string[]
+    lines: string[],
+    errors: SyntaxError[],
+    warnings: SyntaxWarning[],
+    suggestions: string[],
   ): void {
     // Perform strict validation first
     this.performStrictValidation(lines, errors, warnings, suggestions);
@@ -264,103 +420,116 @@ export class QB64PESyntaxService {
   /**
    * Check for compatibility issues using known patterns
    */
-  private checkCompatibilityIssues(lines: string[], compatibilityIssues: CompatibilityIssue[]): void {
+  private checkCompatibilityIssues(
+    lines: string[],
+    compatibilityIssues: CompatibilityIssue[],
+  ): void {
     // Define compatibility patterns based on the JSON rules
     const patterns = [
       {
-        pattern: /FUNCTION\s+(\w+)\s*\([^)]*\)\s+AS\s+(INTEGER|LONG|SINGLE|DOUBLE|STRING|_BYTE|_INTEGER64|_FLOAT|_UNSIGNED)\b/gi,
-        severity: 'error' as const,
-        category: 'function_return_types',
-        message: 'Function return types must use type sigils, not AS clauses',
-        suggestion: 'Use FUNCTION {name}{sigil}({params}) instead of FUNCTION {name}({params}) AS {type}',
+        pattern:
+          /FUNCTION\s+(\w+)\s*\([^)]*\)\s+AS\s+(INTEGER|LONG|SINGLE|DOUBLE|STRING|_BYTE|_INTEGER64|_FLOAT|_UNSIGNED)\b/gi,
+        severity: "error" as const,
+        category: "function_return_types",
+        message: "Function return types must use type sigils, not AS clauses",
+        suggestion:
+          "Use FUNCTION {name}{sigil}({params}) instead of FUNCTION {name}({params}) AS {type}",
         examples: {
-          incorrect: 'FUNCTION name(params) AS INTEGER',
-          correct: 'FUNCTION name%(params)'
-        }
+          incorrect: "FUNCTION name(params) AS INTEGER",
+          correct: "FUNCTION name%(params)",
+        },
       },
       {
-        pattern: /FUNCTION\s+(\w+)\s*\([^)]*\)\s+AS\s+([A-Z][A-Z0-9_]*(?<!INTEGER|LONG|SINGLE|DOUBLE|STRING|_BYTE|_INTEGER64|_FLOAT|_UNSIGNED))\b/gi,
-        severity: 'error' as const,
-        category: 'function_return_types',
-        message: 'QB64PE does not support User-Defined Types (UDTs) as FUNCTION return values',
-        suggestion: 'Use SUB with BYREF parameter instead: SUB {name}({params}, result AS {type})',
+        pattern:
+          /FUNCTION\s+(\w+)\s*\([^)]*\)\s+AS\s+([A-Z][A-Z0-9_]*(?<!INTEGER|LONG|SINGLE|DOUBLE|STRING|_BYTE|_INTEGER64|_FLOAT|_UNSIGNED))\b/gi,
+        severity: "error" as const,
+        category: "function_return_types",
+        message:
+          "QB64PE does not support User-Defined Types (UDTs) as FUNCTION return values",
+        suggestion:
+          "Use SUB with BYREF parameter instead: SUB {name}({params}, result AS {type})",
         examples: {
-          incorrect: 'FUNCTION get_data() AS MyType',
-          correct: 'SUB get_data(result AS MyType)\n  \' populate result\nEND SUB'
-        }
+          incorrect: "FUNCTION get_data() AS MyType",
+          correct:
+            "SUB get_data(result AS MyType)\n  ' populate result\nEND SUB",
+        },
       },
       {
         pattern: /\$CONSOLE\s*:\s*OFF/gi,
-        severity: 'error' as const,
-        category: 'console_directives',
-        message: '$CONSOLE:OFF is not valid syntax',
-        suggestion: 'Use $CONSOLE or $CONSOLE:ONLY instead',
+        severity: "error" as const,
+        category: "console_directives",
+        message: "$CONSOLE:OFF is not valid syntax",
+        suggestion: "Use $CONSOLE or $CONSOLE:ONLY instead",
         examples: {
-          incorrect: '$CONSOLE:OFF',
-          correct: '$CONSOLE'
-        }
+          incorrect: "$CONSOLE:OFF",
+          correct: "$CONSOLE",
+        },
       },
       {
         pattern: /IF\s+[^\n]+\s+THEN\s+[^\n]+:\s*IF\s+[^\n]+\s+THEN/gi,
-        severity: 'warning' as const,
-        category: 'multi_statement_lines',
-        message: 'Chained IF statements on one line can cause parsing errors',
-        suggestion: 'Split IF statements onto separate lines',
+        severity: "warning" as const,
+        category: "multi_statement_lines",
+        message: "Chained IF statements on one line can cause parsing errors",
+        suggestion: "Split IF statements onto separate lines",
         examples: {
-          incorrect: 'IF r < 0 THEN r = 0: IF r > 255 THEN r = 255',
-          correct: 'IF r < 0 THEN r = 0\nIF r > 255 THEN r = 255'
-        }
+          incorrect: "IF r < 0 THEN r = 0: IF r > 255 THEN r = 255",
+          correct: "IF r < 0 THEN r = 0\nIF r > 255 THEN r = 255",
+        },
       },
       {
-        pattern: /DIM\s+\w+\s*\([^)]+\)\s+AS\s+\w+\s*,\s*\w+\s*\([^)]+\)\s+AS\s+\w+/gi,
-        severity: 'error' as const,
-        category: 'array_declarations',
-        message: 'Multiple array declarations with dimensions on one line not supported',
-        suggestion: 'Declare each array on a separate line',
+        pattern:
+          /DIM\s+\w+\s*\([^)]+\)\s+AS\s+\w+\s*,\s*\w+\s*\([^)]+\)\s+AS\s+\w+/gi,
+        severity: "error" as const,
+        category: "array_declarations",
+        message:
+          "Multiple array declarations with dimensions on one line not supported",
+        suggestion: "Declare each array on a separate line",
         examples: {
-          incorrect: 'DIM arr1(10) AS INTEGER, arr2(20) AS INTEGER',
-          correct: 'DIM arr1(10) AS INTEGER\nDIM arr2(20) AS INTEGER'
-        }
+          incorrect: "DIM arr1(10) AS INTEGER, arr2(20) AS INTEGER",
+          correct: "DIM arr1(10) AS INTEGER\nDIM arr2(20) AS INTEGER",
+        },
       },
       {
         pattern: /\b(_WORD\$|_TRIM\$)\b/gi,
-        severity: 'error' as const,
-        category: 'missing_functions',
-        message: 'Function does not exist in QB64PE',
-        suggestion: 'Use built-in string functions like INSTR, MID$, LEFT$, RIGHT$ instead',
+        severity: "error" as const,
+        category: "missing_functions",
+        message: "Function does not exist in QB64PE",
+        suggestion:
+          "Use built-in string functions like INSTR, MID$, LEFT$, RIGHT$ instead",
         examples: {
           incorrect: '_WORD$(line$, 1, " ")',
-          correct: 'Use INSTR and MID$ for string parsing'
-        }
+          correct: "Use INSTR and MID$ for string parsing",
+        },
       },
       {
         pattern: /\b(DEF\s+FN|TRON|TROFF|SETMEM|SIGNAL)\b/gi,
-        severity: 'error' as const,
-        category: 'legacy_keywords',
-        message: 'Legacy BASIC keyword not supported in QB64PE',
-        suggestion: 'Use modern QB64PE alternatives',
+        severity: "error" as const,
+        category: "legacy_keywords",
+        message: "Legacy BASIC keyword not supported in QB64PE",
+        suggestion: "Use modern QB64PE alternatives",
         examples: {
-          incorrect: 'DEF FN name(x) = x * 2',
-          correct: 'FUNCTION name%(x AS INTEGER)\n    name% = x * 2\nEND FUNCTION'
-        }
+          incorrect: "DEF FN name(x) = x * 2",
+          correct:
+            "FUNCTION name%(x AS INTEGER)\n    name% = x * 2\nEND FUNCTION",
+        },
       },
       {
         pattern: /\b(ON\s+PEN|PEN\s+ON|PEN\s+OFF|ON\s+UEVENT)\b/gi,
-        severity: 'error' as const,
-        category: 'device_access',
-        message: 'Device access keyword not supported in QB64PE',
-        suggestion: 'Use modern QB64PE input/output methods',
+        severity: "error" as const,
+        category: "device_access",
+        message: "Device access keyword not supported in QB64PE",
+        suggestion: "Use modern QB64PE input/output methods",
         examples: {
-          incorrect: 'ON PEN GOSUB handler',
-          correct: 'Use _MOUSEINPUT and _MOUSEBUTTON for mouse input'
-        }
-      }
+          incorrect: "ON PEN GOSUB handler",
+          correct: "Use _MOUSEINPUT and _MOUSEBUTTON for mouse input",
+        },
+      },
     ];
 
     lines.forEach((line, index) => {
       const lineNum = index + 1;
-      
-      patterns.forEach(patternDef => {
+
+      patterns.forEach((patternDef) => {
         patternDef.pattern.lastIndex = 0; // Reset regex state
         const match = patternDef.pattern.exec(line);
         if (match) {
@@ -372,7 +541,7 @@ export class QB64PESyntaxService {
             severity: patternDef.severity,
             category: patternDef.category,
             suggestion: patternDef.suggestion,
-            examples: patternDef.examples
+            examples: patternDef.examples,
           });
         }
       });
@@ -380,25 +549,135 @@ export class QB64PESyntaxService {
   }
 
   /**
+   * Check for variable naming mismatch between DIM AS and sigil usage (critical bug)
+   * Example: DIM x AS INTEGER creates 'x', but code using 'x%' creates a different variable
+   */
+  private checkVariableNamingMismatch(
+    lines: string[],
+    compatibilityIssues: CompatibilityIssue[],
+  ): void {
+    // Track variables declared with DIM AS (without sigil)
+    const declaredVars: Map<string, { line: number; type: string }> = new Map();
+
+    // Type sigils mapping
+    const typeSigils: Map<string, string> = new Map([
+      ["INTEGER", "%"],
+      ["LONG", "&"],
+      ["SINGLE", "!"],
+      ["DOUBLE", "#"],
+      ["STRING", "$"],
+      ["_INTEGER64", "&&"],
+      ["_BYTE", "%%"],
+      ["_UNSIGNED INTEGER", "%"],
+      ["_UNSIGNED LONG", "&"],
+    ]);
+
+    // Pass 1: Collect all DIM AS declarations
+    lines.forEach((line, index) => {
+      const lineNum = index + 1;
+      const trimmedLine = line.trim();
+
+      // Match DIM [SHARED] variableName AS type
+      const dimMatch = trimmedLine.match(
+        /^DIM\s+(?:SHARED\s+)?([A-Z_][A-Z0-9_]*)\s+AS\s+(INTEGER|LONG|SINGLE|DOUBLE|STRING|_BYTE|_INTEGER64|_UNSIGNED\s+(?:INTEGER|LONG))/i,
+      );
+      if (dimMatch) {
+        const varName = dimMatch[1].toUpperCase();
+        const varType = dimMatch[2].toUpperCase().replace(/\s+/g, " ");
+
+        // Check if variable name ends with a sigil (inconsistent)
+        const lastChar = varName.charAt(varName.length - 1);
+        if (["%", "&", "!", "#", "$"].includes(lastChar)) {
+          compatibilityIssues.push({
+            line: lineNum,
+            column: 1,
+            pattern: dimMatch[0],
+            message: `Variable declared with both AS clause and sigil - use one or the other`,
+            severity: "error",
+            category: "variable_naming_mismatch",
+            suggestion: `Remove sigil and use 'DIM ${varName.slice(0, -1)} AS ${varType}' OR use 'DIM ${varName}' without AS clause`,
+            examples: {
+              incorrect: `DIM COUNTER% AS INTEGER`,
+              correct: `DIM COUNTER AS INTEGER  ' or DIM COUNTER%`,
+            },
+          });
+        } else {
+          declaredVars.set(varName, { line: lineNum, type: varType });
+        }
+      }
+    });
+
+    // Pass 2: Check for sigil usage of variables declared with DIM AS
+    lines.forEach((line, index) => {
+      const lineNum = index + 1;
+
+      // Skip DIM lines (already processed)
+      if (line.trim().match(/^DIM\s+/i)) {
+        return;
+      }
+
+      // Look for variable references with sigils
+      // Note: Can't use \b after sigil since % etc are not word chars
+      const varPattern = /([A-Z_][A-Z0-9_]*[%&!#$]{1,2})(?=\s|=|\(|,|$|:)/gi;
+      let match;
+
+      while ((match = varPattern.exec(line)) !== null) {
+        const varWithSigil = match[1].toUpperCase();
+
+        // Extract base name and sigil
+        const sigilMatch = varWithSigil.match(
+          /^([A-Z_][A-Z0-9_]*)([%&!#$]{1,2})$/,
+        );
+        if (!sigilMatch) continue;
+
+        const baseName = sigilMatch[1];
+        const sigil = sigilMatch[2];
+
+        // Check if this base name was declared without sigil
+        const declaration = declaredVars.get(baseName);
+        if (declaration) {
+          const expectedSigil = typeSigils.get(declaration.type);
+
+          compatibilityIssues.push({
+            line: lineNum,
+            column: match.index + 1,
+            pattern: varWithSigil,
+            message: `Variable '${baseName}' declared with 'DIM AS ${declaration.type}' but referenced as '${varWithSigil}' - these are DIFFERENT variables`,
+            severity: "error",
+            category: "variable_naming_mismatch",
+            suggestion: expectedSigil
+              ? `Use '${baseName}${expectedSigil}' in DIM statement, or remove sigil in usage: change '${varWithSigil}' to '${baseName}'`
+              : `Remove sigil in usage: change '${varWithSigil}' to '${baseName}'`,
+            examples: {
+              incorrect: `DIM SHARED PALETTE_LOADER_COUNT AS INTEGER\n' later: PALETTE_LOADER_COUNT% = 0  ' WRONG - different variable!`,
+              correct: `DIM SHARED PALETTE_LOADER_COUNT% AS INTEGER\n' later: PALETTE_LOADER_COUNT% = 0  ' CORRECT - same variable`,
+            },
+          });
+        }
+      }
+    });
+  }
+
+  /**
    * Check for non-QB64PE syntax (VB, QBasic, etc.)
    */
   private checkNonQB64Syntax(
-    lines: string[], 
-    errors: SyntaxError[], 
-    warnings: SyntaxWarning[]
+    lines: string[],
+    errors: SyntaxError[],
+    warnings: SyntaxWarning[],
   ): void {
     lines.forEach((line, index) => {
       const lineNum = index + 1;
-      
-      this.nonQB64Constructs.forEach(construct => {
+
+      this.nonQB64Constructs.forEach((construct) => {
         const match = construct.pattern.exec(line);
         if (match) {
           warnings.push({
             line: lineNum,
             column: match.index + 1,
             message: construct.message,
-            rule: 'non-qb64pe-syntax',
-            suggestion: construct.suggestion
+            rule: "non-qb64pe-syntax",
+            suggestion: construct.suggestion,
           });
         }
       });
@@ -408,7 +687,11 @@ export class QB64PESyntaxService {
   /**
    * Check basic syntax errors
    */
-  private checkBasicSyntaxErrors(line: string, lineNum: number, errors: SyntaxError[]): void {
+  private checkBasicSyntaxErrors(
+    line: string,
+    lineNum: number,
+    errors: SyntaxError[],
+  ): void {
     // Check for unmatched quotes
     const quotes = line.match(/"/g);
     if (quotes && quotes.length % 2 !== 0) {
@@ -416,9 +699,9 @@ export class QB64PESyntaxService {
         line: lineNum,
         column: line.lastIndexOf('"') + 1,
         message: "Unmatched quote",
-        severity: 'error',
-        rule: 'unmatched-quotes',
-        suggestion: "Ensure all quotes are properly closed"
+        severity: "error",
+        rule: "unmatched-quotes",
+        suggestion: "Ensure all quotes are properly closed",
       });
     }
 
@@ -430,21 +713,21 @@ export class QB64PESyntaxService {
         line: lineNum,
         column: line.length,
         message: "Unmatched parentheses",
-        severity: 'error',
-        rule: 'unmatched-parentheses',
-        suggestion: "Check that all parentheses are properly matched"
+        severity: "error",
+        rule: "unmatched-parentheses",
+        suggestion: "Check that all parentheses are properly matched",
       });
     }
 
     // Check for invalid line continuation
-    if (line.trim().endsWith('_') && !line.trim().endsWith(' _')) {
+    if (line.trim().endsWith("_") && !line.trim().endsWith(" _")) {
       errors.push({
         line: lineNum,
-        column: line.lastIndexOf('_') + 1,
+        column: line.lastIndexOf("_") + 1,
         message: "Line continuation underscore must be preceded by space",
-        severity: 'error',
-        rule: 'invalid-line-continuation',
-        suggestion: "Add space before underscore for line continuation"
+        severity: "error",
+        rule: "invalid-line-continuation",
+        suggestion: "Add space before underscore for line continuation",
       });
     }
   }
@@ -453,52 +736,61 @@ export class QB64PESyntaxService {
    * Check loop structures
    */
   private checkLoopStructures(
-    trimmedLine: string, 
-    lineNum: number, 
-    loopStack: Array<{type: string, line: number}>, 
-    errors: SyntaxError[]
+    trimmedLine: string,
+    lineNum: number,
+    loopStack: Array<{ type: string; line: number }>,
+    errors: SyntaxError[],
   ): void {
-    if (trimmedLine.startsWith('FOR ')) {
-      loopStack.push({type: 'FOR', line: lineNum});
-    } else if (trimmedLine === 'NEXT' || trimmedLine.startsWith('NEXT ')) {
-      if (loopStack.length === 0 || loopStack[loopStack.length - 1].type !== 'FOR') {
+    if (trimmedLine.startsWith("FOR ")) {
+      loopStack.push({ type: "FOR", line: lineNum });
+    } else if (trimmedLine === "NEXT" || trimmedLine.startsWith("NEXT ")) {
+      if (
+        loopStack.length === 0 ||
+        loopStack[loopStack.length - 1].type !== "FOR"
+      ) {
         errors.push({
           line: lineNum,
           column: 1,
           message: "NEXT without matching FOR",
-          severity: 'error',
-          rule: 'unmatched-next',
-          suggestion: "Ensure every NEXT has a matching FOR"
+          severity: "error",
+          rule: "unmatched-next",
+          suggestion: "Ensure every NEXT has a matching FOR",
         });
       } else {
         loopStack.pop();
       }
-    } else if (trimmedLine.startsWith('WHILE ')) {
-      loopStack.push({type: 'WHILE', line: lineNum});
-    } else if (trimmedLine === 'WEND') {
-      if (loopStack.length === 0 || loopStack[loopStack.length - 1].type !== 'WHILE') {
+    } else if (trimmedLine.startsWith("WHILE ")) {
+      loopStack.push({ type: "WHILE", line: lineNum });
+    } else if (trimmedLine === "WEND") {
+      if (
+        loopStack.length === 0 ||
+        loopStack[loopStack.length - 1].type !== "WHILE"
+      ) {
         errors.push({
           line: lineNum,
           column: 1,
           message: "WEND without matching WHILE",
-          severity: 'error',
-          rule: 'unmatched-wend',
-          suggestion: "Ensure every WEND has a matching WHILE"
+          severity: "error",
+          rule: "unmatched-wend",
+          suggestion: "Ensure every WEND has a matching WHILE",
         });
       } else {
         loopStack.pop();
       }
-    } else if (trimmedLine.startsWith('DO')) {
-      loopStack.push({type: 'DO', line: lineNum});
-    } else if (trimmedLine.startsWith('LOOP')) {
-      if (loopStack.length === 0 || loopStack[loopStack.length - 1].type !== 'DO') {
+    } else if (trimmedLine.startsWith("DO")) {
+      loopStack.push({ type: "DO", line: lineNum });
+    } else if (trimmedLine.startsWith("LOOP")) {
+      if (
+        loopStack.length === 0 ||
+        loopStack[loopStack.length - 1].type !== "DO"
+      ) {
         errors.push({
           line: lineNum,
           column: 1,
           message: "LOOP without matching DO",
-          severity: 'error',
-          rule: 'unmatched-loop',
-          suggestion: "Ensure every LOOP has a matching DO"
+          severity: "error",
+          rule: "unmatched-loop",
+          suggestion: "Ensure every LOOP has a matching DO",
         });
       } else {
         loopStack.pop();
@@ -510,41 +802,47 @@ export class QB64PESyntaxService {
    * Check SUB/FUNCTION structures
    */
   private checkSubFunctionStructures(
-    trimmedLine: string, 
-    lineNum: number, 
-    subFunctionStack: Array<{type: string, name: string, line: number}>, 
-    errors: SyntaxError[]
+    trimmedLine: string,
+    lineNum: number,
+    subFunctionStack: Array<{ type: string; name: string; line: number }>,
+    errors: SyntaxError[],
   ): void {
-    if (trimmedLine.startsWith('SUB ')) {
+    if (trimmedLine.startsWith("SUB ")) {
       const match = trimmedLine.match(/SUB\s+(\w+)/);
-      const name = match ? match[1] : 'unnamed';
-      subFunctionStack.push({type: 'SUB', name, line: lineNum});
-    } else if (trimmedLine.startsWith('FUNCTION ')) {
+      const name = match ? match[1] : "unnamed";
+      subFunctionStack.push({ type: "SUB", name, line: lineNum });
+    } else if (trimmedLine.startsWith("FUNCTION ")) {
       const match = trimmedLine.match(/FUNCTION\s+(\w+)/);
-      const name = match ? match[1] : 'unnamed';
-      subFunctionStack.push({type: 'FUNCTION', name, line: lineNum});
-    } else if (trimmedLine === 'END SUB') {
-      if (subFunctionStack.length === 0 || subFunctionStack[subFunctionStack.length - 1].type !== 'SUB') {
+      const name = match ? match[1] : "unnamed";
+      subFunctionStack.push({ type: "FUNCTION", name, line: lineNum });
+    } else if (trimmedLine === "END SUB") {
+      if (
+        subFunctionStack.length === 0 ||
+        subFunctionStack[subFunctionStack.length - 1].type !== "SUB"
+      ) {
         errors.push({
           line: lineNum,
           column: 1,
           message: "END SUB without matching SUB",
-          severity: 'error',
-          rule: 'unmatched-end-sub',
-          suggestion: "Ensure every END SUB has a matching SUB"
+          severity: "error",
+          rule: "unmatched-end-sub",
+          suggestion: "Ensure every END SUB has a matching SUB",
         });
       } else {
         subFunctionStack.pop();
       }
-    } else if (trimmedLine === 'END FUNCTION') {
-      if (subFunctionStack.length === 0 || subFunctionStack[subFunctionStack.length - 1].type !== 'FUNCTION') {
+    } else if (trimmedLine === "END FUNCTION") {
+      if (
+        subFunctionStack.length === 0 ||
+        subFunctionStack[subFunctionStack.length - 1].type !== "FUNCTION"
+      ) {
         errors.push({
           line: lineNum,
           column: 1,
           message: "END FUNCTION without matching FUNCTION",
-          severity: 'error',
-          rule: 'unmatched-end-function',
-          suggestion: "Ensure every END FUNCTION has a matching FUNCTION"
+          severity: "error",
+          rule: "unmatched-end-function",
+          suggestion: "Ensure every END FUNCTION has a matching FUNCTION",
         });
       } else {
         subFunctionStack.pop();
@@ -560,28 +858,28 @@ export class QB64PESyntaxService {
    * Now uses comprehensive QB64PE_RESERVED_WORDS list from MCP keyword database
    */
   private checkVariableDeclarations(
-    line: string, 
-    lineNum: number, 
-    warnings: SyntaxWarning[], 
-    suggestions: string[]
+    line: string,
+    lineNum: number,
+    warnings: SyntaxWarning[],
+    suggestions: string[],
   ): void {
     const trimmedLine = line.trim().toUpperCase();
-    
+
     // Check for reserved keyword conflicts in DIM statements
-    if (trimmedLine.startsWith('DIM ')) {
+    if (trimmedLine.startsWith("DIM ")) {
       const dimPattern = /\bDIM\s+(?:SHARED\s+)?([A-Za-z][A-Za-z0-9_]*)/gi;
       let match;
       while ((match = dimPattern.exec(line)) !== null) {
         const varName = match[1];
-        
+
         // Use the comprehensive reserved words check from MCP keyword database
         if (isReservedWord(varName)) {
           warnings.push({
             line: lineNum,
             column: match.index + 1,
             message: `Variable name '${varName}' conflicts with reserved QB64PE keyword`,
-            rule: 'reserved-keyword-conflict',
-            suggestion: `Rename to '${varName}_var', '${varName}_value', or 'my_${varName}' to avoid conflict`
+            rule: "reserved-keyword-conflict",
+            suggestion: `Rename to '${varName}_var', '${varName}_value', or 'my_${varName}' to avoid conflict`,
           });
         }
       }
@@ -594,13 +892,16 @@ export class QB64PESyntaxService {
     if (match) {
       const varName = match[1];
       // Skip if it's a known keyword (use the comprehensive list)
-      if (!isReservedWord(varName) && !this.qb64Keywords.has(varName.toUpperCase())) {
+      if (
+        !isReservedWord(varName) &&
+        !this.qb64Keywords.has(varName.toUpperCase())
+      ) {
         warnings.push({
           line: lineNum,
           column: match.index + 1,
           message: `Variable '${varName}' used without explicit declaration`,
-          rule: 'implicit-declaration',
-          suggestion: `Consider adding 'DIM ${varName} AS <type>' before first use`
+          rule: "implicit-declaration",
+          suggestion: `Consider adding 'DIM ${varName} AS <type>' before first use`,
         });
       }
     }
@@ -610,31 +911,31 @@ export class QB64PESyntaxService {
    * Check for unclosed structures
    */
   private checkUnclosedStructures(
-    loopStack: Array<{type: string, line: number}>, 
-    subFunctionStack: Array<{type: string, name: string, line: number}>, 
-    errors: SyntaxError[]
+    loopStack: Array<{ type: string; line: number }>,
+    subFunctionStack: Array<{ type: string; name: string; line: number }>,
+    errors: SyntaxError[],
   ): void {
     // Check unclosed loops
-    loopStack.forEach(loop => {
+    loopStack.forEach((loop) => {
       errors.push({
         line: loop.line,
         column: 1,
         message: `Unclosed ${loop.type} loop`,
-        severity: 'error',
-        rule: 'unclosed-loop',
-        suggestion: `Add matching ${loop.type === 'FOR' ? 'NEXT' : loop.type === 'WHILE' ? 'WEND' : 'LOOP'}`
+        severity: "error",
+        rule: "unclosed-loop",
+        suggestion: `Add matching ${loop.type === "FOR" ? "NEXT" : loop.type === "WHILE" ? "WEND" : "LOOP"}`,
       });
     });
 
     // Check unclosed SUB/FUNCTION
-    subFunctionStack.forEach(subFunc => {
+    subFunctionStack.forEach((subFunc) => {
       errors.push({
         line: subFunc.line,
         column: 1,
         message: `Unclosed ${subFunc.type} '${subFunc.name}'`,
-        severity: 'error',
-        rule: 'unclosed-sub-function',
-        suggestion: `Add 'END ${subFunc.type}' to close ${subFunc.type} '${subFunc.name}'`
+        severity: "error",
+        rule: "unclosed-sub-function",
+        suggestion: `Add 'END ${subFunc.type}' to close ${subFunc.type} '${subFunc.name}'`,
       });
     });
   }
@@ -642,7 +943,11 @@ export class QB64PESyntaxService {
   /**
    * Check for undeclared variables (strict mode)
    */
-  private checkUndeclaredVariables(line: string, lineNum: number, warnings: SyntaxWarning[]): void {
+  private checkUndeclaredVariables(
+    line: string,
+    lineNum: number,
+    warnings: SyntaxWarning[],
+  ): void {
     // This would require more sophisticated analysis to track variable scope
     // For now, we'll implement a simplified version
   }
@@ -650,22 +955,35 @@ export class QB64PESyntaxService {
   /**
    * Check for deprecated constructs
    */
-  private checkDeprecatedConstructs(line: string, lineNum: number, warnings: SyntaxWarning[]): void {
+  private checkDeprecatedConstructs(
+    line: string,
+    lineNum: number,
+    warnings: SyntaxWarning[],
+  ): void {
     const deprecatedPatterns = [
-      {pattern: /\bDEF\s+FN/gi, message: "DEF FN is deprecated, use FUNCTION instead"},
-      {pattern: /\bGOSUB\b/gi, message: "GOSUB is discouraged, use SUB procedures instead"},
-      {pattern: /\bON\s+ERROR\s+RESUME\s+NEXT/gi, message: "Consider using structured error handling"}
+      {
+        pattern: /\bDEF\s+FN/gi,
+        message: "DEF FN is deprecated, use FUNCTION instead",
+      },
+      {
+        pattern: /\bGOSUB\b/gi,
+        message: "GOSUB is discouraged, use SUB procedures instead",
+      },
+      {
+        pattern: /\bON\s+ERROR\s+RESUME\s+NEXT/gi,
+        message: "Consider using structured error handling",
+      },
     ];
 
-    deprecatedPatterns.forEach(dep => {
+    deprecatedPatterns.forEach((dep) => {
       const match = dep.pattern.exec(line);
       if (match) {
         warnings.push({
           line: lineNum,
           column: match.index + 1,
           message: dep.message,
-          rule: 'deprecated-construct',
-          suggestion: "Consider using modern QB64PE alternatives"
+          rule: "deprecated-construct",
+          suggestion: "Consider using modern QB64PE alternatives",
         });
       }
     });
@@ -674,7 +992,11 @@ export class QB64PESyntaxService {
   /**
    * Check for type mismatches
    */
-  private checkTypeMismatches(line: string, lineNum: number, warnings: SyntaxWarning[]): void {
+  private checkTypeMismatches(
+    line: string,
+    lineNum: number,
+    warnings: SyntaxWarning[],
+  ): void {
     // Check for string/numeric mismatches
     const stringToNumeric = /(\w+\$)\s*=\s*(\d+)/g;
     const numericToString = /(\w+[%!#&]?)\s*=\s*"[^"]*"/g;
@@ -685,8 +1007,8 @@ export class QB64PESyntaxService {
         line: lineNum,
         column: match.index + 1,
         message: `Assigning numeric value to string variable '${match[1]}'`,
-        rule: 'type-mismatch',
-        suggestion: "Use STR$() to convert numeric to string"
+        rule: "type-mismatch",
+        suggestion: "Use STR$() to convert numeric to string",
       });
     }
 
@@ -695,8 +1017,8 @@ export class QB64PESyntaxService {
         line: lineNum,
         column: match.index + 1,
         message: `Assigning string value to numeric variable '${match[1]}'`,
-        rule: 'type-mismatch',
-        suggestion: "Use VAL() to convert string to numeric"
+        rule: "type-mismatch",
+        suggestion: "Use VAL() to convert string to numeric",
       });
     }
   }
@@ -704,7 +1026,11 @@ export class QB64PESyntaxService {
   /**
    * Check best practices
    */
-  private checkBestPractices(lines: string[], warnings: SyntaxWarning[], suggestions: string[]): void {
+  private checkBestPractices(
+    lines: string[],
+    warnings: SyntaxWarning[],
+    suggestions: string[],
+  ): void {
     let hasConsoleOrPrint = false;
     let hasErrorHandling = false;
     let hasComments = false;
@@ -714,12 +1040,12 @@ export class QB64PESyntaxService {
       const trimmedLine = line.trim().toUpperCase();
 
       // Check for console/print usage
-      if (trimmedLine.includes('PRINT') || trimmedLine.includes('$CONSOLE')) {
+      if (trimmedLine.includes("PRINT") || trimmedLine.includes("$CONSOLE")) {
         hasConsoleOrPrint = true;
       }
 
       // Check for error handling
-      if (trimmedLine.includes('ON ERROR')) {
+      if (trimmedLine.includes("ON ERROR")) {
         hasErrorHandling = true;
       }
 
@@ -734,8 +1060,8 @@ export class QB64PESyntaxService {
           line: lineNum,
           column: 121,
           message: "Line is very long (>120 characters)",
-          rule: 'line-length',
-          suggestion: "Consider breaking long lines for readability"
+          rule: "line-length",
+          suggestion: "Consider breaking long lines for readability",
         });
       }
 
@@ -747,8 +1073,8 @@ export class QB64PESyntaxService {
           line: lineNum,
           column: match.index + 1,
           message: `Magic number '${match[0]}' found`,
-          rule: 'magic-number',
-          suggestion: "Consider using a named constant"
+          rule: "magic-number",
+          suggestion: "Consider using a named constant",
         });
       }
     });
@@ -765,42 +1091,57 @@ export class QB64PESyntaxService {
   /**
    * Validate keywords in code lines
    */
-  private validateKeywords(lines: string[], keywordIssues: KeywordIssue[]): void {
+  private validateKeywords(
+    lines: string[],
+    keywordIssues: KeywordIssue[],
+  ): void {
     lines.forEach((line, lineIndex) => {
       const trimmedLine = line.trim();
-      
+
       // Skip comments and empty lines
-      if (trimmedLine === '' || trimmedLine.startsWith("'") || trimmedLine.startsWith("REM")) {
+      if (
+        trimmedLine === "" ||
+        trimmedLine.startsWith("'") ||
+        trimmedLine.startsWith("REM")
+      ) {
         return;
       }
-      
+
       // Extract potential keywords (simplified tokenization)
       const tokens = this.extractTokens(trimmedLine);
-      
+
       tokens.forEach((token, columnIndex) => {
         // Skip strings, numbers, and operators
-        if (this.isStringLiteral(token) || this.isNumericLiteral(token) || this.isOperator(token)) {
+        if (
+          this.isStringLiteral(token) ||
+          this.isNumericLiteral(token) ||
+          this.isOperator(token)
+        ) {
           return;
         }
-        
+
         // Check if token might be a keyword
-        const cleanToken = token.replace(/[(),$]/g, '').toUpperCase();
-        
+        const cleanToken = token.replace(/[(),$]/g, "").toUpperCase();
+
         if (cleanToken.length > 1 && /^[A-Z_][A-Z0-9_]*$/.test(cleanToken)) {
           const validation = this.keywordsService.validateKeyword(cleanToken);
-          
-          if (!validation.isValid && validation.suggestions && validation.suggestions.length > 0) {
+
+          if (
+            !validation.isValid &&
+            validation.suggestions &&
+            validation.suggestions.length > 0
+          ) {
             // Only flag potential keywords, not all unknown words
             const isLikelyKeyword = this.isLikelyKeyword(cleanToken);
-            
+
             if (isLikelyKeyword) {
               keywordIssues.push({
                 line: lineIndex + 1,
                 column: columnIndex + 1,
                 keyword: cleanToken,
-                message: `Unknown keyword "${cleanToken}". Did you mean one of: ${validation.suggestions.slice(0, 3).join(', ')}?`,
-                severity: 'warning',
-                suggestions: validation.suggestions.slice(0, 5)
+                message: `Unknown keyword "${cleanToken}". Did you mean one of: ${validation.suggestions.slice(0, 3).join(", ")}?`,
+                severity: "warning",
+                suggestions: validation.suggestions.slice(0, 5),
               });
             }
           } else if (validation.isValid && validation.keyword) {
@@ -811,22 +1152,25 @@ export class QB64PESyntaxService {
                 column: columnIndex + 1,
                 keyword: cleanToken,
                 message: `Keyword "${cleanToken}" is deprecated.`,
-                severity: 'warning',
+                severity: "warning",
                 suggestions: validation.keyword.related || [],
-                keywordInfo: validation.keyword
+                keywordInfo: validation.keyword,
               });
             }
-            
+
             // Check for version compatibility
-            if (validation.keyword.version === 'QB64PE' && !cleanToken.startsWith('_')) {
+            if (
+              validation.keyword.version === "QB64PE" &&
+              !cleanToken.startsWith("_")
+            ) {
               keywordIssues.push({
                 line: lineIndex + 1,
                 column: columnIndex + 1,
                 keyword: cleanToken,
                 message: `Keyword "${cleanToken}" is QB64PE specific and may not work in older BASIC versions.`,
-                severity: 'info',
+                severity: "info",
                 suggestions: [],
-                keywordInfo: validation.keyword
+                keywordInfo: validation.keyword,
               });
             }
           }
@@ -841,13 +1185,13 @@ export class QB64PESyntaxService {
   private extractTokens(line: string): string[] {
     // Simple tokenization - split by common delimiters but preserve strings
     const tokens: string[] = [];
-    let current = '';
+    let current = "";
     let inString = false;
-    let stringChar = '';
-    
+    let stringChar = "";
+
     for (let i = 0; i < line.length; i++) {
       const char = line[i];
-      
+
       if (!inString && (char === '"' || char === "'")) {
         if (current.trim()) tokens.push(current.trim());
         current = char;
@@ -856,29 +1200,31 @@ export class QB64PESyntaxService {
       } else if (inString && char === stringChar) {
         current += char;
         tokens.push(current);
-        current = '';
+        current = "";
         inString = false;
-        stringChar = '';
+        stringChar = "";
       } else if (!inString && /[\s,();:=<>+\-*/\\^]/.test(char)) {
         if (current.trim()) tokens.push(current.trim());
         if (char.trim()) tokens.push(char);
-        current = '';
+        current = "";
       } else {
         current += char;
       }
     }
-    
+
     if (current.trim()) tokens.push(current.trim());
-    
-    return tokens.filter(token => token.length > 0);
+
+    return tokens.filter((token) => token.length > 0);
   }
 
   /**
    * Check if a token is a string literal
    */
   private isStringLiteral(token: string): boolean {
-    return (token.startsWith('"') && token.endsWith('"')) || 
-           (token.startsWith("'") && token.endsWith("'"));
+    return (
+      (token.startsWith('"') && token.endsWith('"')) ||
+      (token.startsWith("'") && token.endsWith("'"))
+    );
   }
 
   /**
@@ -900,33 +1246,39 @@ export class QB64PESyntaxService {
    */
   private isLikelyKeyword(token: string): boolean {
     // Keywords are typically all caps or start with underscore
-    return token === token.toUpperCase() && 
-           (token.startsWith('_') || 
-            token.length >= 3 || 
-            ['IF', 'DO', 'TO', 'AS', 'OR'].includes(token));
+    return (
+      token === token.toUpperCase() &&
+      (token.startsWith("_") ||
+        token.length >= 3 ||
+        ["IF", "DO", "TO", "AS", "OR"].includes(token))
+    );
   }
 
   /**
    * Calculate syntax quality score
    */
-  private calculateSyntaxScore(lines: string[], errors: SyntaxError[], warnings: SyntaxWarning[]): number {
+  private calculateSyntaxScore(
+    lines: string[],
+    errors: SyntaxError[],
+    warnings: SyntaxWarning[],
+  ): number {
     let score = 100;
-    
+
     // Deduct points for errors and warnings
-    score -= errors.filter(e => e.severity === 'error').length * 10;
-    score -= errors.filter(e => e.severity === 'warning').length * 5;
+    score -= errors.filter((e) => e.severity === "error").length * 10;
+    score -= errors.filter((e) => e.severity === "warning").length * 5;
     score -= warnings.length * 2;
 
     // Bonus points for good practices
-    const codeLines = lines.filter(line => 
-      line.trim() !== '' && 
-      !line.trim().startsWith("'") && 
-      !line.trim().startsWith("REM")
+    const codeLines = lines.filter(
+      (line) =>
+        line.trim() !== "" &&
+        !line.trim().startsWith("'") &&
+        !line.trim().startsWith("REM"),
     ).length;
 
-    const commentLines = lines.filter(line => 
-      line.trim().startsWith("'") || 
-      line.trim().startsWith("REM")
+    const commentLines = lines.filter(
+      (line) => line.trim().startsWith("'") || line.trim().startsWith("REM"),
     ).length;
 
     if (commentLines > 0 && codeLines > 0) {

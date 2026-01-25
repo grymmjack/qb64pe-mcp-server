@@ -3,18 +3,18 @@ export interface DebuggingSession {
     projectPath: string;
     sourceCode: string;
     compiledExecutable?: string;
-    debugMode: 'automated' | 'interactive' | 'hybrid';
+    debugMode: "automated" | "interactive" | "hybrid";
     startTime: Date;
     lastActivity: Date;
     issues: DebuggingIssue[];
     solutions: DebuggingSolution[];
-    status: 'active' | 'completed' | 'failed' | 'timeout';
-    executionMode: 'console' | 'graphics' | 'mixed';
+    status: "active" | "completed" | "failed" | "timeout";
+    executionMode: "console" | "graphics" | "mixed";
 }
 export interface DebuggingIssue {
     id: string;
-    type: 'console_visibility' | 'file_handle' | 'graphics_context' | 'process_management' | 'flow_control' | 'compilation' | 'runtime';
-    severity: 'critical' | 'high' | 'medium' | 'low';
+    type: "console_visibility" | "file_handle" | "graphics_context" | "process_management" | "flow_control" | "compilation" | "runtime";
+    severity: "critical" | "high" | "medium" | "low";
     description: string;
     location?: {
         line?: number;
@@ -28,7 +28,7 @@ export interface DebuggingIssue {
 }
 export interface DebuggingSolution {
     issueId: string;
-    strategy: 'code_injection' | 'template_replacement' | 'configuration_change' | 'manual_intervention';
+    strategy: "code_injection" | "template_replacement" | "configuration_change" | "manual_intervention";
     priority: 1 | 2 | 3 | 4 | 5;
     description: string;
     implementation: {

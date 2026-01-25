@@ -70,6 +70,7 @@ const session_problems_tools_js_1 = require("./tools/session-problems-tools.js")
 const project_build_context_tools_js_1 = require("./tools/project-build-context-tools.js");
 const file_structure_tools_js_1 = require("./tools/file-structure-tools.js");
 const wiki_platform_tools_js_1 = require("./tools/wiki-platform-tools.js");
+const mouse_input_tools_js_1 = require("./tools/mouse-input-tools.js");
 const tool_discovery_js_1 = require("./utils/tool-discovery.js");
 /**
  * Enhanced MCP Server with automatic tool discovery
@@ -297,6 +298,7 @@ class QB64PEMCPServer {
         (0, project_build_context_tools_js_1.registerProjectBuildContextTools)(this.server, services);
         (0, file_structure_tools_js_1.registerFileStructureTools)(this.server, services);
         (0, wiki_platform_tools_js_1.registerWikiPlatformTools)(this.server, services);
+        (0, mouse_input_tools_js_1.registerMouseInputTools)(this.server, services);
     }
     async setupResources() {
         // QB64PE wiki base resource

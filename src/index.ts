@@ -33,6 +33,7 @@ import { registerSessionProblemsTools } from "./tools/session-problems-tools.js"
 import { registerProjectBuildContextTools } from "./tools/project-build-context-tools.js";
 import { registerFileStructureTools } from "./tools/file-structure-tools.js";
 import { registerWikiPlatformTools } from "./tools/wiki-platform-tools.js";
+import { registerMouseInputTools } from "./tools/mouse-input-tools.js";
 import { ServiceContainer } from "./utils/tool-types.js";
 import { toolDiscoveryManager } from "./utils/tool-discovery.js";
 
@@ -57,7 +58,7 @@ class ToolDiscoveryMCPServer extends McpServer {
   private wrapRegisterTool(
     name: string,
     config: any,
-    handler: (args: any, extra: any) => Promise<any>
+    handler: (args: any, extra: any) => Promise<any>,
   ): void {
     // Register tool in discovery manager
     const category = this.inferCategoryFromToolName(name);
@@ -231,7 +232,7 @@ class QB64PEMCPServer {
     this.screenshotWatcher.on("analysis-complete", (analysisResult: any) => {
       // Screenshot analysis completed - feedback can be generated via feedback service
       console.error(
-        `Screenshot analysis completed: ${analysisResult.screenshotPath}`
+        `Screenshot analysis completed: ${analysisResult.screenshotPath}`,
       );
     });
   }
@@ -284,6 +285,7 @@ class QB64PEMCPServer {
     registerProjectBuildContextTools(this.server, services);
     registerFileStructureTools(this.server, services);
     registerWikiPlatformTools(this.server, services);
+    registerMouseInputTools(this.server, services);
   }
 
   private async setupResources(): Promise<void> {
@@ -306,7 +308,7 @@ class QB64PEMCPServer {
             },
           ],
         };
-      }
+      },
     );
 
     // Compiler reference resource
@@ -328,7 +330,7 @@ class QB64PEMCPServer {
             },
           ],
         };
-      }
+      },
     );
 
     // Compatibility documentation resource
@@ -382,7 +384,7 @@ Use the tools above to get detailed information and solutions for specific issue
             ],
           };
         }
-      }
+      },
     );
 
     // QB64PE keywords base resource
@@ -416,11 +418,11 @@ Use the tools above to get detailed information and solutions for specific issue
                         };
                         return acc;
                       },
-                      {} as any
+                      {} as any,
                     ),
                   },
                   null,
-                  2
+                  2,
                 ),
               },
             ],
@@ -435,7 +437,7 @@ Use the tools above to get detailed information and solutions for specific issue
             ],
           };
         }
-      }
+      },
     );
 
     // Keywords by category resource
@@ -460,7 +462,7 @@ Use the tools above to get detailed information and solutions for specific issue
                   text: JSON.stringify(
                     { error: "Category not specified" },
                     null,
-                    2
+                    2,
                   ),
                 },
               ],
@@ -488,7 +490,7 @@ Use the tools above to get detailed information and solutions for specific issue
                     })),
                   },
                   null,
-                  2
+                  2,
                 ),
               },
             ],
@@ -503,7 +505,7 @@ Use the tools above to get detailed information and solutions for specific issue
             ],
           };
         }
-      }
+      },
     );
 
     // Individual keyword resource
@@ -528,7 +530,7 @@ Use the tools above to get detailed information and solutions for specific issue
                   text: JSON.stringify(
                     { error: "Keyword not specified" },
                     null,
-                    2
+                    2,
                   ),
                 },
               ],
@@ -555,7 +557,7 @@ Use the tools above to get detailed information and solutions for specific issue
             ],
           };
         }
-      }
+      },
     );
 
     // QB64PE execution monitoring resource
@@ -599,7 +601,7 @@ Use the tools above to get detailed information and solutions for specific issue
             ],
           };
         }
-      }
+      },
     );
 
     // QB64PE installation guidance resource
@@ -619,7 +621,7 @@ Use the tools above to get detailed information and solutions for specific issue
           const installation =
             await this.installationService.detectInstallation();
           const config = this.installationService.getPathConfiguration(
-            installation.installPath
+            installation.installPath,
           );
 
           const content = `${report}
@@ -688,7 +690,7 @@ Use the MCP tools for automated detection and configuration assistance.`;
             ],
           };
         }
-      }
+      },
     );
 
     // Agent Intelligence Guide resource
@@ -707,7 +709,7 @@ Use the MCP tools for automated detection and configuration assistance.`;
           const { join } = await import("path");
           const guideContent = await readFile(
             join(process.cwd(), "AGENT_INTELLIGENCE_GUIDE.md"),
-            "utf-8"
+            "utf-8",
           );
           return {
             contents: [
@@ -734,7 +736,7 @@ Use the MCP tools for automated detection and configuration assistance.`;
             ],
           };
         }
-      }
+      },
     );
 
     // QB64PE porting documentation resource
@@ -769,7 +771,7 @@ ${dialectInfo
 
 **Conversion Rules:**
 ${d.rules.map((rule) => `- ${rule}`).join("\n")}
-`
+`,
   )
   .join("\n")}
 
@@ -904,7 +906,7 @@ Use the MCP porting tools for automated assistance with these transformations.`;
             ],
           };
         }
-      }
+      },
     );
   }
 
@@ -925,7 +927,7 @@ Use the MCP porting tools for automated assistance with these transformations.`;
             .string()
             .optional()
             .describe(
-              "Comma-separated list of areas to focus the review on: syntax, performance, best-practices, cross-platform, debugging"
+              "Comma-separated list of areas to focus the review on: syntax, performance, best-practices, cross-platform, debugging",
             ),
         },
       },
@@ -953,7 +955,7 @@ Ensure all suggestions are specific to QB64PE and not other BASIC dialects.`,
             },
           },
         ],
-      })
+      }),
     );
 
     // Debugging helper prompt
@@ -997,7 +999,7 @@ Focus specifically on QB64PE debugging techniques and tools.`,
             },
           },
         ],
-      })
+      }),
     );
 
     // Execution monitoring prompt
@@ -1048,7 +1050,7 @@ Please provide:
             },
           },
         ],
-      })
+      }),
     );
 
     // Enhanced debugging prompt
@@ -1120,7 +1122,7 @@ ${platform ? `**Platform:** ${platform}\n` : ""}
             },
           },
         ],
-      })
+      }),
     );
 
     // QBasic to QB64PE porting prompt
@@ -1140,7 +1142,7 @@ ${platform ? `**Platform:** ${platform}\n` : ""}
             .string()
             .optional()
             .describe(
-              "Whether to preserve original formatting and comments (true/false)"
+              "Whether to preserve original formatting and comments (true/false)",
             ),
         },
       },
@@ -1179,7 +1181,7 @@ ${preserveOriginal === "true" ? "Please preserve original comments and structure
             },
           },
         ],
-      })
+      }),
     );
 
     // Compilation error analysis prompt - NEW!
@@ -1193,7 +1195,7 @@ ${preserveOriginal === "true" ? "Please preserve original comments and structure
           terminalOutput: z
             .string()
             .describe(
-              "Complete terminal output from failed QB64PE compilation"
+              "Complete terminal output from failed QB64PE compilation",
             ),
           sourceFilePath: z
             .string()
@@ -1202,7 +1204,7 @@ ${preserveOriginal === "true" ? "Please preserve original comments and structure
             .string()
             .optional()
             .describe(
-              "Additional context about what the user was trying to do"
+              "Additional context about what the user was trying to do",
             ),
         },
       },
@@ -1329,7 +1331,7 @@ Use these tools in your autonomous workflow:
             },
           },
         ],
-      })
+      }),
     );
 
     // Build context preservation prompt
@@ -1440,7 +1442,7 @@ This ensures the next conversation can immediately resume with correct build par
             },
           },
         ],
-      })
+      }),
     );
   }
 
@@ -1595,25 +1597,25 @@ This ensures the next conversation can immediately resume with correct build par
    */
   private getCompatibilityRecommendations(
     result: any,
-    dialect: string
+    dialect: string,
   ): string[] {
     const recommendations: string[] = [];
 
     if (result.errors.length > 0) {
       recommendations.push(
-        "Critical errors found - manual review required before testing"
+        "Critical errors found - manual review required before testing",
       );
     }
 
     if (result.warnings.some((w: string) => w.includes("multi-statement"))) {
       recommendations.push(
-        "Split multi-statement lines for better QB64PE compatibility"
+        "Split multi-statement lines for better QB64PE compatibility",
       );
     }
 
     if (result.warnings.some((w: string) => w.includes("array"))) {
       recommendations.push(
-        "Review array declarations and separate multi-array statements"
+        "Review array declarations and separate multi-array statements",
       );
     }
 
@@ -1623,15 +1625,15 @@ This ensures the next conversation can immediately resume with correct build par
 
     if (dialect !== "qbasic") {
       recommendations.push(
-        `Consider ${dialect}-specific compatibility issues during testing`
+        `Consider ${dialect}-specific compatibility issues during testing`,
       );
     }
 
     recommendations.push(
-      "Test program incrementally - start with basic functionality"
+      "Test program incrementally - start with basic functionality",
     );
     recommendations.push(
-      "Use QB64PE debugging features ($CONSOLE, PRINT statements)"
+      "Use QB64PE debugging features ($CONSOLE, PRINT statements)",
     );
 
     return recommendations;
@@ -1674,43 +1676,43 @@ This ensures the next conversation can immediately resume with correct build par
 
     if (session.issues.length === 0) {
       recommendations.push(
-        "No critical issues detected - code appears ready for testing"
+        "No critical issues detected - code appears ready for testing",
       );
     } else {
       const criticalIssues = session.issues.filter(
-        (i: any) => i.severity === "critical"
+        (i: any) => i.severity === "critical",
       );
       const highIssues = session.issues.filter(
-        (i: any) => i.severity === "high"
+        (i: any) => i.severity === "high",
       );
 
       if (criticalIssues.length > 0) {
         recommendations.push(
-          `Address ${criticalIssues.length} critical issue(s) before testing`
+          `Address ${criticalIssues.length} critical issue(s) before testing`,
         );
       }
 
       if (highIssues.length > 0) {
         recommendations.push(
-          `Review ${highIssues.length} high-priority issue(s) for better reliability`
+          `Review ${highIssues.length} high-priority issue(s) for better reliability`,
         );
       }
     }
 
     if (session.executionMode === "graphics") {
       recommendations.push(
-        "Graphics program detected - expect window interaction, use timeouts"
+        "Graphics program detected - expect window interaction, use timeouts",
       );
     } else if (session.executionMode === "mixed") {
       recommendations.push(
-        "Mixed mode program - monitor console output and graphics window"
+        "Mixed mode program - monitor console output and graphics window",
       );
     }
 
     const autoFixableIssues = session.issues.filter((i: any) => i.autoFixable);
     if (autoFixableIssues.length > 0) {
       recommendations.push(
-        `${autoFixableIssues.length} issue(s) can be auto-fixed with enhance_qb64pe_code_for_debugging`
+        `${autoFixableIssues.length} issue(s) can be auto-fixed with enhance_qb64pe_code_for_debugging`,
       );
     }
 
@@ -1726,7 +1728,7 @@ This ensures the next conversation can immediately resume with correct build par
     const unresolvedIssues = session.issues.filter((i: any) => !i.resolved);
     if (unresolvedIssues.length > 0) {
       actions.push(
-        "Apply debugging enhancements to resolve outstanding issues"
+        "Apply debugging enhancements to resolve outstanding issues",
       );
     }
 
@@ -1735,7 +1737,7 @@ This ensures the next conversation can immediately resume with correct build par
       new Date().getTime() - session.startTime.getTime() > 300000
     ) {
       actions.push(
-        "Session has been active for over 5 minutes - consider closing if completed"
+        "Session has been active for over 5 minutes - consider closing if completed",
       );
     }
 
@@ -1744,7 +1746,7 @@ This ensures the next conversation can immediately resume with correct build par
       !session.solutions.some((s: any) => s.strategy === "code_injection")
     ) {
       actions.push(
-        "Graphics program should use enhanced debugging for timeout management"
+        "Graphics program should use enhanced debugging for timeout management",
       );
     }
 
@@ -1755,7 +1757,7 @@ This ensures the next conversation can immediately resume with correct build par
    * Get execution mode distribution for sessions
    */
   private getExecutionModeDistribution(
-    sessions: any[]
+    sessions: any[],
   ): Record<string, number> {
     const distribution: Record<string, number> = {
       console: 0,

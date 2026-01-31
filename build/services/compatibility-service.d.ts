@@ -11,6 +11,32 @@ export interface CompatibilityIssue {
         correct: string;
     };
 }
+export interface KeyboardBufferSafetyIssue {
+    line: number;
+    column: number;
+    pattern: string;
+    message: string;
+    suggestion: string;
+    riskLevel: "high" | "medium" | "low";
+}
+export interface KeyboardBufferSafetyResult {
+    hasIssues: boolean;
+    issues: KeyboardBufferSafetyIssue[];
+    suggestions: string[];
+    bestPractices: string[];
+    summary: {
+        totalIssues: number;
+        highRisk: number;
+        mediumRisk: number;
+        lowRisk: number;
+        keydownUsages: number;
+        inkeyUsages: number;
+        bufferDrains: number;
+        ctrlModifierChecks: number;
+        altModifierChecks: number;
+        shiftModifierChecks: number;
+    };
+}
 export interface CompatibilityRule {
     pattern: RegExp;
     severity: "error" | "warning" | "info";
@@ -76,6 +102,19 @@ export declare class QB64PECompatibilityService {
      * Get specific debugging guidance for an issue
      */
     private getSpecificDebuggingGuidance;
+    /**
+     * Keyboard buffer safety issue detected during validation
+     */
+    private createKeyboardBufferIssue;
+    /**
+     * Validate keyboard buffer safety in QB64PE code
+     * Detects potential keyboard buffer leakage issues that can cause:
+     * - CTRL+key combinations producing ASCII control characters
+     * - _KEYDOWN() checks without buffer consumption
+     * - INKEY$ capturing unintended control characters
+     * - Multiple handlers processing the same keystroke
+     */
+    validateKeyboardBufferSafety(code: string): Promise<KeyboardBufferSafetyResult>;
     /**
      * Get platform compatibility information
      */

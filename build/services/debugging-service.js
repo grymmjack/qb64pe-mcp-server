@@ -163,30 +163,26 @@ class QB64PEDebuggingService {
             code = code.replace(/\$CONSOLE(?!:)/g, "$CONSOLE:ONLY");
             modifications.push("Updated $CONSOLE to $CONSOLE:ONLY for shell redirection compatibility");
         }
-        // Add explicit console activation for Windows
+        // Add explicit logging setup with _LOGINFO
         const consoleActivation = `
-' === DEBUGGING ENHANCEMENT: Console Management ===
-$IF WIN THEN
-_CONSOLE ON
-$END IF
-
+' === DEBUGGING ENHANCEMENT: Logging System ===
 CONST DEBUG_MODE = 1
 CONST AUTO_TEST_DELAY = ${config.timeoutSeconds / 10}
 
 SUB DebugPause (message AS STRING)
     IF DEBUG_MODE = 1 THEN
-        PRINT message + " (auto-continuing in " + STR$(AUTO_TEST_DELAY) + "s...)"
+        _LOGINFO message + " (auto-continuing in " + STR$(AUTO_TEST_DELAY) + "s...)"
         _DELAY AUTO_TEST_DELAY
     ELSE
-        PRINT message
+        _LOGINFO message
         SLEEP
     END IF
 END SUB
 
 SUB DebugExit (message AS STRING)
-    PRINT message
+    _LOGINFO message
     IF DEBUG_MODE = 1 THEN
-        PRINT "Auto-exiting in " + STR$(AUTO_TEST_DELAY) + " seconds..."
+        _LOGINFO "Auto-exiting in " + STR$(AUTO_TEST_DELAY) + " seconds..."
         _DELAY AUTO_TEST_DELAY
     ELSE
         PRINT "Press any key to exit..."
@@ -697,15 +693,15 @@ CALL ScreenshotInit
                     issueId: issue.id,
                     strategy: "code_injection",
                     priority: 1,
-                    description: "Inject console management system with $CONSOLE directive and Windows console activation",
+                    description: "Inject logging system using QB64PE's built-in _LOGINFO functions",
                     implementation: {
                         codeChanges: [
-                            "Add $CONSOLE metacommand",
-                            "Add _CONSOLE ON for Windows compatibility",
+                            "Add _LOGINFO calls for debug output",
+                            "Use _LOGERROR for error reporting with stacktraces",
                             "Add DEBUG_MODE constant for flow control",
                         ],
                     },
-                    rationale: "QB64PE programs need explicit console activation to ensure output visibility",
+                    rationale: "QB64PE programs should use _LOGINFO for proper logging without disrupting program flow",
                 });
                 break;
             case "flow_control":
@@ -784,16 +780,24 @@ CALL ScreenshotInit
 
 ## Core Debugging Issues and Solutions
 
-### 1. Console Output and Program Execution Issues
-**Problem**: Programs exit immediately without showing output
-**Solution**: Use debugging service's console management system
+### 1. Debug Output and Logging Issues
+**Problem**: Need debug output without disrupting program flow
+**Solution**: Use QB64PE's built-in logging system
 \`\`\`basic
-' Auto-injected by debugging service:
-$CONSOLE
-$IF WIN THEN
-_CONSOLE ON
-$END IF
-CONST DEBUG_MODE = 1
+' Use _LOGINFO for debug output:
+_LOGINFO "Starting initialization"
+_LOGINFO "Variable x = " + STR$(x)
+
+' Use _LOGERROR for errors with automatic stacktrace:
+_LOGERROR "Critical error occurred"
+' Output includes full call stack showing SUB/FUNCTION hierarchy:
+' [0.12100] ERROR QB64 MySub: 5: Critical error occurred
+' #1 [0x00007FF6664AFA7E] in MySub() (QB64)
+' #2 [0x00007FF6664AF891] in Main QB64 code
+
+' Other logging levels:
+_LOGWARN "Warning: Using default value"  ' Warnings
+_LOGTRACE "Entering loop iteration"      ' Detailed traces
 \`\`\`
 
 ### 2. File Handle and Resource Management Issues  

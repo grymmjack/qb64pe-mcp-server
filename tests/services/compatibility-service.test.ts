@@ -429,4 +429,121 @@ describe('QB64PECompatibilityService', () => {
       expect(declareIssue?.suggestion).toContain('DECLARE LIBRARY');
     });
   });
+
+  describe('validateKeyboardBufferSafety', () => {
+    it('should detect _KEYDOWN(27) without buffer drain', async () => {
+      const code = `
+SUB HandleKeys
+  IF _KEYDOWN(27) THEN
+    EXIT SUB
+  END IF
+END SUB`;
+      const result = await service.validateKeyboardBufferSafety(code);
+      expect(result.hasIssues).toBe(true);
+      expect(result.issues.length).toBeGreaterThan(0);
+      const escIssue = result.issues.find(i => i.pattern.includes('_KEYDOWN(27)'));
+      expect(escIssue).toBeDefined();
+    });
+
+    it('should not flag code with proper buffer drain', async () => {
+      const code = `
+SUB HandleKeys
+  IF _KEYDOWN(27) THEN
+    DO WHILE _KEYHIT: LOOP
+    EXIT SUB
+  END IF
+END SUB`;
+      const result = await service.validateKeyboardBufferSafety(code);
+      const escIssues = result.issues.filter(i => i.pattern.includes('_KEYDOWN(27)'));
+      expect(escIssues.length).toBe(0);
+    });
+
+    it('should detect CTRL modifier check without buffer drain', async () => {
+      const code = `
+SUB HandleKeys
+  IF _KEYDOWN(100305) THEN
+    ' CTRL is held
+    k$ = INKEY$
+  END IF
+END SUB`;
+      const result = await service.validateKeyboardBufferSafety(code);
+      expect(result.summary.ctrlModifierChecks).toBeGreaterThan(0);
+    });
+
+    it('should detect INKEY$ after CTRL check without drain', async () => {
+      const code = `
+SUB HandleKeys
+  IF _KEYDOWN(100305) THEN
+    k$ = INKEY$
+    IF k$ = CHR$(3) THEN SYSTEM
+  END IF
+END SUB`;
+      const result = await service.validateKeyboardBufferSafety(code);
+      expect(result.summary.inkeyUsages).toBeGreaterThan(0);
+    });
+
+    it('should return summary statistics', async () => {
+      const code = `
+DO
+  IF _KEYDOWN(27) THEN EXIT DO
+  k$ = INKEY$
+LOOP`;
+      const result = await service.validateKeyboardBufferSafety(code);
+      expect(result.summary).toBeDefined();
+      expect(result.summary.keydownUsages).toBeDefined();
+      expect(result.summary.inkeyUsages).toBeDefined();
+      expect(result.summary.bufferDrains).toBeDefined();
+    });
+
+    it('should provide best practices', async () => {
+      const code = 'k$ = INKEY$';
+      const result = await service.validateKeyboardBufferSafety(code);
+      expect(result.bestPractices).toBeDefined();
+      expect(result.bestPractices.length).toBeGreaterThan(0);
+    });
+
+    it('should handle empty code', async () => {
+      const result = await service.validateKeyboardBufferSafety('');
+      expect(result.hasIssues).toBe(false);
+      expect(result.issues.length).toBe(0);
+    });
+
+    it('should skip comments', async () => {
+      const code = `
+' IF _KEYDOWN(27) THEN EXIT SUB
+REM Another comment with _KEYDOWN(27)`;
+      const result = await service.validateKeyboardBufferSafety(code);
+      expect(result.summary.keydownUsages).toBe(0);
+    });
+
+    it('should detect EXIT SUB after _KEYDOWN without buffer drain', async () => {
+      const code = `
+SUB HandleInput
+  IF _KEYDOWN(65) THEN
+    ' Handle A key
+    EXIT SUB
+  END IF
+END SUB`;
+      const result = await service.validateKeyboardBufferSafety(code);
+      const exitIssue = result.issues.find(i => i.pattern.includes('EXIT'));
+      expect(exitIssue).toBeDefined();
+    });
+
+    it('should suggest buffer drain pattern', async () => {
+      const code = `IF _KEYDOWN(27) THEN END`;
+      const result = await service.validateKeyboardBufferSafety(code);
+      if (result.issues.length > 0) {
+        expect(result.issues[0].suggestion).toContain('KEYHIT');
+      }
+    });
+
+    it('should provide control character reference in best practices', async () => {
+      const code = `
+IF _KEYDOWN(100305) THEN
+  k$ = INKEY$
+END IF`;
+      const result = await service.validateKeyboardBufferSafety(code);
+      expect(result.bestPractices.some(p => p.includes('CTRL') || p.includes('buffer'))).toBe(true);
+    });
+  });
 });

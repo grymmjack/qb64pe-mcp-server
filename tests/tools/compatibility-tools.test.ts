@@ -48,9 +48,9 @@ describe('Compatibility Tools', () => {
       expect(mockServer.registerTool).toHaveBeenCalled();
     });
 
-    it('should register exactly 3 compatibility tools', () => {
+    it('should register exactly 4 compatibility tools', () => {
       registerCompatibilityTools(mockServer, services);
-      expect(mockServer.registerTool).toHaveBeenCalledTimes(3);
+      expect(mockServer.registerTool).toHaveBeenCalledTimes(4);
     });
 
     it('should register all expected tool names', () => {
@@ -60,6 +60,7 @@ describe('Compatibility Tools', () => {
       expect(toolNames).toContain('validate_qb64pe_compatibility');
       expect(toolNames).toContain('search_qb64pe_compatibility');
       expect(toolNames).toContain('get_qb64pe_best_practices');
+      expect(toolNames).toContain('validate_keyboard_buffer_safety');
     });
   });
 
@@ -270,6 +271,93 @@ describe('Compatibility Tools', () => {
       await handler!({ topic: 'syntax' });
       
       expect(createMCPError).toHaveBeenCalledWith(error, 'getting best practices');
+    });
+  });
+
+  describe('validate_keyboard_buffer_safety', () => {
+    it('should validate keyboard buffer safety successfully', async () => {
+      registerCompatibilityTools(mockServer, services);
+      const handler = registeredTools.get('validate_keyboard_buffer_safety');
+      expect(handler).toBeDefined();
+      
+      const mockResult = {
+        hasIssues: true,
+        issues: [
+          {
+            line: 10,
+            column: 5,
+            pattern: '_KEYDOWN(27)',
+            message: 'ESC key detection without keyboard buffer drain',
+            suggestion: 'Add buffer drain',
+            riskLevel: 'high'
+          }
+        ],
+        suggestions: ['Consider adding buffer drains'],
+        bestPractices: ['Use DO WHILE _KEYHIT: LOOP'],
+        summary: {
+          totalIssues: 1,
+          highRisk: 1,
+          mediumRisk: 0,
+          lowRisk: 0,
+          keydownUsages: 2,
+          inkeyUsages: 1,
+          bufferDrains: 0,
+          ctrlModifierChecks: 1,
+          altModifierChecks: 0,
+          shiftModifierChecks: 0
+        }
+      };
+      
+      mockCompatibilityService.validateKeyboardBufferSafety = jest.fn().mockResolvedValue(mockResult);
+      
+      const result = await handler!({ code: 'IF _KEYDOWN(27) THEN END' });
+      
+      expect(mockCompatibilityService.validateKeyboardBufferSafety).toHaveBeenCalledWith('IF _KEYDOWN(27) THEN END');
+      expect(createMCPTextResponse).toHaveBeenCalled();
+    });
+
+    it('should handle code with no issues', async () => {
+      registerCompatibilityTools(mockServer, services);
+      const handler = registeredTools.get('validate_keyboard_buffer_safety');
+      expect(handler).toBeDefined();
+      
+      const mockResult = {
+        hasIssues: false,
+        issues: [],
+        suggestions: ['Good practice: Your code includes keyboard buffer drains'],
+        bestPractices: ['Use DO WHILE _KEYHIT: LOOP'],
+        summary: {
+          totalIssues: 0,
+          highRisk: 0,
+          mediumRisk: 0,
+          lowRisk: 0,
+          keydownUsages: 1,
+          inkeyUsages: 1,
+          bufferDrains: 1,
+          ctrlModifierChecks: 0,
+          altModifierChecks: 0,
+          shiftModifierChecks: 0
+        }
+      };
+      
+      mockCompatibilityService.validateKeyboardBufferSafety = jest.fn().mockResolvedValue(mockResult);
+      
+      await handler!({ code: 'DO WHILE _KEYHIT: LOOP\nk$ = INKEY$' });
+      
+      expect(createMCPTextResponse).toHaveBeenCalled();
+    });
+
+    it('should handle validation errors', async () => {
+      registerCompatibilityTools(mockServer, services);
+      const handler = registeredTools.get('validate_keyboard_buffer_safety');
+      expect(handler).toBeDefined();
+      
+      const error = new Error('Validation failed');
+      mockCompatibilityService.validateKeyboardBufferSafety = jest.fn().mockRejectedValue(error);
+      
+      await handler!({ code: 'test code' });
+      
+      expect(createMCPError).toHaveBeenCalledWith(error, 'validating keyboard buffer safety');
     });
   });
 });

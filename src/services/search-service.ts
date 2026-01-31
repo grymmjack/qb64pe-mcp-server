@@ -164,7 +164,7 @@ export class CompatibilitySearchService {
       },
       {
         title: "Debugging Best Practices",
-        content: "Use console output for debugging: $CONSOLE, _DEST _CONSOLE, PRINT debug messages. Modern QB64PE includes assertions and logging: _ASSERT, _LOGERROR, _LOGWARN, _LOGINFO, _LOGTRACE",
+        content: "Modern QB64PE debugging uses built-in logging: _LOGINFO (debug output), _LOGERROR (errors with automatic stacktraces showing call hierarchy), _LOGWARN (warnings), _LOGTRACE (detailed traces). Logging works without disrupting program flow. Legacy methods: $CONSOLE, _DEST _CONSOLE, PRINT. Also includes assertions: _ASSERT",
         category: "debugging",
         tags: ["debugging", "$CONSOLE", "_DEST", "_ASSERT", "_LOGERROR", "_LOGWARN", "console"],
         metadata: {

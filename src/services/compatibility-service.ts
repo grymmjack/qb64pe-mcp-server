@@ -14,6 +14,34 @@ export interface CompatibilityIssue {
   };
 }
 
+export interface KeyboardBufferSafetyIssue {
+  line: number;
+  column: number;
+  pattern: string;
+  message: string;
+  suggestion: string;
+  riskLevel: "high" | "medium" | "low";
+}
+
+export interface KeyboardBufferSafetyResult {
+  hasIssues: boolean;
+  issues: KeyboardBufferSafetyIssue[];
+  suggestions: string[];
+  bestPractices: string[];
+  summary: {
+    totalIssues: number;
+    highRisk: number;
+    mediumRisk: number;
+    lowRisk: number;
+    keydownUsages: number;
+    inkeyUsages: number;
+    bufferDrains: number;
+    ctrlModifierChecks: number;
+    altModifierChecks: number;
+    shiftModifierChecks: number;
+  };
+}
+
 export interface CompatibilityRule {
   pattern: RegExp;
   severity: "error" | "warning" | "info";
@@ -668,18 +696,21 @@ _ASSERT x > 0, "X must be positive"
 _ASSERT LEN(filename$) > 0, "Filename cannot be empty"
 \`\`\`
 
-## Console Debugging
+## Modern Logging (QB64PE v4.0.0+) - PREFERRED
+\`\`\`basic
+_LOGERROR "Critical error occurred"
+_LOGWARN "Warning: Using default values"
+_LOGINFO "Processing file: " + filename$
+_LOGTRACE "Function called with: " + STR$(value)
+\`\`\`
+
+## Console Debugging (Legacy - use _LOGINFO above instead)
 \`\`\`basic
 $CONSOLE
 _DEST _CONSOLE
 PRINT "Debug: Variable x ="; x
 _DEST 0
 \`\`\`
-
-## Modern Logging (QB64PE v4.0.0+)
-\`\`\`basic
-_LOGERROR "Critical error occurred"
-_LOGWARN "Warning: Using default values"
 _LOGINFO "Processing file: " + filename$
 _LOGTRACE "Function called with: " + STR$(value)
 \`\`\`
@@ -727,7 +758,300 @@ _LOGTRACE "Function called with: " + STR$(value)
       return "- Use '$DYNAMIC directive before dynamic array declarations\\n- Ensure arrays are properly shared with DIM SHARED\\n- Check array bounds and initialization\\n- Use REDIM for dynamic array resizing";
     }
 
-    return "- Add debug PRINT statements to trace program flow\\n- Use $CONSOLE for real-time debug output\\n- Check variable values at key points\\n- Test smaller code sections incrementally";
+    return "- Use _LOGINFO to trace program flow without disrupting output\\n- Use _LOGERROR for critical errors with stacktraces\\n- Check variable values with _LOGINFO statements\\n- Test smaller code sections incrementally";
+  }
+
+  /**
+   * Keyboard buffer safety issue detected during validation
+   */
+  private createKeyboardBufferIssue(
+    line: number,
+    column: number,
+    pattern: string,
+    message: string,
+    suggestion: string,
+    riskLevel: "high" | "medium" | "low",
+  ): KeyboardBufferSafetyIssue {
+    return {
+      line,
+      column,
+      pattern,
+      message,
+      suggestion,
+      riskLevel,
+    };
+  }
+
+  /**
+   * Validate keyboard buffer safety in QB64PE code
+   * Detects potential keyboard buffer leakage issues that can cause:
+   * - CTRL+key combinations producing ASCII control characters
+   * - _KEYDOWN() checks without buffer consumption
+   * - INKEY$ capturing unintended control characters
+   * - Multiple handlers processing the same keystroke
+   */
+  async validateKeyboardBufferSafety(
+    code: string,
+  ): Promise<KeyboardBufferSafetyResult> {
+    const issues: KeyboardBufferSafetyIssue[] = [];
+    const lines = code.split("\n");
+    const suggestions: string[] = [];
+
+    // Track context
+    let hasKeydownCheck = false;
+    let hasInkeyUsage = false;
+    let keydownLines: number[] = [];
+    let inkeyLines: number[] = [];
+    let bufferDrainLines: number[] = [];
+    let ctrlCheckLines: number[] = [];
+    let altCheckLines: number[] = [];
+    let shiftCheckLines: number[] = [];
+
+    // Regex patterns for detection
+    const keydownPattern = /_KEYDOWN\s*\(\s*(\d+)\s*\)/gi;
+    const inkeyPattern = /INKEY\$/gi;
+    const keyhitPattern = /_KEYHIT/gi;
+    const bufferDrainPattern =
+      /DO\s+(WHILE|UNTIL)\s+_KEYHIT\s*:?\s*LOOP|WHILE\s+_KEYHIT\s*:?\s*WEND/gi;
+    const ctrlKeydownPattern =
+      /_KEYDOWN\s*\(\s*(100305|100306)\s*\)|_KEYDOWN\s*\(\s*&H\s*[\dA-Fa-f]+\s*\)/gi;
+    const altKeydownPattern =
+      /_KEYDOWN\s*\(\s*(100307|100308)\s*\)|_KEYDOWN\s*\(\s*&H\s*[\dA-Fa-f]+\s*\)/gi;
+    const shiftKeydownPattern =
+      /_KEYDOWN\s*\(\s*(100303|100304)\s*\)|_KEYDOWN\s*\(\s*&H\s*[\dA-Fa-f]+\s*\)/gi;
+    const escKeydownPattern = /_KEYDOWN\s*\(\s*27\s*\)/gi;
+    const exitSubPattern = /EXIT\s+(SUB|FUNCTION)/gi;
+
+    // First pass: identify all relevant patterns and their locations
+    lines.forEach((line, index) => {
+      const lineNum = index + 1;
+      const trimmedLine = line.trim().toUpperCase();
+
+      // Skip comments
+      if (trimmedLine.startsWith("'") || trimmedLine.startsWith("REM ")) {
+        return;
+      }
+
+      // Check for _KEYDOWN usage
+      keydownPattern.lastIndex = 0;
+      if (keydownPattern.test(line)) {
+        hasKeydownCheck = true;
+        keydownLines.push(lineNum);
+      }
+
+      // Check for INKEY$ usage
+      inkeyPattern.lastIndex = 0;
+      if (inkeyPattern.test(line)) {
+        hasInkeyUsage = true;
+        inkeyLines.push(lineNum);
+      }
+
+      // Check for buffer drain patterns
+      bufferDrainPattern.lastIndex = 0;
+      if (bufferDrainPattern.test(line)) {
+        bufferDrainLines.push(lineNum);
+      }
+
+      // Check for CTRL key detection
+      ctrlKeydownPattern.lastIndex = 0;
+      if (
+        ctrlKeydownPattern.test(line) ||
+        trimmedLine.includes("_KEYDOWN(100305)") ||
+        trimmedLine.includes("_KEYDOWN(100306)")
+      ) {
+        ctrlCheckLines.push(lineNum);
+      }
+
+      // Check for ALT key detection
+      altKeydownPattern.lastIndex = 0;
+      if (
+        altKeydownPattern.test(line) ||
+        trimmedLine.includes("_KEYDOWN(100307)") ||
+        trimmedLine.includes("_KEYDOWN(100308)")
+      ) {
+        altCheckLines.push(lineNum);
+      }
+
+      // Check for SHIFT key detection
+      shiftKeydownPattern.lastIndex = 0;
+      if (
+        shiftKeydownPattern.test(line) ||
+        trimmedLine.includes("_KEYDOWN(100303)") ||
+        trimmedLine.includes("_KEYDOWN(100304)")
+      ) {
+        shiftCheckLines.push(lineNum);
+      }
+    });
+
+    // Second pass: detect specific issues
+    lines.forEach((line, index) => {
+      const lineNum = index + 1;
+      const trimmedLine = line.trim();
+
+      // Skip comments
+      if (
+        trimmedLine.toUpperCase().startsWith("'") ||
+        trimmedLine.toUpperCase().startsWith("REM ")
+      ) {
+        return;
+      }
+
+      // Issue 1: _KEYDOWN(27) (ESC) without buffer drain
+      escKeydownPattern.lastIndex = 0;
+      if (escKeydownPattern.test(line)) {
+        // Check if there's a buffer drain within next 5 lines
+        let hasNearbyDrain = false;
+        for (let i = index; i < Math.min(index + 5, lines.length); i++) {
+          bufferDrainPattern.lastIndex = 0;
+          if (bufferDrainPattern.test(lines[i])) {
+            hasNearbyDrain = true;
+            break;
+          }
+        }
+        if (!hasNearbyDrain) {
+          issues.push(
+            this.createKeyboardBufferIssue(
+              lineNum,
+              line.indexOf("_KEYDOWN") + 1,
+              "_KEYDOWN(27)",
+              "ESC key detection without keyboard buffer drain may cause control character leakage",
+              "Add 'DO WHILE _KEYHIT: LOOP' after handling ESC to prevent ASCII 27 from leaking to INKEY$",
+              "high",
+            ),
+          );
+        }
+      }
+
+      // Issue 2: CTRL modifier check without buffer drain
+      if (
+        ctrlCheckLines.includes(lineNum) &&
+        !bufferDrainLines.some(
+          (drainLine) => drainLine > lineNum && drainLine <= lineNum + 10,
+        )
+      ) {
+        // Check if INKEY$ is used nearby
+        const hasNearbyInkey = inkeyLines.some(
+          (inkeyLine) =>
+            Math.abs(inkeyLine - lineNum) < 20 && inkeyLine > lineNum,
+        );
+        if (hasNearbyInkey) {
+          issues.push(
+            this.createKeyboardBufferIssue(
+              lineNum,
+              line.indexOf("_KEYDOWN") + 1,
+              "_KEYDOWN(CTRL)",
+              "CTRL+key combinations can produce ASCII control characters (0-31) that leak to INKEY$",
+              "Add 'DO WHILE _KEYHIT: LOOP' to drain buffer when CTRL is held, before checking INKEY$",
+              "high",
+            ),
+          );
+        }
+      }
+
+      // Issue 3: EXIT SUB/FUNCTION after _KEYDOWN without buffer consumption
+      exitSubPattern.lastIndex = 0;
+      if (exitSubPattern.test(line)) {
+        // Check if there was a _KEYDOWN check in the last 10 lines without buffer drain
+        let hasRecentKeydown = false;
+        let hasRecentDrain = false;
+        for (let i = Math.max(0, index - 10); i < index; i++) {
+          keydownPattern.lastIndex = 0;
+          if (keydownPattern.test(lines[i])) {
+            hasRecentKeydown = true;
+          }
+          bufferDrainPattern.lastIndex = 0;
+          if (bufferDrainPattern.test(lines[i])) {
+            hasRecentDrain = true;
+          }
+        }
+        if (hasRecentKeydown && !hasRecentDrain) {
+          issues.push(
+            this.createKeyboardBufferIssue(
+              lineNum,
+              line.indexOf("EXIT") + 1,
+              "EXIT SUB/FUNCTION",
+              "EXIT after _KEYDOWN() check without buffer drain may leave control characters in buffer",
+              "Add 'DO WHILE _KEYHIT: LOOP' before EXIT to consume any buffered control characters",
+              "medium",
+            ),
+          );
+        }
+      }
+
+      // Issue 4: INKEY$ usage with nearby CTRL/ALT detection but no buffer drain
+      inkeyPattern.lastIndex = 0;
+      if (inkeyPattern.test(line)) {
+        const hasCtrlNearby = ctrlCheckLines.some(
+          (ctrlLine) => Math.abs(ctrlLine - lineNum) < 30,
+        );
+        const hasAltNearby = altCheckLines.some(
+          (altLine) => Math.abs(altLine - lineNum) < 30,
+        );
+        const hasDrainBefore = bufferDrainLines.some(
+          (drainLine) => drainLine < lineNum && drainLine > lineNum - 10,
+        );
+
+        if ((hasCtrlNearby || hasAltNearby) && !hasDrainBefore) {
+          issues.push(
+            this.createKeyboardBufferIssue(
+              lineNum,
+              line.indexOf("INKEY$") + 1,
+              "INKEY$",
+              "INKEY$ may capture control characters from CTRL/ALT+key combinations",
+              "Add 'DO WHILE _KEYHIT: LOOP' before INKEY$ when modifier keys are in use",
+              "medium",
+            ),
+          );
+        }
+      }
+    });
+
+    // Generate general suggestions based on findings
+    if (hasKeydownCheck && hasInkeyUsage && bufferDrainLines.length === 0) {
+      suggestions.push(
+        "Your code uses both _KEYDOWN() and INKEY$ but has no keyboard buffer drains. Consider adding 'DO WHILE _KEYHIT: LOOP' at strategic points.",
+      );
+    }
+
+    if (ctrlCheckLines.length > 0) {
+      suggestions.push(
+        "CTRL+key combinations produce ASCII control characters (CTRL+A=1, CTRL+B=2, ..., CTRL+Z=26). CTRL+2=0, CTRL+3=27(ESC), CTRL+6=30. These may trigger unintended handlers.",
+      );
+    }
+
+    if (issues.length === 0 && bufferDrainLines.length > 0) {
+      suggestions.push(
+        "Good practice: Your code includes keyboard buffer drains which help prevent control character leakage.",
+      );
+    }
+
+    // Add best practice summary
+    const bestPractices = [
+      "Use 'DO WHILE _KEYHIT: LOOP' to drain the keyboard buffer after _KEYDOWN() checks",
+      "Place buffer drains BEFORE INKEY$ when CTRL/ALT/SHIFT modifiers are detected",
+      "CTRL+number keys produce specific ASCII values: CTRL+3=27(ESC), CTRL+2=0",
+      "Multiple handlers can process the same keystroke if buffer isn't properly consumed",
+      "_KEYDOWN() detects key state but doesn't consume characters from the buffer",
+    ];
+
+    return {
+      hasIssues: issues.length > 0,
+      issues,
+      suggestions,
+      bestPractices,
+      summary: {
+        totalIssues: issues.length,
+        highRisk: issues.filter((i) => i.riskLevel === "high").length,
+        mediumRisk: issues.filter((i) => i.riskLevel === "medium").length,
+        lowRisk: issues.filter((i) => i.riskLevel === "low").length,
+        keydownUsages: keydownLines.length,
+        inkeyUsages: inkeyLines.length,
+        bufferDrains: bufferDrainLines.length,
+        ctrlModifierChecks: ctrlCheckLines.length,
+        altModifierChecks: altCheckLines.length,
+        shiftModifierChecks: shiftCheckLines.length,
+      },
+    };
   }
 
   /**

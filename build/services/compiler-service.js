@@ -89,53 +89,67 @@ class QB64PECompilerService {
     ];
     debuggingTechniques = [
         {
-            technique: "PRINT Statement Debugging",
-            description: "Use PRINT statements to display variable values and program flow",
+            technique: "_LOGINFO Debugging",
+            description: "Use _LOGINFO to log variable values and program flow without disrupting output",
             example: `DIM x AS INTEGER
 x = 10
-PRINT "Debug: x = "; x
-PRINT "About to enter loop"
+_LOGINFO "x = " + STR$(x)
+_LOGINFO "About to enter loop"
 FOR i = 1 TO 5
-    PRINT "Debug: i = "; i
+    _LOGINFO "i = " + STR$(i)
     x = x + i
-    PRINT "Debug: x is now "; x
+    _LOGINFO "x is now " + STR$(x)
 NEXT i
-PRINT "Final x = "; x`,
+_LOGINFO "Final x = " + STR$(x)`,
             platform: ["windows", "macos", "linux"],
-            useCase: "Basic debugging, variable inspection, flow control verification",
+            useCase: "Modern debugging with built-in logging, variable inspection, flow control verification",
         },
         {
-            technique: "$CONSOLE Output",
-            description: "Use $CONSOLE to create a console window for debug output",
-            example: `$CONSOLE
+            technique: "_LOGERROR for Errors with Stacktraces",
+            description: "Use _LOGERROR to log errors with automatic stacktrace generation showing call hierarchy",
+            example: `SUB ProcessData(value AS INTEGER)
+    IF value < 0 THEN
+        _LOGERROR "Invalid value: " + STR$(value)
+        EXIT SUB
+    END IF
+    ' Process data...
+END SUB
+
+' Example stacktrace output:
+' [0.12100] ERROR QB64 ProcessData: 3: Invalid value: -5
+' #1 [0x00007FF6664AFA7E] in ProcessData() (QB64)
+' #2 [0x00007FF6664AF891] in Main QB64 code`,
+            platform: ["windows", "macos", "linux"],
+            useCase: "Error debugging with full call stack, finding where errors originate",
+        },
+        {
+            technique: "$CONSOLE Output (Legacy)",
+            description: "Use $CONSOLE to create a console window - prefer _LOGINFO for modern debugging",
+            example: `' Note: _LOGINFO is preferred for debug output
+$CONSOLE
 PRINT "This appears in the console window"
 DIM myVar AS INTEGER
 myVar = 42
 PRINT "myVar = "; myVar
 INPUT "Press Enter to continue...", dummy$`,
             platform: ["windows", "macos", "linux"],
-            useCase: "Detailed debugging without interfering with graphics",
+            useCase: "Legacy code or when console window is specifically needed",
         },
         {
-            technique: "_CONSOLE Toggle",
-            description: "Dynamically show/hide console for debugging",
+            technique: "_LOGINFO with Debug Flag",
+            description: "Use conditional _LOGINFO calls for debug mode",
             example: `DIM debug AS INTEGER
 debug = 1  ' Set to 1 for debugging
 
-IF debug THEN _CONSOLE ON
-
 ' Your program code here
 FOR i = 1 TO 10
-    IF debug THEN PRINT "Processing item"; i
+    IF debug THEN _LOGINFO "Processing item " + STR$(i)
     ' Main program logic
 NEXT i
 
-IF debug THEN
-    PRINT "Debug: Program completed"
-    INPUT "Press Enter to exit...", dummy$
-END IF`,
+IF debug THEN _LOGINFO "Program completed"`,
             platform: ["windows", "macos", "linux"],
-            useCase: "Toggle debugging output on/off",
+            useCase: "Toggle debugging output on/off without disrupting program flow",
         },
         {
             technique: "File Logging",
@@ -307,7 +321,36 @@ PRINT "Final count: "; count`,
 4. **Isolate Problems**: Comment out sections to narrow down the issue
 5. **Use Error Handling**: Implement ON ERROR GOTO for runtime errors
 
-## Basic Debugging Template
+## Modern Debugging Template
+
+\`\`\`basic
+_LOGINFO "Program started"
+
+' Your program code here
+DIM myVar AS INTEGER
+myVar = 10
+_LOGINFO "myVar = " + STR$(myVar)
+
+' Error handling with stacktrace
+IF myVar < 0 THEN
+    _LOGERROR "Invalid value detected: " + STR$(myVar)
+    ' Stacktrace will automatically show where this was called from
+END IF
+
+' Add more _LOGINFO calls as needed
+_LOGINFO "Program completed"
+\`\`\`
+
+## All Logging Levels (v4.0.0+)
+
+\`\`\`basic
+_LOGTRACE "Detailed trace info"    ' Most verbose
+_LOGINFO "General information"     ' Standard debug output
+_LOGWARN "Warning message"         ' Potential issues
+_LOGERROR "Error with stacktrace" ' Errors with full call stack
+\`\`\`
+
+## Legacy Debugging Template (use _LOGINFO above instead)
 
 \`\`\`basic
 $CONSOLE  ' Enable console for debugging

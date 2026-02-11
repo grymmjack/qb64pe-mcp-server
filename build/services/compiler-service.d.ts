@@ -53,7 +53,7 @@ export declare class QB64PECompilerService {
      * Compile QB64PE code and return compilation result with errors and suggestions
      * This enables autonomous compile-verify-fix loops
      */
-    compileAndVerify(sourceFilePath: string, qb64pePath?: string, compilerFlags?: string[]): Promise<{
+    compileAndVerify(sourceFilePath: string, qb64pePath?: string, compilerFlags?: string[], useStoredFlags?: boolean): Promise<{
         success: boolean;
         output: string;
         errors: Array<{

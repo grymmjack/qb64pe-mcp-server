@@ -633,6 +633,7 @@ INPUT "Press Enter to exit...", dummy$
     sourceFilePath: string,
     qb64pePath?: string,
     compilerFlags?: string[],
+    useStoredFlags: boolean = true,
   ): Promise<{
     success: boolean;
     output: string;
@@ -669,18 +670,40 @@ INPUT "Press Enter to exit...", dummy$
       suggestions: [],
     };
 
+    // Check build context for previous build parameters
+    const previousContext =
+      await this.buildContextService.getContext(sourceFilePath);
+
+    // Auto-determine compiler flags
+    // Priority: 1) User-provided flags, 2) Stored flags from build context (if useStoredFlags=true), 3) Default flags
+    let flags: string[];
+    if (compilerFlags) {
+      // User explicitly provided flags - use them
+      flags = compilerFlags;
+    } else if (
+      useStoredFlags &&
+      previousContext?.lastUsedCommand?.compilerFlags
+    ) {
+      // No flags provided but build context exists - use stored successful flags
+      flags = previousContext.lastUsedCommand.compilerFlags;
+      console.error(
+        `[Compiler] Using stored compiler flags from build context: ${JSON.stringify(flags)}`,
+      );
+      result.suggestions.push(
+        `ℹ️ Using previously successful compiler flags: ${JSON.stringify(flags)}`,
+      );
+    } else {
+      // No flags provided and no build context - use defaults
+      flags = ["-c", "-x", "-w"];
+    }
+
     // Auto-determine output path if not specified
     // Priority: 1) Build context, 2) Existing .run file, 3) tasks.json, 4) Default to source directory
-    const flags = compilerFlags || ["-c", "-x", "-w"];
     let outputName = path.basename(
       sourceFilePath,
       path.extname(sourceFilePath),
     );
     let outputDir = path.dirname(sourceFilePath);
-
-    // Check build context for previous output path
-    const previousContext =
-      await this.buildContextService.getContext(sourceFilePath);
     if (previousContext?.lastUsedCommand?.outputName) {
       outputName = previousContext.lastUsedCommand.outputName;
       console.error(

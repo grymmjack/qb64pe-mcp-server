@@ -23,17 +23,28 @@ Absolute path to the QB64PE source file (.bas) to compile. Must exist and be rea
 
 **qb64pePath** (string)  
 Path to QB64PE executable. If not provided, the tool will automatically search:
+
 - Common installation locations (`/usr/local/bin/qb64pe`, `/opt/qb64pe/qb64pe`, etc.)
 - System PATH
 - Use `detect_qb64pe_installation` tool if QB64PE location is uncertain
 
 **compilerFlags** (array of strings)  
-Additional compiler flags to pass to QB64PE. Default: `['-c', '-w']`
+Compiler flags to pass to QB64PE. If not provided, the tool will **automatically use stored flags from the last successful build** (via build context). If no build context exists, defaults to `['-c', '-x', '-w']`
+
+**🔧 Build Context Auto-Detection:**  
+When `compilerFlags` is not provided and a previous successful build exists for this project, the tool will automatically retrieve and use those proven-working compiler flags. This prevents compilation failures caused by using incorrect flag combinations.
+
+Common flags:
+
 - `-c` = Compile without running
+- `-x` = Compile and run (no console)
 - `-w` = Show warnings
 - `-g` = Generate debug information
 - `-z` = Enable optimizations
 - `-o <name>` = Specify output executable name
+
+**useStoredFlags** (boolean, default: `true`)  
+Whether to automatically use stored flags from build context when `compilerFlags` is not provided. Set to `false` to explicitly use default flags instead of stored flags.
 
 ## Response Structure
 
@@ -74,43 +85,43 @@ Additional compiler flags to pass to QB64PE. Default: `['-c', '-w']`
 async function autonomousCompileFix(sourceFile) {
   let iteration = 0;
   const maxIterations = 5;
-  
+
   while (iteration < maxIterations) {
     iteration++;
     console.log(`Iteration ${iteration}: Compiling...`);
-    
+
     // 1. Compile and verify
     const result = await compileAndVerifyQb64pe({
-      sourceFilePath: sourceFile
+      sourceFilePath: sourceFile,
     });
-    
+
     // 2. Check if successful
     if (result.success) {
       console.log("✅ Compilation successful!");
       console.log(`Executable: ${result.executablePath}`);
       return { success: true, iterations: iteration };
     }
-    
+
     // 3. Analyze errors
     console.log(`❌ Compilation failed with ${result.errors.length} errors`);
-    result.errors.forEach(err => {
-      console.log(`  Line ${err.line || '?'}: ${err.message}`);
+    result.errors.forEach((err) => {
+      console.log(`  Line ${err.line || "?"}: ${err.message}`);
     });
-    
+
     // 4. Apply fixes based on error analysis
     const fixes = await analyzeDetermineFixe(result.errors, result.suggestions);
     if (fixes.length === 0) {
       console.log("⚠️ No fixes could be determined automatically");
       return { success: false, reason: "unresolvable", iterations: iteration };
     }
-    
+
     // 5. Apply fixes to source code
     await applyFixes(sourceFile, fixes);
     console.log(`Applied ${fixes.length} fixes, recompiling...`);
-    
+
     // Loop continues - compile again with fixes
   }
-  
+
   return { success: false, reason: "max_iterations", iterations: iteration };
 }
 ```
@@ -123,22 +134,22 @@ async function smartCompileWorkflow(sourceFile) {
   // 1. Pre-check syntax (fast, no compilation needed)
   const syntaxCheck = await validateQb64peSyntax({
     code: await readFile(sourceFile),
-    checkLevel: "strict"
+    checkLevel: "strict",
   });
-  
+
   if (!syntaxCheck.isValid) {
     console.log("Syntax errors detected before compilation:");
-    syntaxCheck.errors.forEach(err => console.log(`  ${err.message}`));
-    
+    syntaxCheck.errors.forEach((err) => console.log(`  ${err.message}`));
+
     // Fix syntax errors first
     await fixSyntaxErrors(sourceFile, syntaxCheck.errors);
   }
-  
+
   // 2. Now compile with verified syntax
   const compileResult = await compileAndVerifyQb64pe({
-    sourceFilePath: sourceFile
+    sourceFilePath: sourceFile,
   });
-  
+
   return compileResult;
 }
 ```
@@ -151,31 +162,31 @@ async function portAndVerify(qbasicFile, outputFile) {
   // 1. Port QBasic to QB64PE
   const ported = await portQbasicToQb64pe({
     sourceCode: await readFile(qbasicFile),
-    sourceDialect: "qbasic"
+    sourceDialect: "qbasic",
   });
-  
+
   // 2. Save ported code
   await writeFile(outputFile, ported.convertedCode);
-  
+
   // 3. Autonomous compilation loop
   let iteration = 0;
   while (iteration < 3) {
     iteration++;
-    
+
     const result = await compileAndVerifyQb64pe({
-      sourceFilePath: outputFile
+      sourceFilePath: outputFile,
     });
-    
+
     if (result.success) {
       console.log(`✅ Port successful after ${iteration} iteration(s)`);
       return result;
     }
-    
+
     // Analyze and fix porting issues
     const fixes = await analyzePortingErrors(result.errors);
     await applyFixes(outputFile, fixes);
   }
-  
+
   throw new Error("Porting verification failed after 3 iterations");
 }
 ```
@@ -185,6 +196,7 @@ async function portAndVerify(qbasicFile, outputFile) {
 The tool provides context-aware suggestions based on error patterns:
 
 ### Type Mismatch Errors
+
 ```json
 {
   "error": {
@@ -200,6 +212,7 @@ The tool provides context-aware suggestions based on error patterns:
 ```
 
 ### Undeclared Variable Errors
+
 ```json
 {
   "error": {
@@ -215,6 +228,7 @@ The tool provides context-aware suggestions based on error patterns:
 ```
 
 ### SUB/FUNCTION Errors
+
 ```json
 {
   "error": {
@@ -248,21 +262,23 @@ async function developmentWorkflow(sourceFile) {
   // 1. Installation check
   const installation = await detectQb64peInstallation();
   if (!installation.isInstalled) {
-    throw new Error("QB64PE not installed. Use get_qb64pe_installation_guidance");
+    throw new Error(
+      "QB64PE not installed. Use get_qb64pe_installation_guidance",
+    );
   }
-  
+
   // 2. Pre-compilation syntax validation
   const syntax = await validateQb64peSyntax({
     code: await readFile(sourceFile),
-    checkLevel: "best-practices"
+    checkLevel: "best-practices",
   });
-  
+
   // 3. Compatibility check
   const compat = await validateQb64peCompatibility({
     code: await readFile(sourceFile),
-    platform: "all"
+    platform: "all",
   });
-  
+
   // 4. Compile with autonomous retry
   return await autonomousCompileFix(sourceFile);
 }
@@ -310,9 +326,7 @@ async function developmentWorkflow(sourceFile) {
       "severity": "error"
     }
   ],
-  "suggestions": [
-    "Ensure the file path is correct and the file exists"
-  ]
+  "suggestions": ["Ensure the file path is correct and the file exists"]
 }
 ```
 
@@ -343,6 +357,7 @@ The tool has a 30-second timeout for compilation. If QB64PE hangs:
 ### 1. Always Compile After Fixes
 
 **DON'T:**
+
 ```javascript
 // ❌ Make fix and return to user without verification
 await replaceStringInFile(file, oldCode, fixedCode);
@@ -350,12 +365,13 @@ await replaceStringInFile(file, oldCode, fixedCode);
 ```
 
 **DO:**
+
 ```javascript
 // ✅ Make fix and autonomously verify it works
 await replaceStringInFile(file, oldCode, fixedCode);
 
 const result = await compileAndVerifyQb64pe({
-  sourceFilePath: file
+  sourceFilePath: file,
 });
 
 if (!result.success) {
@@ -386,7 +402,7 @@ const MAX_ITERATIONS = 5;
 for (let i = 0; i < MAX_ITERATIONS; i++) {
   const result = await compileAndVerifyQb64pe({ sourceFilePath: file });
   if (result.success) break;
-  
+
   await applyFixes(file, result.errors);
 }
 ```
@@ -399,7 +415,7 @@ if (!result.success) {
   console.log("Compilation failed after autonomous fix attempts:");
   console.log(`Errors remaining: ${result.errors.length}`);
   result.errors.forEach((err, i) => {
-    console.log(`${i + 1}. Line ${err.line || '?'}: ${err.message}`);
+    console.log(`${i + 1}. Line ${err.line || "?"}: ${err.message}`);
   });
   console.log("\nSuggested actions:");
   result.suggestions.forEach((sug, i) => {
@@ -407,6 +423,81 @@ if (!result.success) {
   });
 }
 ```
+
+### 5. Build Context Auto-Detection (NEW)
+
+**The Problem This Solves:**  
+Agents often use incorrect compiler flags, leading to multiple failed compilation attempts even when the code is correct. The agent ignores contextWarning messages about parameter differences.
+
+**The Solution:**  
+This tool now **automatically** uses stored compiler flags from previous successful builds when no flags are explicitly provided.
+
+**DO (Recommended - Let auto-detection work):**
+
+```javascript
+// ✅ No flags provided - tool automatically uses stored successful flags
+const result = await compileAndVerifyQb64pe({
+  sourceFilePath: "/path/to/project.bas",
+});
+// If previous build used ["-w", "-x"], those flags are reused automatically
+```
+
+**Manual Check (Optional):**
+
+```javascript
+// If you want to explicitly check what flags were used before
+const context = await getProjectBuildContext({
+  sourceFilePath: "/path/to/project.bas",
+});
+
+if (context && context.lastUsedCommand) {
+  console.log("Previous flags:", context.lastUsedCommand.compilerFlags);
+}
+
+// Then compile (auto-uses those flags anyway)
+await compileAndVerifyQb64pe({
+  sourceFilePath: "/path/to/project.bas",
+});
+```
+
+**Override Stored Flags (When Needed):**
+
+```javascript
+// Explicitly provide different flags to override stored ones
+await compileAndVerifyQb64pe({
+  sourceFilePath: "/path/to/project.bas",
+  compilerFlags: ["-c", "-w", "-g"], // Use these instead
+});
+
+// OR disable auto-detection to force defaults
+await compileAndVerifyQb64pe({
+  sourceFilePath: "/path/to/project.bas",
+  useStoredFlags: false, // Ignore build context, use defaults
+});
+```
+
+**contextWarning Response:**  
+If you manually provide flags that differ from stored ones, the response will include a `contextWarning`:
+
+```json
+{
+  "success": true,
+  "contextWarning": "Build parameters differ from previous build. Previous flags: [-w, -x]",
+  "suggestions": [
+    "⚠️ Build parameters differ from previous build!",
+    "Previous command: qb64pe -w -x project.bas",
+    "Consider using previous flags if they were working: [\"-w\",\"-x\"]"
+  ]
+}
+```
+
+**Key Benefits:**
+
+- ✅ Prevents compilation failures from wrong flag combinations
+- ✅ Eliminates need to manually track compiler flags
+- ✅ Automatically learns from successful builds
+- ✅ Reduces compilation attempts from 3+ down to 1
+- ✅ Works seamlessly across conversation summaries
 
 ## System Prompt Guidance for LLMs
 
@@ -419,22 +510,33 @@ When fixing QB64PE compilation errors:
 
 1. Make code fixes using edit tools
 2. IMMEDIATELY call compile_and_verify_qb64pe to verify the fix
+   - DO NOT provide compilerFlags parameter (let auto-detection work)
+   - The tool will automatically use stored successful flags from build context
 3. Analyze compilation results:
    - If success: Report to user and complete task
    - If errors: Analyze error messages and suggestions
+   - If contextWarning present: Note flag differences but proceed
 4. Apply additional fixes based on error analysis
 5. REPEAT steps 2-4 until:
    - Compilation succeeds, OR
    - No more automatic fixes can be determined, OR
    - Maximum iterations reached (typically 5)
 
+BUILD CONTEXT AUTO-DETECTION:
+- Tool automatically uses stored compiler flags from previous successful builds
+- No need to manually call get_project_build_context before compiling
+- Only provide compilerFlags if you explicitly want different flags
+- Trust the auto-detection - it uses proven-working flag combinations
+
 NEVER:
 - Make a fix and wait for user to compile
 - Stop after first compilation error without attempting fixes
 - Assume fixes work without verification
+- Manually provide default flags like ["-c", "-w"] (let auto-detection work)
 
 ALWAYS:
 - Compile after each fix to verify it works
+- Let auto-detection choose compiler flags (omit compilerFlags parameter)
 - Use error messages and suggestions to guide next fix
 - Continue iterating autonomously until success or deadlock
 ```
@@ -451,6 +553,7 @@ ALWAYS:
 ### Efficiency Gain
 
 **Before (Human Intervention Required):**
+
 - Agent makes fix
 - Human manually runs compilation
 - Human reports error back to agent
@@ -458,6 +561,7 @@ ALWAYS:
 - **Result**: 3+ human interventions per porting task
 
 **After (Autonomous Loop):**
+
 - Agent makes fix
 - Agent compiles automatically
 - Agent analyzes results autonomously
@@ -467,6 +571,7 @@ ALWAYS:
 ### Example Session Improvement
 
 **Session Problem Addressed:**
+
 ```json
 {
   "problem": "Agent required human intervention to compile after each fix",
@@ -480,6 +585,7 @@ ALWAYS:
 ---
 
 **See Also:**
+
 - [validate_qb64pe_syntax](./validate_qb64pe_syntax.md) - Pre-compilation syntax checking
 - [validate_qb64pe_compatibility](./validate_qb64pe_compatibility.md) - Platform compatibility
 - [port_qbasic_to_qb64pe](./port_qbasic_to_qb64pe.md) - QBasic porting with compilation

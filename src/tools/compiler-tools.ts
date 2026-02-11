@@ -16,7 +16,7 @@ import { ServiceContainer } from "../utils/tool-types.js";
  */
 export function registerCompilerTools(
   server: McpServer,
-  services: ServiceContainer
+  services: ServiceContainer,
 ): void {
   // Compiler options tool
   server.registerTool(
@@ -40,13 +40,13 @@ export function registerCompilerTools(
       try {
         const options = await services.compilerService.getCompilerOptions(
           platform,
-          optionType
+          optionType,
         );
         return createMCPResponse(options);
       } catch (error) {
         return createMCPError(error, "getting compiler options");
       }
-    }
+    },
   );
 
   // Syntax validation tool
@@ -74,13 +74,13 @@ export function registerCompilerTools(
       try {
         const validation = await services.syntaxService.validateSyntax(
           code,
-          checkLevel
+          checkLevel,
         );
         return createMCPResponse(validation);
       } catch (error) {
         return createMCPError(error, "validating syntax");
       }
-    }
+    },
   );
 
   // Debugging help tool
@@ -100,7 +100,7 @@ export function registerCompilerTools(
     },
     createTextToolHandler(async ({ issue, platform = "all" }) => {
       return await services.compilerService.getDebuggingHelp(issue, platform);
-    }, "getting debugging help")
+    }, "getting debugging help"),
   );
 
   // Compile and verify tool - enables autonomous compile-verify-fix loops
@@ -123,39 +123,50 @@ export function registerCompilerTools(
         "6. REPEAT steps 3-5 until result.success = true\n" +
         "7. Report final success to user\n\n" +
         "⚡ CRITICAL: Use this tool after EVERY code change to verify fixes work. Do NOT wait for user to ask 'does it compile?' - this is automatic!\n\n" +
+        "🔧 **BUILD CONTEXT AUTO-DETECTION:**\n" +
+        "This tool AUTOMATICALLY uses previously successful compiler flags from build context when available.\n" +
+        "If no flags are provided and a successful build exists, those flags will be reused automatically.\n" +
+        "Set useStoredFlags=false to explicitly ignore stored flags and use defaults instead.\n\n" +
         "❌ BAD: Edit file → Wait for user to ask if it compiles\n" +
         "✅ GOOD: Edit file → Immediately compile → Report success/errors → Fix if needed → Repeat",
       inputSchema: {
         sourceFilePath: z
           .string()
           .describe(
-            "Absolute path to the QB64PE source file (.bas) to compile"
+            "Absolute path to the QB64PE source file (.bas) to compile",
           ),
         qb64pePath: z
           .string()
           .optional()
           .describe(
-            "Path to QB64PE executable. If not provided, will search common locations and PATH."
+            "Path to QB64PE executable. If not provided, will search common locations and PATH.",
           ),
         compilerFlags: z
           .array(z.string())
           .optional()
           .describe(
-            "Additional compiler flags (default: ['-c', '-x', '-w'] for compile only, no-console, show warnings)"
+            "Compiler flags to use. If not provided, will automatically use stored flags from previous successful build, or default to ['-c', '-x', '-w']",
+          ),
+        useStoredFlags: z
+          .boolean()
+          .optional()
+          .describe(
+            "Whether to automatically use stored flags from build context when compilerFlags is not provided (default: true)",
           ),
       },
     },
-    async ({ sourceFilePath, qb64pePath, compilerFlags }) => {
+    async ({ sourceFilePath, qb64pePath, compilerFlags, useStoredFlags }) => {
       try {
         const result = await services.compilerService.compileAndVerify(
           sourceFilePath,
           qb64pePath,
-          compilerFlags
+          compilerFlags,
+          useStoredFlags,
         );
         return createMCPResponse(result);
       } catch (error) {
         return createMCPError(error, "compiling and verifying code");
       }
-    }
+    },
   );
 }

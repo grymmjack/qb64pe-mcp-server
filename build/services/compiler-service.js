@@ -698,7 +698,7 @@ INPUT "Press Enter to exit...", dummy$
                 if (fs.existsSync(executablePath)) {
                     result.success = true;
                     result.executablePath = executablePath;
-                    result.suggestions.push("Compilation successful! Executable created.");
+                    result.suggestions.push("⚙️ Compilation successful! Executable created.");
                 }
                 else if (result.errors.length === 0) {
                     result.errors.push({

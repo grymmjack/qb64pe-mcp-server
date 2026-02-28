@@ -901,7 +901,7 @@ INPUT "Press Enter to exit...", dummy$
           result.success = true;
           result.executablePath = executablePath;
           result.suggestions.push(
-            "Compilation successful! Executable created.",
+            "⚙️ Compilation successful! Executable created.",
           );
         } else if (result.errors.length === 0) {
           result.errors.push({

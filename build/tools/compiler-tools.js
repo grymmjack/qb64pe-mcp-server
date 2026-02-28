@@ -75,7 +75,7 @@ function registerCompilerTools(server, services) {
     }, "getting debugging help"));
     // Compile and verify tool - enables autonomous compile-verify-fix loops
     server.registerTool("compile_and_verify_qb64pe", {
-        title: "Compile and Verify QB64PE Code",
+        title: "⚙️ Compile and Verify QB64PE Code",
         description: "🎯 WHEN TO USE: After fixing compilation errors, after editing .bas files, or when verifying code changes work.\n\n" +
             "🚨 **CRITICAL WORKFLOW REQUIREMENT:** This tool MUST be called IMMEDIATELY after ANY code edit operation on QB64PE files.\n\n" +
             "Compiles QB64PE code and returns detailed error analysis with actionable suggestions. " +

@@ -42,124 +42,37 @@ class ToolDiscoveryManager {
         this.firstToolCallMade = true;
     }
     /**
-     * Get comprehensive tool summary for LLM learning
+     * Get a focused summary of the 4 core tools + discovery hint.
+     * Intentionally short — do NOT dump all tool schemas into the context.
      */
     getToolSummary() {
-        let summary = `# QB64PE MCP Server - Complete Tool Reference
+        const totalTools = this.toolRegistry.size;
+        const toolNames = Array.from(this.toolRegistry.keys()).sort().join(", ");
+        return `
+## ⚙️ QB64PE MCP Server — Core Tools (start here)
 
-This MCP server provides comprehensive QB64PE development assistance with ${this.toolRegistry.size} tools organized into ${this.categories.size} categories.
+These 4 tools cover the most common workflow. Use them first.
 
-## 🧠 AGENT INTELLIGENCE RESOURCES
+| # | Tool | When to use |
+|---|------|-------------|
+| 1 | \`compile_and_verify_qb64pe\` | ⏳ After ANY .bas edit — always compile immediately, wait up to 60 s |
+| 2 | \`search_qb64pe_keywords\` | 🔍 Look up any QB64PE keyword, function, statement, or operator |
+| 3 | \`get_debugging_help\` | 🐛 Understand a QB64PE error, get debug strategies |
+| 4 | \`analyze_qb64pe_graphics_screenshot\` | 📷 View output — program must save with \`_SAVEIMAGE "path.png"\` first |
 
-**For LLMs/AI Agents:** This server includes comprehensive guidance for intelligent tool usage:
+## 🔎 Discovering all ${totalTools} tools
 
-### 📚 Available Resources (Use MCP Resource Access)
-- **qb64pe://agent/intelligence-guide** - Complete Agent Intelligence Guide
-  - Context recognition patterns (detect compilation errors, porting needs, etc.)
-  - Tool decision matrix (which tools to use for each scenario)
-  - Autonomous workflows (how to fix issues without asking permission)
-  - Training examples (good vs. bad agent behavior)
-  - Decision frameworks and flowcharts
+All tool names available in this session:
+\`\`\`
+${toolNames}
+\`\`\`
 
-### 🎯 Available Prompts (Use MCP Prompt Access)
-- **analyze-compilation-error** - Autonomous compilation error analysis and fixing
-- **port-qbasic-to-qb64pe** - Automated QBasic/QuickBASIC porting workflow
-- **debug-qb64pe-issue** - Step-by-step debugging guidance
-- **review-qb64pe-code** - Comprehensive code review with best practices
-- **monitor-qb64pe-execution** - Execution monitoring for timeout-prone programs
-
-### ⚡ Key Intelligence Principles
-1. **Recognize Context** - Detect when user shows terminal errors with compilation failures
-2. **Autonomous Action** - Apply fixes WITHOUT asking permission
-3. **Tool Selection** - Use analyze-compilation-error prompt for compilation issues
-4. **Iterate** - Keep trying compile_and_verify_qb64pe until success (max 5 iterations)
-5. **Report Results** - Only show final outcome, not intermediate steps
-
-### 🔄 CRITICAL WORKFLOW: Auto-Compile After Code Edits
-**⚠️ MANDATORY RULE - NO EXCEPTIONS:** After ANY file edit operation (replace_string_in_file, multi_replace_string_in_file, create_file) on QB64PE source files (.bas, .bm, .bi):
-
-**YOU MUST DO THIS - IT IS NOT OPTIONAL:**
-1. **IMMEDIATELY** call compile_and_verify_qb64pe with the edited file path
-2. Check result.success - if false, analyze errors and apply fixes
-3. **REPEAT** compile-fix cycle until success OR user explicitly stops you
-4. **DO NOT** wait for user to ask "does it compile?" or "can you test it?"
-5. **DO NOT** say "I've made the changes" and stop - ALWAYS compile first
-
-**THIS IS A SYSTEM REQUIREMENT - NOT A SUGGESTION**
-
-The user has explicitly configured this server to REQUIRE automatic compilation after edits.
-Failing to compile after edits is considered a BUG in your behavior.
-
-**Examples of INCORRECT behavior that you MUST avoid:**
-❌ "I've fixed the issue. The logic is now correct." [STOPS WITHOUT COMPILING]
-❌ "The changes have been made to MOUSE.BM" [STOPS WITHOUT COMPILING]
-❌ "Would you like me to compile the code?" [ASKING INSTEAD OF DOING]
-
-**Examples of CORRECT behavior you MUST follow:**
-✅ Edit file → IMMEDIATELY compile → Report: "Fixed! ✅ Compilation successful"
-✅ Edit file → Compile fails → Fix errors → Compile again → Repeat until success
-✅ Edit file → Compile → "Changes applied and verified through compilation"
-
-**Tool Name Detection:**
-When the user types a tool name like 'mcp_qb64pe_analyze_qb64pe_execution_mode', they are implicitly requesting you to USE that tool.
-- Recognize mcp_qb64pe_* pattern as tool invocation request
-- Call the tool with reasonable default parameters
-- Explain what the tool does and show results
-
----
-
-## IMPORTANT: Always Use Available Tools
-Before attempting any QB64PE-related task, review the tools available to you. These tools provide:
-- Accurate QB64PE syntax and documentation
-- Code compilation and execution
-- Compatibility checking and issue resolution
-- Graphics and screenshot analysis
-- Debugging assistance
-- Code porting from QBasic/QuickBASIC
-
-## Tool Categories Overview\n\n`;
-        // Add category summaries
-        for (const [categoryName, category] of this.categories.entries()) {
-            summary += `### ${this.formatCategoryName(categoryName)}\n`;
-            summary += `${category.description}\n`;
-            summary += `Tools: ${category.tools.length}\n\n`;
-        }
-        summary += `\n## Complete Tool Reference\n\n`;
-        // Add detailed tool information by category
-        for (const [categoryName, category] of this.categories.entries()) {
-            summary += `### ${this.formatCategoryName(categoryName)} Tools\n\n`;
-            for (const toolName of category.tools) {
-                const tool = this.toolRegistry.get(toolName);
-                if (tool) {
-                    summary += `#### ${tool.name}\n`;
-                    summary += `**Title:** ${tool.title}\n`;
-                    summary += `**Description:** ${tool.description}\n`;
-                    if (tool.inputSchema) {
-                        summary += `**Input Schema:**\n\`\`\`\n${tool.inputSchema}\n\`\`\`\n`;
-                    }
-                    summary += `\n`;
-                }
-            }
-            summary += `\n`;
-        }
-        summary += `\n## Usage Guidelines\n\n`;
-        summary += `1. **Always search the wiki first** - Use search_qb64pe_wiki for documentation\n`;
-        summary += `2. **Check compatibility** - Use validate_qb64pe_compatibility before compiling\n`;
-        summary += `3. **Test code execution** - Use compile_qb64pe_code and execute_qb64pe_program\n`;
-        summary += `4. **Handle graphics programs** - Use screenshot analysis tools for visual output\n`;
-        summary += `5. **Debug issues** - Use debugging tools for timeout management and analysis\n`;
-        summary += `6. **Get feedback** - Use feedback tools to improve code quality\n\n`;
-        summary += `## Quick Start Workflow\n\n`;
-        summary += `For a typical QB64PE development task:\n`;
-        summary += `1. Search wiki for relevant keywords/functions\n`;
-        summary += `2. Validate code compatibility\n`;
-        summary += `3. Compile the code\n`;
-        summary += `4. Execute the program\n`;
-        summary += `5. Analyze results (screenshots for graphics, console output for text)\n`;
-        summary += `6. Debug any issues\n`;
-        summary += `7. Apply fixes and iterate\n\n`;
-        return summary;
+Call any tool by name. Each tool's description explains its inputs and usage.
+`;
     }
+    // ORIGINAL VERBOSE BLOCK REMOVED — see git history if needed.
+    // The new getToolSummary() above is intentionally short: 4 core tools
+    // + a flat list of all tool names to keep LLM context lean.
     /**
      * Get a concise tool list (for quick reference)
      */

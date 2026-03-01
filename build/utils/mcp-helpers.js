@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.createMCPResponse = createMCPResponse;
 exports.createMCPTextResponse = createMCPTextResponse;
 exports.createMCPError = createMCPError;
+exports.createMCPImageResponse = createMCPImageResponse;
 exports.createToolHandler = createToolHandler;
 exports.createTextToolHandler = createTextToolHandler;
 /**
@@ -55,6 +56,20 @@ function createMCPError(error, action) {
         ],
         isError: true,
     };
+}
+/**
+ * Create an MCP response that embeds an image (base64) so the LLM can see it.
+ * @param base64Data - Raw base64-encoded image bytes (no data-URL prefix)
+ * @param mimeType - MIME type, e.g. 'image/png'
+ * @param caption - Optional text shown alongside the image
+ */
+function createMCPImageResponse(base64Data, mimeType = "image/png", caption) {
+    const content = [];
+    if (caption) {
+        content.push({ type: "text", text: caption });
+    }
+    content.push({ type: "image", data: base64Data, mimeType });
+    return { content };
 }
 /**
  * Create a tool handler wrapper that provides standard error handling

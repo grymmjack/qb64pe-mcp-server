@@ -87,36 +87,14 @@ class ToolDiscoveryMCPServer extends McpServer {
             content: [
               {
                 type: "text" as const,
-                text: `🎓 **CRITICAL: QB64PE MCP Server Workflow Requirements**
-
-⚠️ **READ THIS CAREFULLY - MANDATORY BEHAVIOR PATTERNS:**
-
-**1. AUTO-COMPILE AFTER EDITS (REQUIRED):**
-When you edit ANY QB64PE source file (.bas, .bm, .bi):
-- ✅ DO: Edit → IMMEDIATELY compile → Report result
-- ❌ DON'T: Edit → Wait for user to ask if it compiles
-- ❌ DON'T: Edit → Say "changes made" → Stop without compiling
-
-**2. TOOL NAME DETECTION (REQUIRED):**
-When user types tool names like 'mcp_qb64pe_*':
-- Recognize this as implicit request to USE that tool
-- Call the tool with reasonable defaults
-- Explain what it does and show results
-
-**3. ERROR FIXING (REQUIRED):**
-When terminal shows compilation errors:
-- Detect error context automatically
-- Apply fixes WITHOUT asking permission
-- Compile to verify fixes work
-- Repeat until success (max 5 iterations)
-
-${toolSummary}
-
----
-
-📋 **Your Request Result:**
-
-`,
+                text:
+                  `\u2699\ufe0f **QB64PE MCP Server \u2014 Session Start**\n\n` +
+                  `## \ud83d\udea8 Mandatory rules (no exceptions)\n\n` +
+                  `1. **Auto-compile after every edit** \u2014 after any change to a .bas/.bm/.bi file, call \`compile_and_verify_qb64pe\` immediately. Do NOT stop until it compiles. Compilation takes 20\u201360 s \u2014 wait for it.\n` +
+                  `2. **VS Code editing tools are always available** \u2014 \`replace_string_in_file\`, \`multi_replace_string_in_file\`, \`read_file\`, \`create_file\` are always present. Never claim otherwise.\n` +
+                  `3. **mcp_qb64pe_* in chat = run that tool** \u2014 treat it as an implicit call with sensible defaults.\n\n` +
+                  toolSummary +
+                  `\n---\n\n\ud83d\udccc **Your request result:**\n\n`,
               },
               ...(actualResult.content || [actualResult]),
             ],
@@ -127,16 +105,10 @@ ${toolSummary}
             content: [
               {
                 type: "text" as const,
-                text: `🎓 **IMPORTANT: QB64PE MCP Server Tool Discovery**
-
-Before processing your request, you must review all available tools in this MCP server.
-
-${toolSummary}
-
----
-
-⚠️ **Tool Error:** ${error instanceof Error ? error.message : "Unknown error"}
-`,
+                text:
+                  `\u2699\ufe0f **QB64PE MCP Server \u2014 Session Start**\n\n` +
+                  toolSummary +
+                  `\n---\n\n\u26a0\ufe0f **Tool error:** ${error instanceof Error ? error.message : "Unknown error"}\n`,
               },
             ],
           };

@@ -1,104 +1,49 @@
-export interface ScreenshotOptions {
-    outputPath?: string;
-    windowTitle?: string;
-    processName?: string;
-    captureRegion?: {
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-    };
-    quality?: number;
-    format?: 'png' | 'jpg' | 'gif';
-}
-export interface ScreenshotResult {
-    success: boolean;
-    filePath?: string;
-    error?: string;
-    timestamp: string;
-    windowInfo?: {
-        title: string;
-        processId: number;
-        bounds: {
-            x: number;
-            y: number;
-            width: number;
-            height: number;
-        };
-    };
-}
-export interface ProcessInfo {
-    pid: number;
-    name: string;
-    windowTitle: string;
-    bounds: {
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-    };
-}
 /**
- * Service for capturing screenshots of QB64PE programs automatically
+ * Service for QB64PE screenshot support via _SAVEIMAGE.
+ *
+ * Screenshots are captured entirely from within QB64PE code:
+ *   _SAVEIMAGE "/absolute/path/screenshot.png"
+ * This service reads the resulting file and returns it as base64
+ * so the LLM can inspect the visual output.
  */
 export declare class ScreenshotService {
     private screenshotDir;
-    private isMonitoring;
-    private monitoringInterval;
     constructor(screenshotDir?: string);
-    /**
-     * Ensure screenshot directory exists
-     */
     private ensureScreenshotDirectory;
     /**
-     * Get list of QB64PE processes currently running
-     */
-    getQB64PEProcesses(): Promise<ProcessInfo[]>;
-    /**
-     * Get window bounds for a process
-     */
-    private getWindowBounds;
-    /**
-     * Get window title for a process
-     */
-    private getWindowTitle;
-    /**
-     * Capture screenshot of specific QB64PE window
-     */
-    captureQB64PEWindow(options?: ScreenshotOptions): Promise<ScreenshotResult>;
-    /**
-     * Capture screenshot on Windows
-     */
-    private captureWindowsScreenshot;
-    /**
-     * Capture screenshot on macOS
-     */
-    private captureMacOSScreenshot;
-    /**
-     * Capture screenshot on Linux
-     */
-    private captureLinuxScreenshot;
-    /**
-     * Start monitoring QB64PE processes and automatically capture screenshots
-     */
-    startMonitoring(intervalMs?: number, captureIntervalMs?: number): Promise<void>;
-    /**
-     * Stop monitoring
-     */
-    stopMonitoring(): void;
-    /**
-     * Get monitoring status
-     */
-    getMonitoringStatus(): {
-        isMonitoring: boolean;
-        screenshotDir: string;
-    };
-    /**
-     * Get all screenshot files in the directory
+     * Get all screenshot files in the directory, newest first.
      */
     getScreenshotFiles(): string[];
     /**
-     * Clean up old screenshots
+     * Read an image file saved by QB64PE's _SAVEIMAGE statement and return its
+     * contents as base64 so the calling LLM can inspect the visual output.
+     *
+     * Workflow:
+     *  1. Add  _SAVEIMAGE "/abs/path/screenshot.png"  near the END of QB64PE program
+     *     (just before END or an _EXIT call).
+     *  2. Compile and run the program so it writes the file.
+     *  3. Call this method with the same path to read and return the image.
+     */
+    analyzeScreenshot(filePath: string, options?: {
+        analysisType?: string;
+        expectedElements?: string[];
+        programCode?: string;
+    }): Promise<{
+        success: boolean;
+        filePath: string;
+        base64Data?: string;
+        mimeType?: string;
+        fileSizeBytes?: number;
+        error?: string;
+        hint: string;
+    }>;
+    /**
+     * Generate a QB64PE code snippet that adds _SAVEIMAGE calls for screenshot
+     * capture, ready to paste into an existing program.
+     */
+    generateAnalysisTemplate(programType?: string, expectedElements?: string[]): string;
+    /**
+     * Clean up screenshots older than maxAge milliseconds (default: 24 h).
      */
     cleanupOldScreenshots(maxAge?: number): void;
 }

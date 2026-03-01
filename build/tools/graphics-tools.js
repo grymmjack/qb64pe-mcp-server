@@ -12,11 +12,18 @@ const mcp_helpers_js_1 = require("../utils/mcp-helpers.js");
 function registerGraphicsTools(server, services) {
     server.registerTool("analyze_qb64pe_graphics_screenshot", {
         title: "Analyze QB64PE Graphics Screenshot",
-        description: "Analyze QB64PE graphics program screenshots to detect shapes, colors, layout, and visual elements",
+        description: "📷 View and analyze a screenshot saved by a QB64PE program using _SAVEIMAGE.\n\n" +
+            "🔧 **HOW TO CAPTURE A SCREENSHOT FROM QB64PE CODE:**\n" +
+            "Add this line near the END of your QB64PE program (just before END or _EXIT):\n" +
+            '    _SAVEIMAGE "/absolute/path/to/screenshot.png"\n' +
+            "Then compile and run the program. Once it exits the file will exist on disk.\n" +
+            "Finally call this tool with that same path — the image will be returned so you\n" +
+            "can see exactly what the program drew.\n\n" +
+            "⚠️ The file must already exist (written by _SAVEIMAGE) before calling this tool.",
         inputSchema: {
             screenshotPath: zod_1.z
                 .string()
-                .describe("Path to the screenshot file to analyze (PNG, JPG, GIF)"),
+                .describe("Absolute path to the PNG/JPG/GIF file written by _SAVEIMAGE"),
             analysisType: zod_1.z
                 .enum([
                 "shapes",
@@ -44,6 +51,9 @@ function registerGraphicsTools(server, services) {
                 expectedElements,
                 programCode,
             });
+            if (analysis.success && analysis.base64Data && analysis.mimeType) {
+                return (0, mcp_helpers_js_1.createMCPImageResponse)(analysis.base64Data, analysis.mimeType, `📷 Screenshot: ${screenshotPath} (${analysis.fileSizeBytes} bytes)`);
+            }
             return (0, mcp_helpers_js_1.createMCPResponse)(analysis);
         }
         catch (error) {
@@ -68,76 +78,9 @@ function registerGraphicsTools(server, services) {
             return (0, mcp_helpers_js_1.createMCPError)(error, "generating screenshot analysis template");
         }
     });
-    server.registerTool("capture_qb64pe_screenshot", {
-        title: "Capture QB64PE Screenshot",
-        description: "Capture screenshots from running QB64PE programs",
-        inputSchema: {
-            processName: zod_1.z
-                .string()
-                .optional()
-                .describe("Process name to capture (default: qb64pe)"),
-            outputPath: zod_1.z
-                .string()
-                .optional()
-                .describe("Output path for screenshot"),
-        },
-    }, async ({ processName = "qb64pe", outputPath }) => {
-        try {
-            const screenshot = await services.screenshotService.captureScreenshot(processName, outputPath);
-            return (0, mcp_helpers_js_1.createMCPResponse)(screenshot);
-        }
-        catch (error) {
-            return (0, mcp_helpers_js_1.createMCPError)(error, "capturing screenshot");
-        }
-    });
-    server.registerTool("get_qb64pe_processes", {
-        title: "Get QB64PE Processes",
-        description: "Get information about running QB64PE processes",
-        inputSchema: {},
-    }, async () => {
-        try {
-            const processes = await services.screenshotService.getQB64PEProcesses();
-            return (0, mcp_helpers_js_1.createMCPResponse)(processes);
-        }
-        catch (error) {
-            return (0, mcp_helpers_js_1.createMCPError)(error, "getting QB64PE processes");
-        }
-    });
-    server.registerTool("start_screenshot_monitoring", {
-        title: "Start Screenshot Monitoring",
-        description: "Start automated screenshot monitoring for QB64PE processes",
-        inputSchema: {
-            interval: zod_1.z
-                .number()
-                .optional()
-                .describe("Monitoring interval in seconds (default: 5)"),
-            outputDir: zod_1.z
-                .string()
-                .optional()
-                .describe("Output directory for screenshots"),
-        },
-    }, async ({ interval = 5, outputDir }) => {
-        try {
-            const status = await services.screenshotService.startMonitoring(interval, outputDir);
-            return (0, mcp_helpers_js_1.createMCPResponse)(status);
-        }
-        catch (error) {
-            return (0, mcp_helpers_js_1.createMCPError)(error, "starting screenshot monitoring");
-        }
-    });
-    server.registerTool("stop_screenshot_monitoring", {
-        title: "Stop Screenshot Monitoring",
-        description: "Stop automated screenshot monitoring",
-        inputSchema: {},
-    }, async () => {
-        try {
-            const status = await services.screenshotService.stopMonitoring();
-            return (0, mcp_helpers_js_1.createMCPResponse)(status);
-        }
-        catch (error) {
-            return (0, mcp_helpers_js_1.createMCPError)(error, "stopping screenshot monitoring");
-        }
-    });
+    // capture_qb64pe_screenshot, get_qb64pe_processes, start_screenshot_monitoring,
+    // stop_screenshot_monitoring removed — screenshots are taken from within QB64PE
+    // code using _SAVEIMAGE, then read back via analyze_qb64pe_graphics_screenshot.
     server.registerTool("start_screenshot_watching", {
         title: "Start Screenshot Watching",
         description: "Start watching for new screenshots and automatically analyze them",
@@ -200,50 +143,28 @@ function registerGraphicsTools(server, services) {
         }
     });
     server.registerTool("get_automation_status", {
-        title: "Get Screenshot Automation Status",
-        description: "Get comprehensive status of all screenshot automation services",
+        title: "Get Screenshot Status",
+        description: "List screenshot files saved by QB64PE programs via _SAVEIMAGE",
         inputSchema: {},
     }, async () => {
         try {
-            const screenshotStatus = services.screenshotService.getMonitoringStatus();
-            const watcherStatus = services.screenshotWatcher.getStatus();
             const recentFiles = services.screenshotService
                 .getScreenshotFiles()
-                .slice(0, 5);
+                .slice(0, 10);
             return (0, mcp_helpers_js_1.createMCPResponse)({
-                screenshot: {
-                    monitoring: screenshotStatus,
-                    recentFiles: recentFiles.length,
-                    latestFile: recentFiles[0] || null,
-                },
-                watcher: watcherStatus,
-                overall: {
-                    fullyAutomated: screenshotStatus.isMonitoring && watcherStatus.isWatching,
-                    capturingScreenshots: screenshotStatus.isMonitoring,
-                    analyzingScreenshots: watcherStatus.isWatching,
-                    totalScreenshots: recentFiles.length,
-                },
+                screenshotDir: recentFiles[0]
+                    ? require("path").dirname(recentFiles[0])
+                    : null,
+                totalScreenshots: recentFiles.length,
+                recentFiles,
+                hint: 'Add  _SAVEIMAGE "path.png"  near END of QB64PE program, compile and run, then call analyze_qb64pe_graphics_screenshot.',
             });
         }
         catch (error) {
-            return (0, mcp_helpers_js_1.createMCPError)(error, "getting automation status");
+            return (0, mcp_helpers_js_1.createMCPError)(error, "getting screenshot status");
         }
     });
-    server.registerTool("get_qb64pe_graphics_guide", {
-        title: "Get QB64PE Graphics Guide",
-        description: "Get comprehensive guide for QB64PE graphics programming",
-        inputSchema: {
-            topic: zod_1.z.enum(["basics", "advanced", "optimization", "all"]).optional(),
-        },
-    }, async ({ topic = "all" }) => {
-        try {
-            const guide = await services.screenshotService.getGraphicsGuide(topic);
-            return (0, mcp_helpers_js_1.createMCPTextResponse)(guide);
-        }
-        catch (error) {
-            return (0, mcp_helpers_js_1.createMCPError)(error, "getting graphics guide");
-        }
-    });
+    // get_qb64pe_graphics_guide removed — method was never implemented.
     server.registerTool("generate_qb64pe_echo_functions", {
         title: "Generate QB64PE ECHO Functions",
         description: "Generate ECHO functions for simplified console output in graphics programs",

@@ -37,6 +37,22 @@ export declare function createMCPError(error: unknown, action: string): {
     isError: boolean;
 };
 /**
+ * Create an MCP response that embeds an image (base64) so the LLM can see it.
+ * @param base64Data - Raw base64-encoded image bytes (no data-URL prefix)
+ * @param mimeType - MIME type, e.g. 'image/png'
+ * @param caption - Optional text shown alongside the image
+ */
+export declare function createMCPImageResponse(base64Data: string, mimeType?: string, caption?: string): {
+    content: ({
+        type: "text";
+        text: string;
+    } | {
+        type: "image";
+        data: string;
+        mimeType: string;
+    })[];
+};
+/**
  * Create a tool handler wrapper that provides standard error handling
  * @param handler - Async function that processes tool arguments
  * @param actionDescription - Description of the action (for error messages)

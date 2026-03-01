@@ -36,7 +36,8 @@ export declare class ToolDiscoveryManager {
      */
     markToolsAsLearned(): void;
     /**
-     * Get comprehensive tool summary for LLM learning
+     * Get a focused summary of the 4 core tools + discovery hint.
+     * Intentionally short — do NOT dump all tool schemas into the context.
      */
     getToolSummary(): string;
     /**

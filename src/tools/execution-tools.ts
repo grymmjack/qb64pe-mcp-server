@@ -144,7 +144,8 @@ export function registerExecutionTools(
     },
     async () => {
       try {
-        const guidance = services.executionService.getMonitoringGuidance();
+        const guidance =
+          services.executionService.getRealTimeMonitoringGuidance();
         return createMCPResponse({ guidance });
       } catch (error) {
         return createMCPError(error, "getting execution monitoring guidance");

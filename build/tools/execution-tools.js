@@ -101,7 +101,7 @@ function registerExecutionTools(server, services) {
         inputSchema: {},
     }, async () => {
         try {
-            const guidance = services.executionService.getMonitoringGuidance();
+            const guidance = services.executionService.getRealTimeMonitoringGuidance();
             return (0, mcp_helpers_js_1.createMCPResponse)({ guidance });
         }
         catch (error) {

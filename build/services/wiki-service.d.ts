@@ -37,6 +37,13 @@ export declare class QB64PEWikiService {
      */
     getWikiIndex(): Promise<string>;
     /**
+     * Get all available wiki categories.
+     * Returns the same structured index as getWikiIndex() — the Main Page
+     * is the canonical category listing for the QB64PE wiki.
+     * Called by the get_qb64pe_wiki_categories MCP tool.
+     */
+    getWikiCategories(): Promise<string>;
+    /**
      * Perform actual wiki search using the search API
      */
     private performWikiSearch;

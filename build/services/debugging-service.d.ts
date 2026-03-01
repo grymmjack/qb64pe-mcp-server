@@ -130,6 +130,11 @@ export declare class QB64PEDebuggingService {
      */
     getSessionStatus(sessionId: string): DebuggingSession | undefined;
     /**
+     * Generate a standalone QB64PE debugging template.
+     * Called by the generate_advanced_debugging_template MCP tool.
+     */
+    generateAdvancedTemplate(programType?: "console" | "graphics" | "mixed", includeAllFeatures?: boolean): string;
+    /**
      * List all active debug sessions
      */
     getActiveSessions(): DebuggingSession[];

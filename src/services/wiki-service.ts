@@ -36,7 +36,7 @@ export class QB64PEWikiService {
    */
   async searchWiki(
     query: string,
-    category?: string
+    category?: string,
   ): Promise<WikiSearchResult[]> {
     const cacheKey = `search:${query}:${category || "all"}`;
     const cached = this.getCachedResult(cacheKey);
@@ -50,7 +50,7 @@ export class QB64PEWikiService {
       if (searchResults.length === 0) {
         const alternativeResults = await this.performAlternativeSearch(
           query,
-          category
+          category,
         );
         this.setCachedResult(cacheKey, alternativeResults);
         return alternativeResults;
@@ -70,7 +70,7 @@ export class QB64PEWikiService {
    */
   async getPageContent(
     pageTitle: string,
-    includeExamples: boolean = true
+    includeExamples: boolean = true,
   ): Promise<string> {
     const cacheKey = `page:${pageTitle}:${includeExamples}`;
     const cached = this.getCachedResult(cacheKey);
@@ -131,11 +131,21 @@ export class QB64PEWikiService {
   }
 
   /**
+   * Get all available wiki categories.
+   * Returns the same structured index as getWikiIndex() — the Main Page
+   * is the canonical category listing for the QB64PE wiki.
+   * Called by the get_qb64pe_wiki_categories MCP tool.
+   */
+  async getWikiCategories(): Promise<string> {
+    return this.getWikiIndex();
+  }
+
+  /**
    * Perform actual wiki search using the search API
    */
   private async performWikiSearch(
     query: string,
-    category?: string
+    category?: string,
   ): Promise<WikiSearchResult[]> {
     const searchUrl = `${this.baseUrl}/Special:Search`;
     const params = new URLSearchParams({
@@ -179,7 +189,7 @@ export class QB64PEWikiService {
    */
   private async performAlternativeSearch(
     query: string,
-    category?: string
+    category?: string,
   ): Promise<WikiSearchResult[]> {
     // Try searching for common QB64PE pages
     const commonPages = this.getCommonPages();
@@ -189,7 +199,7 @@ export class QB64PEWikiService {
       if (
         page.title.toLowerCase().includes(query.toLowerCase()) ||
         page.keywords.some((keyword) =>
-          keyword.toLowerCase().includes(query.toLowerCase())
+          keyword.toLowerCase().includes(query.toLowerCase()),
         )
       ) {
         results.push({
@@ -209,7 +219,7 @@ export class QB64PEWikiService {
    */
   private extractPageContent(
     $: cheerio.CheerioAPI,
-    includeExamples: boolean
+    includeExamples: boolean,
   ): string {
     let content = "";
 
@@ -227,7 +237,7 @@ export class QB64PEWikiService {
       if (text) {
         if ($element.is("h2, h3, h4, h5, h6")) {
           const level = "#".repeat(
-            parseInt($element.prop("tagName")?.slice(1) || "1")
+            parseInt($element.prop("tagName")?.slice(1) || "1"),
           );
           content += `\n${level} ${text}\n\n`;
         } else {
@@ -292,7 +302,7 @@ export class QB64PEWikiService {
 
         if ($element.is("h2, h3")) {
           const level = "#".repeat(
-            parseInt($element.prop("tagName")?.slice(1) || "1")
+            parseInt($element.prop("tagName")?.slice(1) || "1"),
           );
           index += `${level} ${$element.text().trim()}\n\n`;
         } else if ($element.is("ul")) {
@@ -353,7 +363,7 @@ export class QB64PEWikiService {
 
   private filterByCategory(
     results: WikiSearchResult[],
-    category?: string
+    category?: string,
   ): WikiSearchResult[] {
     if (!category || category === "all") {
       return results;
@@ -410,7 +420,7 @@ export class QB64PEWikiService {
 
   private getFallbackResults(
     query: string,
-    category?: string
+    category?: string,
   ): WikiSearchResult[] {
     const commonPages = this.getCommonPages();
     return commonPages
@@ -418,11 +428,11 @@ export class QB64PEWikiService {
         (page) =>
           page.title.toLowerCase().includes(query.toLowerCase()) ||
           page.keywords.some((k) =>
-            k.toLowerCase().includes(query.toLowerCase())
-          )
+            k.toLowerCase().includes(query.toLowerCase()),
+          ),
       )
       .filter(
-        (page) => !category || category === "all" || page.category === category
+        (page) => !category || category === "all" || page.category === category,
       )
       .map((page) => ({
         title: page.title,
@@ -493,7 +503,7 @@ Visit the full wiki at: https://qb64phoenix.com/qb64wiki/
    * Extracts Windows/Linux/macOS support information from wiki tables
    */
   async parsePlatformAvailability(
-    keywordName: string
+    keywordName: string,
   ): Promise<PlatformAvailability | null> {
     const cacheKey = `platform:${keywordName}`;
     const cached = this.getCachedResult(cacheKey);
@@ -517,7 +527,7 @@ Visit the full wiki at: https://qb64phoenix.com/qb64wiki/
       const availability = this.extractPlatformInfo(
         $,
         keywordName,
-        response.data
+        response.data,
       );
 
       if (availability) {
@@ -529,7 +539,7 @@ Visit the full wiki at: https://qb64phoenix.com/qb64wiki/
     } catch (error) {
       console.error(
         `Platform availability parse error for ${keywordName}:`,
-        error
+        error,
       );
       return null;
     }
@@ -539,7 +549,7 @@ Visit the full wiki at: https://qb64phoenix.com/qb64wiki/
    * Batch parse platform availability for multiple keywords
    */
   async batchParsePlatformAvailability(
-    keywords: string[]
+    keywords: string[],
   ): Promise<Map<string, PlatformAvailability>> {
     const results = new Map<string, PlatformAvailability>();
 
@@ -571,7 +581,7 @@ Visit the full wiki at: https://qb64phoenix.com/qb64wiki/
   private extractPlatformInfo(
     $: cheerio.CheerioAPI,
     keywordName: string,
-    html: string
+    html: string,
   ): PlatformAvailability | null {
     let windows = true;
     let linux = true;
@@ -597,10 +607,10 @@ Visit the full wiki at: https://qb64phoenix.com/qb64wiki/
 
         const winIdx = headers.findIndex((h) => h.includes("win"));
         const linIdx = headers.findIndex(
-          (h) => h.includes("lin") || h.includes("unix")
+          (h) => h.includes("lin") || h.includes("unix"),
         );
         const macIdx = headers.findIndex(
-          (h) => h.includes("mac") || h.includes("osx")
+          (h) => h.includes("mac") || h.includes("osx"),
         );
 
         if (winIdx >= 0 || linIdx >= 0 || macIdx >= 0) {
@@ -651,7 +661,7 @@ Visit the full wiki at: https://qb64phoenix.com/qb64wiki/
         }
         if (
           pageText.match(
-            /not.*(?:available|supported).*(?:on|in).*(?:macos|mac|osx)/
+            /not.*(?:available|supported).*(?:on|in).*(?:macos|mac|osx)/,
           )
         ) {
           macos = false;

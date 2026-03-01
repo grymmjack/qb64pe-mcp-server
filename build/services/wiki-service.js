@@ -129,6 +129,15 @@ class QB64PEWikiService {
         }
     }
     /**
+     * Get all available wiki categories.
+     * Returns the same structured index as getWikiIndex() — the Main Page
+     * is the canonical category listing for the QB64PE wiki.
+     * Called by the get_qb64pe_wiki_categories MCP tool.
+     */
+    async getWikiCategories() {
+        return this.getWikiIndex();
+    }
+    /**
      * Perform actual wiki search using the search API
      */
     async performWikiSearch(query, category) {

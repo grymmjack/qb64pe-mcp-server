@@ -232,6 +232,18 @@ END`;
         return `"${programPath}" > "${outputPath}" 2>&1`;
     }
     /**
+     * Generate platform-keyed output capture commands.
+     * Plural alias consumed by the generate_output_capture_commands MCP tool.
+     */
+    generateOutputCaptureCommands(programPath, outputPath = 'program_output.txt') {
+        return {
+            linux: `"${programPath}" > "${outputPath}" 2>&1`,
+            macos: `"${programPath}" > "${outputPath}" 2>&1`,
+            windows: `"${programPath}" > "${outputPath}" 2>&1`,
+            powershell: `& "${programPath}" | Tee-Object -FilePath "${outputPath}"`,
+        };
+    }
+    /**
      * Generate file monitoring commands for cross-platform use
      */
     generateFileMonitoringCommands(logFile) {

@@ -66,6 +66,11 @@ export declare class QB64PELoggingService {
      */
     generateOutputCaptureCommand(programPath: string, outputPath?: string): string;
     /**
+     * Generate platform-keyed output capture commands.
+     * Plural alias consumed by the generate_output_capture_commands MCP tool.
+     */
+    generateOutputCaptureCommands(programPath: string, outputPath?: string): Record<string, string>;
+    /**
      * Generate file monitoring commands for cross-platform use
      */
     generateFileMonitoringCommands(logFile: string): Record<string, string>;

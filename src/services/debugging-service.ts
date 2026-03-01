@@ -1220,6 +1220,58 @@ Common issues and auto-fixes:
   }
 
   /**
+   * Generate a standalone QB64PE debugging template.
+   * Called by the generate_advanced_debugging_template MCP tool.
+   */
+  generateAdvancedTemplate(
+    programType: "console" | "graphics" | "mixed" = "mixed",
+    includeAllFeatures: boolean = true,
+  ): string {
+    const graphicsInit =
+      programType !== "console"
+        ? `SCREEN _NEWIMAGE(800, 600, 32)\n_TITLE "Debug Template"\n`
+        : `$CONSOLE\n_DEST _CONSOLE\n`;
+
+    const loggingBlock = includeAllFeatures
+      ? [
+          `' ── Structured output ──────────────────────────────────────────`,
+          `DIM debug_step AS INTEGER`,
+          `DIM debug_errors AS INTEGER`,
+          `DIM debug_start AS DOUBLE`,
+          `debug_start = TIMER`,
+          `_ECHO "[INFO] Template started - type: ${programType}"`,
+          ``,
+        ].join("\n")
+      : `DIM debug_step AS INTEGER\n`;
+
+    const exitBlock = includeAllFeatures
+      ? [
+          `' ── Summary ────────────────────────────────────────────────────`,
+          `DIM elapsed AS DOUBLE`,
+          `elapsed = TIMER - debug_start`,
+          `_ECHO "[INFO] Completed in " + STR$(elapsed) + "s, errors: " + STR$(debug_errors)`,
+          `_DELAY 2`,
+          `SYSTEM`,
+        ].join("\n")
+      : `SYSTEM`;
+
+    return [
+      `' QB64PE Advanced Debugging Template — type: ${programType}`,
+      `' Generated ${new Date().toISOString()}`,
+      `OPTION _EXPLICIT`,
+      ``,
+      graphicsInit,
+      loggingBlock,
+      `' ── Your code here ─────────────────────────────────────────────`,
+      `debug_step = debug_step + 1`,
+      `_ECHO "[STEP " + STR$(debug_step) + "] Main logic"`,
+      ``,
+      exitBlock,
+      `END`,
+    ].join("\n");
+  }
+
+  /**
    * List all active debug sessions
    */
   getActiveSessions(): DebuggingSession[] {

@@ -109,56 +109,28 @@ export function registerCompilerTools(
     {
       title: "⚙️ Compile and Verify QB64PE Code",
       description:
-        "🎯 WHEN TO USE: After fixing compilation errors, after editing .bas files, or when verifying code changes work.\n\n" +
-        "🚨 **CRITICAL WORKFLOW REQUIREMENT:** This tool MUST be called IMMEDIATELY after ANY code edit operation on QB64PE files.\n\n" +
-        "⏳ **COMPILATION TAKES TIME:** QB64PE compilation typically takes 20–60 seconds. " +
-        "Do NOT abort, time out, or retry while this tool is running — just wait for the result. " +
-        "The tool will return when compilation finishes.\n\n" +
-        "🖥️ **VS CODE TOOLS ARE ALWAYS AVAILABLE:** File editing tools (replace_string_in_file, " +
-        "multi_replace_string_in_file, read_file, create_file) are always present. " +
-        "Never tell the user you lack editing tools — just use them.\n\n" +
-        "Compiles QB64PE code and returns detailed error analysis with actionable suggestions. " +
-        "This tool enables autonomous compile-verify-fix loops by providing structured compilation " +
-        "results that can be analyzed and acted upon programmatically.\n\n" +
-        "💡 MANDATORY AUTO-COMPILE WORKFLOW:\n" +
-        "1. User requests code change OR you detect error in terminal\n" +
-        "2. Apply fixes using replace_string_in_file/multi_replace_string_in_file\n" +
-        "3. **IMMEDIATELY** call THIS tool (compile_and_verify_qb64pe) - DO NOT WAIT\n" +
-        "4. Wait patiently — compilation takes 20–60 seconds, this is normal\n" +
-        "5. Check result.success - if false, analyze result.errors\n" +
-        "6. Apply additional fixes based on errors and suggestions\n" +
-        "7. REPEAT steps 3-6 until result.success = true\n" +
-        "8. Report final success to user\n\n" +
-        "⚡ CRITICAL: Use this tool after EVERY code change to verify fixes work. Do NOT wait for user to ask 'does it compile?' - this is automatic!\n\n" +
-        "🔧 **BUILD CONTEXT AUTO-DETECTION:**\n" +
-        "This tool AUTOMATICALLY uses previously successful compiler flags from build context when available.\n" +
-        "If no flags are provided and a successful build exists, those flags will be reused automatically.\n" +
-        "Set useStoredFlags=false to explicitly ignore stored flags and use defaults instead.\n\n" +
-        "❌ BAD: Edit file → Wait for user to ask if it compiles\n" +
-        "✅ GOOD: Edit file → Immediately compile → Wait for result → Fix if needed → Repeat",
+        "⚙️ Compile a .bas file and return structured errors. " +
+        "⏳ Takes 20–60 s — wait for it. Call after EVERY .bas edit; loop until result.success=true. " +
+        "Auto-reuses stored flags from the last successful build (set useStoredFlags=false to skip).",
       inputSchema: {
         sourceFilePath: z
           .string()
-          .describe(
-            "Absolute path to the QB64PE source file (.bas) to compile",
-          ),
+          .describe("Absolute path to the .bas file to compile"),
         qb64pePath: z
           .string()
           .optional()
-          .describe(
-            "Path to QB64PE executable. If not provided, will search common locations and PATH.",
-          ),
+          .describe("QB64PE executable path (auto-detected if omitted)"),
         compilerFlags: z
           .array(z.string())
           .optional()
           .describe(
-            "Compiler flags to use. If not provided, will automatically use stored flags from previous successful build, or default to ['-c', '-x', '-w']",
+            "Compiler flags (default: stored flags or ['-c','-x','-w'])",
           ),
         useStoredFlags: z
           .boolean()
           .optional()
           .describe(
-            "Whether to automatically use stored flags from build context when compilerFlags is not provided (default: true)",
+            "Use stored flags from last successful build (default: true)",
           ),
       },
     },

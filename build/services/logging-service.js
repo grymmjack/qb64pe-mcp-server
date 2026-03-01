@@ -18,15 +18,15 @@ class QB64PELoggingService {
         enableNativeLogging: true,
         enableStructuredOutput: true,
         enableEchoOutput: true, // Enable simplified console output
-        consoleDirective: '$CONSOLE:ONLY', // For text-only programs; use $CONSOLE for graphics
-        logLevel: 'INFO',
+        consoleDirective: "$CONSOLE:ONLY", // For text-only programs; use $CONSOLE for graphics
+        logLevel: "INFO",
         autoExitTimeout: 10,
         outputSections: [
-            'PROGRAM ANALYSIS',
-            'HEADER VALIDATION',
-            'DATA PROCESSING',
-            'RESULTS SUMMARY'
-        ]
+            "PROGRAM ANALYSIS",
+            "HEADER VALIDATION",
+            "DATA PROCESSING",
+            "RESULTS SUMMARY",
+        ],
     };
     /**
      * Inject native QB64PE logging functions into source code
@@ -35,7 +35,7 @@ class QB64PELoggingService {
         const cfg = { ...this.defaultConfig, ...config };
         let enhanced = sourceCode;
         // Ensure proper console directive for automation
-        if (!enhanced.includes('$CONSOLE')) {
+        if (!enhanced.includes("$CONSOLE")) {
             enhanced = `${cfg.consoleDirective}\n${enhanced}`;
         }
         else {
@@ -43,11 +43,11 @@ class QB64PELoggingService {
             enhanced = enhanced.replace(/\$CONSOLE(?!:ONLY)/g, cfg.consoleDirective);
         }
         // Add logging function definitions if not present
-        if (!enhanced.includes('_LOGINFO') && cfg.enableNativeLogging) {
+        if (!enhanced.includes("_LOGINFO") && cfg.enableNativeLogging) {
             const loggingHeader = this.generateLoggingHeader(cfg);
             enhanced = this.insertAfterDirectives(enhanced, loggingHeader);
         }
-        else if (!enhanced.includes('SUB ECHO') && cfg.enableEchoOutput) {
+        else if (!enhanced.includes("SUB ECHO") && cfg.enableEchoOutput) {
             // Add ECHO functions even if native logging is disabled
             const echoHeader = this.generateEchoHeader(cfg);
             enhanced = this.insertAfterDirectives(enhanced, echoHeader);
@@ -59,9 +59,9 @@ class QB64PELoggingService {
      */
     generateStructuredOutput(sections, includeLogging = true, config) {
         const cfg = { ...this.defaultConfig, ...config };
-        let output = '';
+        let output = "";
         sections.forEach((section, index) => {
-            const sectionName = section.toUpperCase().replace(/\s+/g, ' ');
+            const sectionName = section.toUpperCase().replace(/\s+/g, " ");
             // Use _ECHO if enabled, otherwise use PRINT
             if (cfg.enableEchoOutput) {
                 output += `\n_ECHO "=== ${sectionName} ==="\n`;
@@ -109,8 +109,8 @@ class QB64PELoggingService {
     parseStructuredOutput(output) {
         const sections = {};
         const logs = [];
-        const lines = output.split('\n');
-        let currentSection = '';
+        const lines = output.split("\n");
+        let currentSection = "";
         let success = true;
         let totalSteps = 0;
         let failedSteps = 0;
@@ -130,20 +130,20 @@ class QB64PELoggingService {
                     level: logMatch[1],
                     message: logMatch[2],
                     section: currentSection || undefined,
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
                 });
-                if (logMatch[1] === 'ERROR') {
+                if (logMatch[1] === "ERROR") {
                     success = false;
                     failedSteps++;
                 }
                 continue;
             }
             // Parse step completion
-            if (trimmed.includes('Step') && trimmed.includes('completed')) {
+            if (trimmed.includes("Step") && trimmed.includes("completed")) {
                 totalSteps++;
             }
             // Parse success/failure indicators
-            if (trimmed.startsWith('FAILED:') || trimmed.includes('ERROR')) {
+            if (trimmed.startsWith("FAILED:") || trimmed.includes("ERROR")) {
                 success = false;
                 failedSteps++;
             }
@@ -158,8 +158,8 @@ class QB64PELoggingService {
             summary: {
                 success,
                 totalSteps,
-                failedSteps
-            }
+                failedSteps,
+            },
         };
     }
     /**
@@ -228,14 +228,14 @@ END`;
     /**
      * Generate shell command for output capture
      */
-    generateOutputCaptureCommand(programPath, outputPath = 'analysis_output.txt') {
+    generateOutputCaptureCommand(programPath, outputPath = "analysis_output.txt") {
         return `"${programPath}" > "${outputPath}" 2>&1`;
     }
     /**
      * Generate platform-keyed output capture commands.
      * Plural alias consumed by the generate_output_capture_commands MCP tool.
      */
-    generateOutputCaptureCommands(programPath, outputPath = 'program_output.txt') {
+    generateOutputCaptureCommands(programPath, outputPath = "program_output.txt") {
         return {
             linux: `"${programPath}" > "${outputPath}" 2>&1`,
             macos: `"${programPath}" > "${outputPath}" 2>&1`,
@@ -251,7 +251,7 @@ END`;
             windows: `powershell -Command "Get-Content -Path '${logFile}' -Wait -Tail 10"`,
             linux: `tail -f "${logFile}"`,
             macos: `tail -f "${logFile}"`,
-            batch: `powershell -Command "while($true) { Clear-Host; Get-Content '${logFile}' | Select-Object -Last 20; Start-Sleep 2 }"`
+            batch: `powershell -Command "while($true) { Clear-Host; Get-Content '${logFile}' | Select-Object -Last 20; Start-Sleep 2 }"`,
         };
     }
     generateLoggingHeader(config) {
@@ -285,13 +285,13 @@ END`;
 `;
     }
     insertAfterDirectives(code, header) {
-        const lines = code.split('\n');
+        const lines = code.split("\n");
         let insertIndex = 0;
         // Find the end of compiler directives
         for (let i = 0; i < lines.length; i++) {
-            if (lines[i].trim().startsWith('$') ||
-                lines[i].trim().startsWith('OPTION') ||
-                lines[i].trim() === '') {
+            if (lines[i].trim().startsWith("$") ||
+                lines[i].trim().startsWith("OPTION") ||
+                lines[i].trim() === "") {
                 insertIndex = i + 1;
             }
             else {
@@ -299,14 +299,17 @@ END`;
             }
         }
         lines.splice(insertIndex, 0, header);
-        return lines.join('\n');
+        return lines.join("\n");
     }
     addStructuredSections(code, config) {
         const structuredOutput = this.generateStructuredOutput(config.outputSections, config.enableNativeLogging, config);
         // Insert before END statement
-        const endIndex = code.lastIndexOf('END');
+        const endIndex = code.lastIndexOf("END");
         if (endIndex !== -1) {
-            return code.substring(0, endIndex) + structuredOutput + '\n' + code.substring(endIndex);
+            return (code.substring(0, endIndex) +
+                structuredOutput +
+                "\n" +
+                code.substring(endIndex));
         }
         return code + structuredOutput;
     }
@@ -320,9 +323,9 @@ IF DEBUG_MODE = 1 THEN
 END IF
 `;
         // Insert before final END
-        const endIndex = code.lastIndexOf('END');
+        const endIndex = code.lastIndexOf("END");
         if (endIndex !== -1) {
-            return code.substring(0, endIndex) + autoExit + '\n' + code.substring(endIndex);
+            return (code.substring(0, endIndex) + autoExit + "\n" + code.substring(endIndex));
         }
         return code + autoExit;
     }
@@ -341,18 +344,21 @@ ProgramEnd:
 _LOGINFO "Program execution completed"
 `;
         // Insert before final END
-        const endIndex = code.lastIndexOf('END');
+        const endIndex = code.lastIndexOf("END");
         if (endIndex !== -1) {
-            return code.substring(0, endIndex) + errorHandling + '\n' + code.substring(endIndex);
+            return (code.substring(0, endIndex) +
+                errorHandling +
+                "\n" +
+                code.substring(endIndex));
         }
         return code + errorHandling;
     }
     generateStructuredAnalysisSteps(steps, config) {
         const cfg = config || this.defaultConfig;
-        let output = '';
+        let output = "";
         steps.forEach((step, index) => {
             const stepNumber = index + 1;
-            const sectionName = step.toUpperCase().replace(/\s+/g, ' ');
+            const sectionName = step.toUpperCase().replace(/\s+/g, " ");
             output += `
 ' Step ${stepNumber}: ${step}
 current_step = ${stepNumber}`;

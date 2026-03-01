@@ -14,13 +14,13 @@ export interface LoggingConfiguration {
     enableNativeLogging: boolean;
     enableStructuredOutput: boolean;
     enableEchoOutput: boolean;
-    consoleDirective: '$CONSOLE' | '$CONSOLE:ONLY';
-    logLevel: 'TRACE' | 'INFO' | 'WARN' | 'ERROR';
+    consoleDirective: "$CONSOLE" | "$CONSOLE:ONLY";
+    logLevel: "TRACE" | "INFO" | "WARN" | "ERROR";
     autoExitTimeout: number;
     outputSections: string[];
 }
 export interface LogEntry {
-    level: 'TRACE' | 'INFO' | 'WARN' | 'ERROR';
+    level: "TRACE" | "INFO" | "WARN" | "ERROR";
     message: string;
     timestamp?: string;
     section?: string;

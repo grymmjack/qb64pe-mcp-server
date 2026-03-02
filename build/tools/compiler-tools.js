@@ -75,7 +75,7 @@ function registerCompilerTools(server, services) {
     }, "getting debugging help"));
     // Compile and verify tool - enables autonomous compile-verify-fix loops
     server.registerTool("compile_and_verify_qb64pe", {
-        title: "⚙️ Compile and Verify QB64PE Code",
+        title: "⚡ Compile and Verify QB64PE Code ⚡",
         description: "⚙️ Compile a .bas file and return structured errors. " +
             "⏳ Takes 20–60 s — wait for it. Call after EVERY .bas edit; loop until result.success=true. " +
             "Auto-reuses stored flags from the last successful build (set useStoredFlags=false to skip).",

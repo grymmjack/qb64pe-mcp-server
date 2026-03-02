@@ -107,7 +107,7 @@ export function registerCompilerTools(
   server.registerTool(
     "compile_and_verify_qb64pe",
     {
-      title: "⚙️ Compile and Verify QB64PE Code",
+      title: "⚡ Compile and Verify QB64PE Code ⚡",
       description:
         "⚙️ Compile a .bas file and return structured errors. " +
         "⏳ Takes 20–60 s — wait for it. Call after EVERY .bas edit; loop until result.success=true. " +

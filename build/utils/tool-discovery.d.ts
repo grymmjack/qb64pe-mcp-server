@@ -36,7 +36,7 @@ export declare class ToolDiscoveryManager {
      */
     markToolsAsLearned(): void;
     /**
-     * Get a focused summary of the 4 core tools + discovery hint.
+     * Get a focused workflow summary + discovery hint.
      * Intentionally short — do NOT dump all tool schemas into the context.
      */
     getToolSummary(): string;

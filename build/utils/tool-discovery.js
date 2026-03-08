@@ -42,23 +42,26 @@ class ToolDiscoveryManager {
         this.firstToolCallMade = true;
     }
     /**
-     * Get a focused summary of the 4 core tools + discovery hint.
+     * Get a focused workflow summary + discovery hint.
      * Intentionally short — do NOT dump all tool schemas into the context.
      */
     getToolSummary() {
         const totalTools = this.toolRegistry.size;
         const toolNames = Array.from(this.toolRegistry.keys()).sort().join(", ");
         return `
-## ⚙️ QB64PE MCP Server — Core Tools (start here)
+## ⚙️ QB64PE MCP Server — Workflow Routing
 
-These 4 tools cover the most common workflow. Use them first.
+Pick the tool that matches the job. Do not default to compile plus keyword lookup for every task.
 
-| # | Tool | When to use |
-|---|------|-------------|
-| 1 | \`compile_and_verify_qb64pe\` | ⏳ After ANY .bas edit — always compile immediately, wait up to 120 s; run flags like \`-x\` are ignored |
-| 2 | \`search_qb64pe_keywords\` | 🔍 Look up any QB64PE keyword, function, statement, or operator |
-| 3 | \`get_debugging_help\` | 🐛 Understand a QB64PE error, get debug strategies |
-| 4 | \`analyze_qb64pe_graphics_screenshot\` | 📷 View output — program must save with \`_SAVEIMAGE "path.png"\` first |
+| Workflow | Primary tools | When to use |
+|---|---|---|
+| Edit → verify | \`compile_and_verify_qb64pe\`, \`validate_qb64pe_syntax\` | After changing .bas/.bm/.bi files |
+| Language/docs | \`lookup_qb64pe_keyword\`, \`search_qb64pe_keywords\`, \`search_qb64pe_wiki\` | Find syntax, statements, functions, and wiki guidance |
+| Pre-compile review | \`validate_qb64pe_compatibility\`, \`search_qb64pe_compatibility\`, \`get_qb64pe_best_practices\` | Catch compatibility and platform issues before compiling |
+| Legacy BASIC porting | \`analyze_qbasic_compatibility\`, \`port_qbasic_to_qb64pe\`, \`get_porting_dialect_info\` | QBasic/QuickBASIC/VB-DOS migration work |
+| Runtime behavior | \`analyze_qb64pe_execution_mode\`, \`get_execution_monitoring_guidance\`, \`get_process_monitoring_commands\`, \`parse_console_output\` | Decide how to monitor or inspect a running program |
+| Graphics output | \`analyze_qb64pe_graphics_screenshot\`, \`generate_qb64pe_screenshot_analysis_template\` | Understand what a graphics program actually drew |
+| Setup/build memory | \`detect_qb64pe_installation\`, \`get_project_build_context\` | Find QB64PE or inspect remembered build settings |
 
 ## 🔎 Discovering all ${totalTools} tools
 
@@ -67,12 +70,11 @@ All tool names available in this session:
 ${toolNames}
 \`\`\`
 
-Call any tool by name. Each tool's description explains its inputs and usage.
+Call any tool by name. Use specialized tools when the task is about compatibility, porting, runtime behavior, graphics, installation, or build context — not just compilation.
 `;
     }
-    // ORIGINAL VERBOSE BLOCK REMOVED — see git history if needed.
-    // The new getToolSummary() above is intentionally short: 4 core tools
-    // + a flat list of all tool names to keep LLM context lean.
+    // The summary above is intentionally short and workflow-oriented so LLMs
+    // can route to specialized tools without needing every schema in-context.
     /**
      * Get a concise tool list (for quick reference)
      */

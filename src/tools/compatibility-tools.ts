@@ -11,6 +11,7 @@ import {
 } from "../utils/mcp-helpers.js";
 import { ServiceContainer } from "../utils/tool-types.js";
 import { KeyboardBufferSafetyIssue } from "../services/compatibility-service.js";
+import { readSourceFileForTool } from "../utils/source-file-utils.js";
 
 /**
  * Register all compatibility-related tools
@@ -23,9 +24,9 @@ export function registerCompatibilityTools(
   server.registerTool(
     "validate_qb64pe_compatibility",
     {
-      title: "Validate QB64PE Compatibility",
+      title: "Review QB64PE Code for Compatibility Problems",
       description:
-        "Check code for QB64PE compatibility issues and get solutions",
+        "Review QB64PE code for compatibility, platform, and migration issues before compiling",
       inputSchema: {
         code: z
           .string()
@@ -61,11 +62,54 @@ export function registerCompatibilityTools(
     },
   );
 
+  server.registerTool(
+    "validate_qb64pe_compatibility_file",
+    {
+      title: "Review a QB64PE File for Compatibility Problems",
+      description:
+        "Read a .bas/.bm/.bi file from disk, review it for QB64PE compatibility issues, and return fixes",
+      inputSchema: {
+        sourceFilePath: z
+          .string()
+          .describe("Absolute path to the .bas/.bm/.bi file to review"),
+        platform: z
+          .enum(["windows", "macos", "linux", "all"])
+          .optional()
+          .describe("Target platform"),
+      },
+    },
+    async ({ sourceFilePath, platform = "all" }) => {
+      try {
+        const { sourceCode } = await readSourceFileForTool(sourceFilePath);
+        const issues =
+          await services.compatibilityService.validateCompatibility(sourceCode);
+        const platformInfo =
+          await services.compatibilityService.getPlatformCompatibility(
+            platform,
+          );
+
+        return createMCPResponse({
+          sourceFilePath,
+          issues,
+          platformInfo,
+          summary: {
+            totalIssues: issues.length,
+            errors: issues.filter((i: any) => i.severity === "error").length,
+            warnings: issues.filter((i: any) => i.severity === "warning")
+              .length,
+          },
+        });
+      } catch (error) {
+        return createMCPError(error, "reviewing compatibility from file");
+      }
+    },
+  );
+
   // Compatibility knowledge search tool
   server.registerTool(
     "search_qb64pe_compatibility",
     {
-      title: "Search QB64PE Compatibility Knowledge",
+      title: "Find Fixes for QB64PE Compatibility Problems",
       description:
         "Search for compatibility issues, solutions, and best practices",
       inputSchema: {
@@ -108,7 +152,7 @@ export function registerCompatibilityTools(
   server.registerTool(
     "get_qb64pe_best_practices",
     {
-      title: "Get QB64PE Best Practices",
+      title: "Get QB64PE Coding Best Practices",
       description:
         "Get best practices and coding guidelines for QB64PE development",
       inputSchema: {
@@ -153,7 +197,7 @@ export function registerCompatibilityTools(
   server.registerTool(
     "validate_keyboard_buffer_safety",
     {
-      title: "Validate Keyboard Buffer Safety",
+      title: "Review Keyboard Buffer Safety",
       description:
         "Detect potential keyboard buffer leakage issues in QB64PE code. " +
         "Scans for _KEYDOWN() checks without subsequent buffer drain, " +
@@ -186,17 +230,19 @@ export function registerCompatibilityTools(
           report += `- **Low Risk:** ${result.summary.lowRisk}\n\n`;
 
           report += "### Issues Detail\n\n";
-          result.issues.forEach((issue: KeyboardBufferSafetyIssue, index: number) => {
-            const riskEmoji =
-              issue.riskLevel === "high"
-                ? "🔴"
-                : issue.riskLevel === "medium"
-                  ? "🟡"
-                  : "🟢";
-            report += `${index + 1}. ${riskEmoji} **Line ${issue.line}** - \`${issue.pattern}\`\n`;
-            report += `   - ${issue.message}\n`;
-            report += `   - **Fix:** ${issue.suggestion}\n\n`;
-          });
+          result.issues.forEach(
+            (issue: KeyboardBufferSafetyIssue, index: number) => {
+              const riskEmoji =
+                issue.riskLevel === "high"
+                  ? "🔴"
+                  : issue.riskLevel === "medium"
+                    ? "🟡"
+                    : "🟢";
+              report += `${index + 1}. ${riskEmoji} **Line ${issue.line}** - \`${issue.pattern}\`\n`;
+              report += `   - ${issue.message}\n`;
+              report += `   - **Fix:** ${issue.suggestion}\n\n`;
+            },
+          );
         } else {
           report += "## ✅ No Issues Found\n\n";
           report +=
@@ -226,7 +272,8 @@ export function registerCompatibilityTools(
 
         report += "\n### Buffer Drain Pattern\n\n";
         report += "```basic\n";
-        report += "' Drain keyboard buffer to prevent control character leakage\n";
+        report +=
+          "' Drain keyboard buffer to prevent control character leakage\n";
         report += "DO WHILE _KEYHIT: LOOP\n";
         report += "```\n\n";
 
@@ -241,6 +288,39 @@ export function registerCompatibilityTools(
         return createMCPTextResponse(report);
       } catch (error) {
         return createMCPError(error, "validating keyboard buffer safety");
+      }
+    },
+  );
+
+  server.registerTool(
+    "validate_keyboard_buffer_safety_file",
+    {
+      title: "Review a QB64PE File for Keyboard Buffer Safety",
+      description:
+        "Read a .bas/.bm/.bi file from disk and detect keyboard buffer leakage or unsafe modifier handling",
+      inputSchema: {
+        sourceFilePath: z
+          .string()
+          .describe("Absolute path to the .bas/.bm/.bi file to review"),
+      },
+    },
+    async ({ sourceFilePath }) => {
+      try {
+        const { sourceCode } = await readSourceFileForTool(sourceFilePath);
+        const result =
+          await services.compatibilityService.validateKeyboardBufferSafety(
+            sourceCode,
+          );
+
+        return createMCPResponse({
+          sourceFilePath,
+          ...result,
+        });
+      } catch (error) {
+        return createMCPError(
+          error,
+          "reviewing keyboard buffer safety from file",
+        );
       }
     },
   );

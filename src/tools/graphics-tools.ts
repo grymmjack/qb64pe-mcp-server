@@ -22,7 +22,7 @@ export function registerGraphicsTools(
   server.registerTool(
     "analyze_qb64pe_graphics_screenshot",
     {
-      title: "Analyze QB64PE Graphics Screenshot",
+      title: "Inspect a QB64PE Screenshot Saved with _SAVEIMAGE",
       description:
         "📷 View and analyze a screenshot saved by a QB64PE program using _SAVEIMAGE.\n\n" +
         "🔧 **HOW TO CAPTURE A SCREENSHOT FROM QB64PE CODE:**\n" +
@@ -93,9 +93,9 @@ export function registerGraphicsTools(
   server.registerTool(
     "generate_qb64pe_screenshot_analysis_template",
     {
-      title: "Generate Screenshot Analysis Template",
+      title: "Generate an _SAVEIMAGE Screenshot Capture Stub",
       description:
-        "Generate a template for screenshot analysis based on program requirements",
+        "Generate QB64PE code that writes a screenshot with _SAVEIMAGE so the result can be analyzed reliably",
       inputSchema: {
         programType: z
           .enum(["shapes", "animation", "game", "visualization"])
@@ -123,9 +123,9 @@ export function registerGraphicsTools(
   server.registerTool(
     "start_screenshot_watching",
     {
-      title: "Start Screenshot Watching",
+      title: "Watch for New _SAVEIMAGE Screenshots",
       description:
-        "Start watching for new screenshots and automatically analyze them",
+        "Watch a directory where QB64PE programs save _SAVEIMAGE output and analyze new image files",
       inputSchema: {
         directory: z
           .string()
@@ -146,8 +146,9 @@ export function registerGraphicsTools(
   server.registerTool(
     "stop_screenshot_watching",
     {
-      title: "Stop Screenshot Watching",
-      description: "Stop watching for new screenshots",
+      title: "Stop Watching _SAVEIMAGE Screenshots",
+      description:
+        "Stop watching for new screenshot files written by _SAVEIMAGE",
       inputSchema: {},
     },
     async () => {
@@ -163,8 +164,9 @@ export function registerGraphicsTools(
   server.registerTool(
     "get_screenshot_analysis_history",
     {
-      title: "Get Screenshot Analysis History",
-      description: "Get history of screenshot analyses",
+      title: "Get _SAVEIMAGE Screenshot Analysis History",
+      description:
+        "Get analysis history for screenshots written by QB64PE via _SAVEIMAGE",
       inputSchema: {
         limit: z
           .number()
@@ -199,7 +201,7 @@ export function registerGraphicsTools(
   server.registerTool(
     "get_automation_status",
     {
-      title: "Get Screenshot Status",
+      title: "List _SAVEIMAGE Screenshot Files",
       description:
         "List screenshot files saved by QB64PE programs via _SAVEIMAGE",
       inputSchema: {},

@@ -6,14 +6,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerCompatibilityTools = registerCompatibilityTools;
 const zod_1 = require("zod");
 const mcp_helpers_js_1 = require("../utils/mcp-helpers.js");
+const source_file_utils_js_1 = require("../utils/source-file-utils.js");
 /**
  * Register all compatibility-related tools
  */
 function registerCompatibilityTools(server, services) {
     // Compatibility validation tool
     server.registerTool("validate_qb64pe_compatibility", {
-        title: "Validate QB64PE Compatibility",
-        description: "Check code for QB64PE compatibility issues and get solutions",
+        title: "Review QB64PE Code for Compatibility Problems",
+        description: "Review QB64PE code for compatibility, platform, and migration issues before compiling",
         inputSchema: {
             code: zod_1.z
                 .string()
@@ -42,9 +43,42 @@ function registerCompatibilityTools(server, services) {
             return (0, mcp_helpers_js_1.createMCPError)(error, "validating compatibility");
         }
     });
+    server.registerTool("validate_qb64pe_compatibility_file", {
+        title: "Review a QB64PE File for Compatibility Problems",
+        description: "Read a .bas/.bm/.bi file from disk, review it for QB64PE compatibility issues, and return fixes",
+        inputSchema: {
+            sourceFilePath: zod_1.z
+                .string()
+                .describe("Absolute path to the .bas/.bm/.bi file to review"),
+            platform: zod_1.z
+                .enum(["windows", "macos", "linux", "all"])
+                .optional()
+                .describe("Target platform"),
+        },
+    }, async ({ sourceFilePath, platform = "all" }) => {
+        try {
+            const { sourceCode } = await (0, source_file_utils_js_1.readSourceFileForTool)(sourceFilePath);
+            const issues = await services.compatibilityService.validateCompatibility(sourceCode);
+            const platformInfo = await services.compatibilityService.getPlatformCompatibility(platform);
+            return (0, mcp_helpers_js_1.createMCPResponse)({
+                sourceFilePath,
+                issues,
+                platformInfo,
+                summary: {
+                    totalIssues: issues.length,
+                    errors: issues.filter((i) => i.severity === "error").length,
+                    warnings: issues.filter((i) => i.severity === "warning")
+                        .length,
+                },
+            });
+        }
+        catch (error) {
+            return (0, mcp_helpers_js_1.createMCPError)(error, "reviewing compatibility from file");
+        }
+    });
     // Compatibility knowledge search tool
     server.registerTool("search_qb64pe_compatibility", {
-        title: "Search QB64PE Compatibility Knowledge",
+        title: "Find Fixes for QB64PE Compatibility Problems",
         description: "Search for compatibility issues, solutions, and best practices",
         inputSchema: {
             query: zod_1.z.string().describe("Search query for compatibility knowledge"),
@@ -79,7 +113,7 @@ function registerCompatibilityTools(server, services) {
     });
     // Best practices guidance tool
     server.registerTool("get_qb64pe_best_practices", {
-        title: "Get QB64PE Best Practices",
+        title: "Get QB64PE Coding Best Practices",
         description: "Get best practices and coding guidelines for QB64PE development",
         inputSchema: {
             topic: zod_1.z
@@ -114,7 +148,7 @@ function registerCompatibilityTools(server, services) {
     });
     // Keyboard buffer safety validation tool
     server.registerTool("validate_keyboard_buffer_safety", {
-        title: "Validate Keyboard Buffer Safety",
+        title: "Review Keyboard Buffer Safety",
         description: "Detect potential keyboard buffer leakage issues in QB64PE code. " +
             "Scans for _KEYDOWN() checks without subsequent buffer drain, " +
             "identifies INKEY$ calls that may capture control characters, " +
@@ -189,6 +223,27 @@ function registerCompatibilityTools(server, services) {
         }
         catch (error) {
             return (0, mcp_helpers_js_1.createMCPError)(error, "validating keyboard buffer safety");
+        }
+    });
+    server.registerTool("validate_keyboard_buffer_safety_file", {
+        title: "Review a QB64PE File for Keyboard Buffer Safety",
+        description: "Read a .bas/.bm/.bi file from disk and detect keyboard buffer leakage or unsafe modifier handling",
+        inputSchema: {
+            sourceFilePath: zod_1.z
+                .string()
+                .describe("Absolute path to the .bas/.bm/.bi file to review"),
+        },
+    }, async ({ sourceFilePath }) => {
+        try {
+            const { sourceCode } = await (0, source_file_utils_js_1.readSourceFileForTool)(sourceFilePath);
+            const result = await services.compatibilityService.validateKeyboardBufferSafety(sourceCode);
+            return (0, mcp_helpers_js_1.createMCPResponse)({
+                sourceFilePath,
+                ...result,
+            });
+        }
+        catch (error) {
+            return (0, mcp_helpers_js_1.createMCPError)(error, "reviewing keyboard buffer safety from file");
         }
     });
 }

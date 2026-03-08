@@ -20,6 +20,7 @@ export declare class QB64PECompilerService {
     constructor();
     private normalizeCompileFlags;
     private resolveExecutablePath;
+    private getWorkflowToolSuggestions;
     private readonly compilerOptions;
     private readonly debuggingTechniques;
     /**

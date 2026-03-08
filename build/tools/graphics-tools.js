@@ -11,7 +11,7 @@ const mcp_helpers_js_1 = require("../utils/mcp-helpers.js");
  */
 function registerGraphicsTools(server, services) {
     server.registerTool("analyze_qb64pe_graphics_screenshot", {
-        title: "Analyze QB64PE Graphics Screenshot",
+        title: "Inspect a QB64PE Screenshot Saved with _SAVEIMAGE",
         description: "📷 View and analyze a screenshot saved by a QB64PE program using _SAVEIMAGE.\n\n" +
             "🔧 **HOW TO CAPTURE A SCREENSHOT FROM QB64PE CODE:**\n" +
             "Add this line near the END of your QB64PE program (just before END or _EXIT):\n" +
@@ -61,8 +61,8 @@ function registerGraphicsTools(server, services) {
         }
     });
     server.registerTool("generate_qb64pe_screenshot_analysis_template", {
-        title: "Generate Screenshot Analysis Template",
-        description: "Generate a template for screenshot analysis based on program requirements",
+        title: "Generate an _SAVEIMAGE Screenshot Capture Stub",
+        description: "Generate QB64PE code that writes a screenshot with _SAVEIMAGE so the result can be analyzed reliably",
         inputSchema: {
             programType: zod_1.z
                 .enum(["shapes", "animation", "game", "visualization"])
@@ -82,8 +82,8 @@ function registerGraphicsTools(server, services) {
     // stop_screenshot_monitoring removed — screenshots are taken from within QB64PE
     // code using _SAVEIMAGE, then read back via analyze_qb64pe_graphics_screenshot.
     server.registerTool("start_screenshot_watching", {
-        title: "Start Screenshot Watching",
-        description: "Start watching for new screenshots and automatically analyze them",
+        title: "Watch for New _SAVEIMAGE Screenshots",
+        description: "Watch a directory where QB64PE programs save _SAVEIMAGE output and analyze new image files",
         inputSchema: {
             directory: zod_1.z
                 .string()
@@ -100,8 +100,8 @@ function registerGraphicsTools(server, services) {
         }
     });
     server.registerTool("stop_screenshot_watching", {
-        title: "Stop Screenshot Watching",
-        description: "Stop watching for new screenshots",
+        title: "Stop Watching _SAVEIMAGE Screenshots",
+        description: "Stop watching for new screenshot files written by _SAVEIMAGE",
         inputSchema: {},
     }, async () => {
         try {
@@ -113,8 +113,8 @@ function registerGraphicsTools(server, services) {
         }
     });
     server.registerTool("get_screenshot_analysis_history", {
-        title: "Get Screenshot Analysis History",
-        description: "Get history of screenshot analyses",
+        title: "Get _SAVEIMAGE Screenshot Analysis History",
+        description: "Get analysis history for screenshots written by QB64PE via _SAVEIMAGE",
         inputSchema: {
             limit: zod_1.z
                 .number()
@@ -143,7 +143,7 @@ function registerGraphicsTools(server, services) {
         }
     });
     server.registerTool("get_automation_status", {
-        title: "Get Screenshot Status",
+        title: "List _SAVEIMAGE Screenshot Files",
         description: "List screenshot files saved by QB64PE programs via _SAVEIMAGE",
         inputSchema: {},
     }, async () => {

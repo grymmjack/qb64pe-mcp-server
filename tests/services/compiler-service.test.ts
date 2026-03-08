@@ -417,6 +417,38 @@ describe("QB64PECompilerService", () => {
 
       expect(executablePath).toBe("/home/grymmjack/git/DRAW/DRAW.run");
     });
+
+    it("should suggest _SAVEIMAGE screenshot workflow for graphics code", () => {
+      const suggestions = (service as any).getWorkflowToolSuggestions(
+        "SCREEN 12\nCIRCLE (100,100), 50\nEND",
+      );
+
+      expect(suggestions.some((s: string) => s.includes("_SAVEIMAGE"))).toBe(
+        true,
+      );
+      expect(
+        suggestions.some((s: string) =>
+          s.includes("analyze_qb64pe_graphics_screenshot"),
+        ),
+      ).toBe(true);
+    });
+
+    it("should suggest porting tools for legacy BASIC patterns", () => {
+      const suggestions = (service as any).getWorkflowToolSuggestions(
+        'GOSUB Start\nPLAY "CDE"\nDECLARE SUB Foo\nRETURN',
+      );
+
+      expect(
+        suggestions.some((s: string) =>
+          s.includes("analyze_qbasic_file_compatibility"),
+        ),
+      ).toBe(true);
+      expect(
+        suggestions.some((s: string) =>
+          s.includes("port_qbasic_file_to_qb64pe"),
+        ),
+      ).toBe(true);
+    });
   });
 
   describe("parseCompilationOutput", () => {

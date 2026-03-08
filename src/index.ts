@@ -132,9 +132,18 @@ class ToolDiscoveryMCPServer extends McpServer {
     if (lowerName.includes("wiki")) return "wiki";
     if (lowerName.includes("keyword")) return "keywords";
     if (lowerName.includes("compile")) return "compiler";
+    if (lowerName.includes("build_context") || lowerName.includes("build"))
+      return "compiler";
     if (lowerName.includes("compatibility") || lowerName.includes("validate"))
       return "compatibility";
-    if (lowerName.includes("execute") || lowerName.includes("run"))
+    if (
+      lowerName.includes("execute") ||
+      lowerName.includes("execution") ||
+      lowerName.includes("run") ||
+      lowerName.includes("monitor") ||
+      lowerName.includes("console") ||
+      lowerName.includes("process")
+    )
       return "execution";
     if (lowerName.includes("install") || lowerName.includes("setup"))
       return "installation";

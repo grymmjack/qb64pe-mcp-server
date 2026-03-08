@@ -83,6 +83,30 @@ class QB64PECompilerService {
             : baseName + executableExt;
         return path.join(path.dirname(sourceFilePath), resolvedName);
     }
+    getWorkflowToolSuggestions(sourceCode) {
+        const suggestions = [];
+        const hasGraphics = /\b(SCREEN|CIRCLE|LINE|PSET|PRESET|PAINT|DRAW|_PUTIMAGE|_NEWIMAGE|_LOADIMAGE|_DISPLAY|CLS)\b/i.test(sourceCode);
+        const hasSaveImage = /\b_SAVEIMAGE\b/i.test(sourceCode);
+        const hasLegacyPatterns = /\b(GOSUB|RETURN|DEF\s+\w+\s*\(|PLAY|BEEP|SOUND|DECLARE\s+(SUB|FUNCTION))\b/i.test(sourceCode);
+        const hasRuntimeSignals = /\b(_LOG(INFO|WARN|ERROR|TRACE)|PRINT\b|\$CONSOLE|INKEY\$|_KEYDOWN|OPEN\s+.+FOR\s+(OUTPUT|APPEND))\b/i.test(sourceCode);
+        if (hasGraphics) {
+            if (hasSaveImage) {
+                suggestions.push("🖼️ Graphics program with _SAVEIMAGE detected. After running it, call analyze_qb64pe_graphics_screenshot with the saved image path.");
+            }
+            else {
+                suggestions.push('🖼️ Graphics code detected. Add _SAVEIMAGE "/absolute/path/screenshot.png" near END, run the program, then call analyze_qb64pe_graphics_screenshot.');
+            }
+            suggestions.push("🧭 For runtime behavior, call analyze_qb64pe_execution_mode_file or get_execution_monitoring_guidance before running the program.");
+        }
+        if (hasLegacyPatterns) {
+            suggestions.push("🔁 Legacy BASIC patterns detected. Call analyze_qbasic_file_compatibility or port_qbasic_file_to_qb64pe for focused migration help.");
+        }
+        if (hasRuntimeSignals && !hasGraphics) {
+            suggestions.push("📟 Runtime output detected. Call analyze_qb64pe_execution_mode_file or parse_console_output if you need structured monitoring guidance.");
+        }
+        suggestions.push("🔎 For pre-compile review on the current file, call validate_qb64pe_compatibility_file.");
+        return [...new Set(suggestions)];
+    }
     compilerOptions = [
         {
             flag: "-c",
@@ -586,6 +610,7 @@ INPUT "Press Enter to exit...", dummy$
         };
         // Check build context for previous build parameters
         const previousContext = await this.buildContextService.getContext(sourceFilePath);
+        let sourceCodeForHints = "";
         // Auto-determine compiler flags
         // Priority: 1) User-provided flags, 2) Stored flags from build context (if useStoredFlags=true), 3) Default flags
         let flags;
@@ -681,6 +706,10 @@ INPUT "Press Enter to exit...", dummy$
                 result.errors = vscodeTaskResult.errors;
                 result.suggestions = vscodeTaskResult.suggestions;
                 result.executablePath = vscodeTaskResult.executablePath;
+                if (fs.existsSync(sourceFilePath)) {
+                    sourceCodeForHints = fs.readFileSync(sourceFilePath, "utf-8");
+                    result.suggestions.push(...this.getWorkflowToolSuggestions(sourceCodeForHints));
+                }
                 if (vscodeTaskResult.success) {
                     result.suggestions.unshift("✅ Compiled using VS Code 'BUILD: Compile' task");
                 }
@@ -730,6 +759,7 @@ INPUT "Press Enter to exit...", dummy$
                 result.suggestions.push("Ensure the file path is correct and the file exists");
                 return result;
             }
+            sourceCodeForHints = fs.readFileSync(sourceFilePath, "utf-8");
             // Validate file extension is .bas or .bm
             const ext = path.extname(sourceFilePath).toLowerCase();
             if (ext !== ".bas" && ext !== ".bm" && ext !== ".bi") {
@@ -781,6 +811,9 @@ INPUT "Press Enter to exit...", dummy$
             // accidentally reuse run-oriented settings like -x.
             const flagsToStore = this.normalizeCompileFlags(flags).flags;
             await this.buildContextService.saveContext(sourceFilePath, qb64peExe, flagsToStore, outputName, result.success, result.executablePath);
+            if (sourceCodeForHints) {
+                result.suggestions.push(...this.getWorkflowToolSuggestions(sourceCodeForHints));
+            }
         }
         catch (error) {
             result.errors.push({

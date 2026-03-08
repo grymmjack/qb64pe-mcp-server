@@ -56,9 +56,9 @@ describe("Execution Tools", () => {
       expect(mockServer.registerTool).toHaveBeenCalled();
     });
 
-    it("should register exactly 7 execution tools", () => {
+    it("should register exactly 9 execution tools", () => {
       registerExecutionTools(mockServer, services);
-      expect(mockServer.registerTool).toHaveBeenCalledTimes(7);
+      expect(mockServer.registerTool).toHaveBeenCalledTimes(9);
     });
 
     it("should register all expected tool names", () => {
@@ -68,8 +68,10 @@ describe("Execution Tools", () => {
       );
 
       expect(toolNames).toContain("analyze_qb64pe_execution_mode");
+      expect(toolNames).toContain("analyze_qb64pe_execution_mode_file");
       expect(toolNames).toContain("get_process_monitoring_commands");
       expect(toolNames).toContain("generate_monitoring_template");
+      expect(toolNames).toContain("generate_monitoring_template_file");
       expect(toolNames).toContain("generate_console_formatting_template");
       expect(toolNames).toContain("get_execution_monitoring_guidance");
       expect(toolNames).toContain("parse_console_output");
@@ -118,6 +120,41 @@ describe("Execution Tools", () => {
         error,
         "analyzing execution mode",
       );
+    });
+
+    it("should analyze execution mode from sourceFilePath", async () => {
+      const fs = require("fs");
+      const path = require("path");
+      const testFile = path.join(process.cwd(), "execution-test.bas");
+
+      fs.writeFileSync(testFile, "SCREEN 12", "utf-8");
+
+      try {
+        registerExecutionTools(mockServer, services);
+        const handler = registeredTools.get(
+          "analyze_qb64pe_execution_mode_file",
+        );
+        expect(handler).toBeDefined();
+
+        const mockExecutionState = { hasGraphics: true, hasConsole: false };
+        const mockGuidance = { recommendation: "Use graphics mode" };
+
+        mockExecutionService.analyzeExecutionMode.mockReturnValue(
+          mockExecutionState,
+        );
+        mockExecutionService.getExecutionGuidance.mockReturnValue(mockGuidance);
+
+        await handler!({ sourceFilePath: testFile });
+
+        expect(mockExecutionService.analyzeExecutionMode).toHaveBeenCalledWith(
+          "SCREEN 12",
+        );
+        expect(createMCPResponse).toHaveBeenCalled();
+      } finally {
+        if (fs.existsSync(testFile)) {
+          fs.unlinkSync(testFile);
+        }
+      }
     });
   });
 
@@ -203,6 +240,37 @@ describe("Execution Tools", () => {
         error,
         "generating monitoring template",
       );
+    });
+
+    it("should generate monitoring template from sourceFilePath", async () => {
+      const fs = require("fs");
+      const path = require("path");
+      const testFile = path.join(process.cwd(), "monitoring-test.bas");
+
+      fs.writeFileSync(testFile, 'PRINT "test"', "utf-8");
+
+      try {
+        registerExecutionTools(mockServer, services);
+        const handler = registeredTools.get(
+          "generate_monitoring_template_file",
+        );
+        expect(handler).toBeDefined();
+
+        mockExecutionService.generateMonitoringTemplate.mockReturnValue(
+          'PRINT "Monitoring"',
+        );
+
+        await handler!({ sourceFilePath: testFile, templateType: "basic" });
+
+        expect(
+          mockExecutionService.generateMonitoringTemplate,
+        ).toHaveBeenCalledWith('PRINT "test"', "basic");
+        expect(createMCPResponse).toHaveBeenCalled();
+      } finally {
+        if (fs.existsSync(testFile)) {
+          fs.unlinkSync(testFile);
+        }
+      }
     });
   });
 

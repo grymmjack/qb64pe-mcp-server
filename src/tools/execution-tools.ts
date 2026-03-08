@@ -6,6 +6,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { createMCPResponse, createMCPError } from "../utils/mcp-helpers.js";
 import { ServiceContainer } from "../utils/tool-types.js";
+import { readSourceFileForTool } from "../utils/source-file-utils.js";
 
 /**
  * Register all execution monitoring tools
@@ -17,9 +18,9 @@ export function registerExecutionTools(
   server.registerTool(
     "analyze_qb64pe_execution_mode",
     {
-      title: "Analyze QB64PE Execution Mode",
+      title: "Decide How a QB64PE Program Should Be Monitored",
       description:
-        "Analyze QB64PE source code to determine execution characteristics and monitoring requirements",
+        "Analyze QB64PE source code and tell the LLM whether the program is graphics, console, or mixed, plus how to monitor it",
       inputSchema: {
         sourceCode: z.string().describe("QB64PE source code to analyze"),
       },
@@ -45,9 +46,43 @@ export function registerExecutionTools(
   );
 
   server.registerTool(
+    "analyze_qb64pe_execution_mode_file",
+    {
+      title: "Decide How a QB64PE File Should Be Monitored",
+      description:
+        "Read a .bas/.bm/.bi file from disk and return the best runtime-monitoring approach for it",
+      inputSchema: {
+        sourceFilePath: z
+          .string()
+          .describe("Absolute path to the .bas/.bm/.bi file to analyze"),
+      },
+    },
+    async ({ sourceFilePath }) => {
+      try {
+        const { sourceCode } = await readSourceFileForTool(sourceFilePath);
+        const executionState =
+          services.executionService.analyzeExecutionMode(sourceCode);
+        const guidance =
+          services.executionService.getExecutionGuidance(executionState);
+
+        return createMCPResponse({
+          sourceFilePath,
+          executionState,
+          guidance,
+          summary: `Program type: ${executionState.hasGraphics ? "Graphics" : "Console"} ${
+            executionState.hasConsole ? "+ Console" : ""
+          }. ${guidance.recommendation}`,
+        });
+      } catch (error) {
+        return createMCPError(error, "analyzing execution mode from file");
+      }
+    },
+  );
+
+  server.registerTool(
     "get_process_monitoring_commands",
     {
-      title: "Get Process Monitoring Commands",
+      title: "Get Commands to Watch a Running QB64PE Program",
       description:
         "Get cross-platform commands for monitoring QB64PE processes",
       inputSchema: {
@@ -94,9 +129,9 @@ export function registerExecutionTools(
   server.registerTool(
     "generate_monitoring_template",
     {
-      title: "Generate Monitoring Template",
+      title: "Create QB64PE Runtime Monitoring Code",
       description:
-        "Generate monitoring code template based on program analysis",
+        "Generate QB64PE runtime-monitoring code based on the program source",
       inputSchema: {
         sourceCode: z.string().describe("QB64PE source code"),
         templateType: z.enum(["basic", "detailed", "advanced"]).optional(),
@@ -116,10 +151,41 @@ export function registerExecutionTools(
   );
 
   server.registerTool(
+    "generate_monitoring_template_file",
+    {
+      title: "Create Runtime Monitoring Code for a QB64PE File",
+      description:
+        "Read a .bas/.bm/.bi file from disk and generate a monitoring template for it",
+      inputSchema: {
+        sourceFilePath: z
+          .string()
+          .describe("Absolute path to the .bas/.bm/.bi file"),
+        templateType: z.enum(["basic", "detailed", "advanced"]).optional(),
+      },
+    },
+    async ({ sourceFilePath, templateType = "basic" }) => {
+      try {
+        const { sourceCode } = await readSourceFileForTool(sourceFilePath);
+        const template = services.executionService.generateMonitoringTemplate(
+          sourceCode,
+          templateType,
+        );
+        return createMCPResponse({ sourceFilePath, template });
+      } catch (error) {
+        return createMCPError(
+          error,
+          "generating monitoring template from file",
+        );
+      }
+    },
+  );
+
+  server.registerTool(
     "generate_console_formatting_template",
     {
-      title: "Generate Console Formatting Template",
-      description: "Generate structured console output formatting template",
+      title: "Create Structured Console Logging Format",
+      description:
+        "Generate structured console output formats for QB64PE runtime logging",
       inputSchema: {
         style: z.enum(["simple", "structured", "json"]).optional(),
       },
@@ -138,8 +204,9 @@ export function registerExecutionTools(
   server.registerTool(
     "get_execution_monitoring_guidance",
     {
-      title: "Get Execution Monitoring Guidance",
-      description: "Get comprehensive guidance on monitoring QB64PE execution",
+      title: "Get a QB64PE Runtime Monitoring Plan",
+      description:
+        "Get a practical monitoring plan for running QB64PE programs",
       inputSchema: {},
     },
     async () => {
@@ -156,8 +223,9 @@ export function registerExecutionTools(
   server.registerTool(
     "parse_console_output",
     {
-      title: "Parse Console Output",
-      description: "Parse structured console output from QB64PE programs",
+      title: "Turn QB64PE Console Output Into Structured Data",
+      description:
+        "Parse QB64PE console/log output into structured data for the LLM",
       inputSchema: {
         output: z.string().describe("Console output to parse"),
       },
@@ -175,8 +243,9 @@ export function registerExecutionTools(
   server.registerTool(
     "get_file_monitoring_commands",
     {
-      title: "Get File Monitoring Commands",
-      description: "Get commands for monitoring file-based QB64PE logging",
+      title: "Get Commands to Watch QB64PE Log Files",
+      description:
+        "Get shell commands for tailing and watching file-based QB64PE logs",
       inputSchema: {
         logFilePath: z.string().optional().describe("Path to log file"),
       },

@@ -677,8 +677,8 @@ INPUT "Press Enter to exit...", dummy$
             // No flags provided and no build context - use defaults
             flags = ["-c", "-w"];
         }
-        // Auto-determine output path if not specified
-        // Priority: 1) Build context, 2) Existing .run file, 3) tasks.json, 4) Default to source directory
+        // Auto-determine output path if not specified.
+        // Priority: 1) Build context, 2) Existing .run file, 3) Default to source directory
         let outputName = path.basename(sourceFilePath, path.extname(sourceFilePath));
         let outputDir = path.dirname(sourceFilePath);
         if (previousContext?.lastUsedCommand?.outputName) {
@@ -686,39 +686,15 @@ INPUT "Press Enter to exit...", dummy$
             console.error(`[Compiler] Using previous output name from build context: ${outputName}`);
         }
         else {
-            // Look for existing .run file in source directory
+            // Look for existing .run file in source directory.
+            // Do not derive compile behavior from VS Code tasks here: task variables like
+            // ${file}, dependsOn chains, OS-specific command blocks, and launcher tasks are
+            // tied to the active editor/UI state, while this tool always compiles the
+            // explicit sourceFilePath it was given.
             const runFile = path.join(outputDir, outputName + ".run");
             if (fs.existsSync(runFile)) {
                 outputName = outputName + ".run";
                 console.error(`[Compiler] Found existing .run file, using: ${outputName}`);
-            }
-            else {
-                // Try parsing tasks.json for output path pattern
-                try {
-                    const workspaceRoot = this.findWorkspaceRoot(sourceFilePath);
-                    const tasksFile = path.join(workspaceRoot, ".vscode", "tasks.json");
-                    if (fs.existsSync(tasksFile)) {
-                        const tasksContent = fs.readFileSync(tasksFile, "utf-8");
-                        const tasksJson = JSON.parse(tasksContent);
-                        const buildTask = tasksJson.tasks?.find((t) => t.label === "BUILD: Compile");
-                        if (buildTask) {
-                            // Extract output pattern from task command
-                            const cmdStr = buildTask.command + " " + (buildTask.args || []).join(" ");
-                            const outputMatch = cmdStr.match(/-o\s+["']?([^\s"']+)["']?/);
-                            if (outputMatch) {
-                                const taskOutput = outputMatch[1]
-                                    .replace(/\$\{file\}/g, sourceFilePath)
-                                    .replace(/\$\{fileBasenameNoExtension\}/g, outputName)
-                                    .replace(/\$\{workspaceFolder\}/g, workspaceRoot);
-                                outputName = path.basename(taskOutput);
-                                console.error(`[Compiler] Using output pattern from tasks.json: ${outputName}`);
-                            }
-                        }
-                    }
-                }
-                catch (e) {
-                    // Ignore errors in task parsing
-                }
             }
         }
         // Default: append .run if no extension (for consistency)
@@ -726,6 +702,8 @@ INPUT "Press Enter to exit...", dummy$
             outputName = outputName + ".run";
             console.error(`[Compiler] Defaulting to .run extension: ${outputName}`);
         }
+        const resolvedOutputPath = path.join(outputDir, outputName);
+        result.resolvedOutputPath = resolvedOutputPath;
         const paramDiff = await this.buildContextService.checkParameterDiff(sourceFilePath, flags, outputName);
         if (paramDiff.differs) {
             result.contextWarning = paramDiff.suggestion;
@@ -779,6 +757,9 @@ INPUT "Press Enter to exit...", dummy$
                     }
                 }
             }
+            if (qb64peExe) {
+                result.resolvedCompilerPath = qb64peExe;
+            }
             // Validate source file exists
             if (!fs.existsSync(sourceFilePath)) {
                 result.errors.push({
@@ -801,8 +782,7 @@ INPUT "Press Enter to exit...", dummy$
                 return result;
             }
             // Build compilation command (flags and outputName already defined above for context check)
-            const outputPath = path.join(outputDir, outputName);
-            const cmd = `"${qb64peExe}" ${flags.join(" ")} -o "${outputPath}" "${sourceFilePath}"`;
+            const cmd = `"${qb64peExe}" ${flags.join(" ")} -o "${resolvedOutputPath}" "${sourceFilePath}"`;
             // Execute compilation
             try {
                 const { stdout, stderr } = await execAsync(cmd, { timeout: 120000 });
@@ -810,7 +790,7 @@ INPUT "Press Enter to exit...", dummy$
                 // Parse compilation output for errors and warnings
                 this.parseCompilationOutput(result.output, result.errors, result.suggestions);
                 // Check if executable was created
-                const executablePath = this.resolveExecutablePath(sourceFilePath, outputName);
+                const executablePath = this.resolveExecutablePath(sourceFilePath, outputName, resolvedOutputPath);
                 if (fs.existsSync(executablePath)) {
                     result.success = true;
                     result.executablePath = executablePath;

@@ -66,6 +66,8 @@ export declare class QB64PECompilerService {
             severity: "error" | "warning";
         }>;
         executablePath?: string;
+        resolvedCompilerPath?: string;
+        resolvedOutputPath?: string;
         suggestions: string[];
         contextWarning?: string;
     }>;

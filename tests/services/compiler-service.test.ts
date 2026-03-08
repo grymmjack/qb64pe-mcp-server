@@ -389,6 +389,24 @@ describe("QB64PECompilerService", () => {
       expect(result).toBeDefined();
     });
 
+    it("should include the resolved compiler path in the result", async () => {
+      const result = await service.compileAndVerify(
+        "/nonexistent/file.bas",
+        "/fake/qb64pe",
+      );
+
+      expect(result.resolvedCompilerPath).toBe("/fake/qb64pe");
+    });
+
+    it("should include the resolved output path in the result", async () => {
+      const result = await service.compileAndVerify(
+        "/nonexistent/file.bas",
+        "/fake/qb64pe",
+      );
+
+      expect(result.resolvedOutputPath).toBe("/nonexistent/file.run");
+    });
+
     it("should provide suggestions for errors", async () => {
       const result = await service.compileAndVerify("/fake/file.bas");
 

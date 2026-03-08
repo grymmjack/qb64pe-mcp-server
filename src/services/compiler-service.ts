@@ -922,31 +922,9 @@ INPUT "Press Enter to exit...", dummy$
     }
 
     try {
-      // Check if we're in VS Code and if a BUILD: Compile task exists
-      const vscodeTaskResult = await this.tryVSCodeTask(sourceFilePath);
-      if (vscodeTaskResult) {
-        // VS Code task was used successfully
-        result.success = vscodeTaskResult.success;
-        result.output = vscodeTaskResult.output;
-        result.errors = vscodeTaskResult.errors;
-        result.suggestions = vscodeTaskResult.suggestions;
-        result.executablePath = vscodeTaskResult.executablePath;
-
-        if (fs.existsSync(sourceFilePath)) {
-          sourceCodeForHints = fs.readFileSync(sourceFilePath, "utf-8");
-          result.suggestions.push(
-            ...this.getWorkflowToolSuggestions(sourceCodeForHints),
-          );
-        }
-
-        if (vscodeTaskResult.success) {
-          result.suggestions.unshift(
-            "✅ Compiled using VS Code 'BUILD: Compile' task",
-          );
-        }
-
-        return result;
-      }
+      // compile_and_verify_qb64pe must always use the direct compile path.
+      // Do not mirror VS Code tasks here because task execution can surface in
+      // a separate terminal context instead of behaving like a silent verify step.
 
       // Determine QB64PE executable path
       let qb64peExe = qb64pePath;

@@ -449,6 +449,29 @@ describe("QB64PECompilerService", () => {
         ),
       ).toBe(true);
     });
+
+    it("should bypass VS Code task mirroring and use direct compilation only", async () => {
+      const tryVSCodeTaskSpy = jest
+        .spyOn(service as any, "tryVSCodeTask")
+        .mockResolvedValue({
+          success: true,
+          output: "task output",
+          errors: [],
+          suggestions: ["task suggestion"],
+          executablePath: "/fake/task-output.run",
+        });
+
+      const result = await service.compileAndVerify(
+        "/nonexistent/file.bas",
+        "/fake/qb64pe",
+      );
+
+      expect(tryVSCodeTaskSpy).not.toHaveBeenCalled();
+      expect(result.success).toBe(false);
+      expect(result.errors.some((e) => e.message.includes("not found"))).toBe(
+        true,
+      );
+    });
   });
 
   describe("parseCompilationOutput", () => {

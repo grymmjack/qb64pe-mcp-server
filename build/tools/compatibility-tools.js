@@ -209,7 +209,8 @@ function registerCompatibilityTools(server, services) {
             });
             report += "\n### Buffer Drain Pattern\n\n";
             report += "```basic\n";
-            report += "' Drain keyboard buffer to prevent control character leakage\n";
+            report +=
+                "' Drain keyboard buffer to prevent control character leakage\n";
             report += "DO WHILE _KEYHIT: LOOP\n";
             report += "```\n\n";
             report += "### Control Character Reference\n\n";

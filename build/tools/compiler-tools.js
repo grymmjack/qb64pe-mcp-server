@@ -77,8 +77,8 @@ function registerCompilerTools(server, services) {
     server.registerTool("compile_and_verify_qb64pe", {
         title: "⚡ Compile and Verify QB64PE Code ⚡",
         description: "⚙️ Compile a .bas file and return structured errors. " +
-            "⏳ Takes 20–60 s — wait for it. Call after EVERY .bas edit; loop until result.success=true. " +
-            "Auto-reuses stored flags from the last successful build (set useStoredFlags=false to skip).",
+            "⏳ Takes 20–120 s — wait for it. Call after EVERY .bas edit; loop until result.success=true. " +
+            "Always compiles in compile-only mode; run flags like -x are ignored. Auto-reuses stored compile flags from the last successful build (set useStoredFlags=false to skip).",
         inputSchema: {
             sourceFilePath: zod_1.z
                 .string()
@@ -90,7 +90,7 @@ function registerCompilerTools(server, services) {
             compilerFlags: zod_1.z
                 .array(zod_1.z.string())
                 .optional()
-                .describe("Compiler flags (default: stored flags or ['-c','-x','-w'])"),
+                .describe("Compiler flags (default: stored flags or ['-c','-w']; run flags like -x are ignored)"),
             useStoredFlags: zod_1.z
                 .boolean()
                 .optional()

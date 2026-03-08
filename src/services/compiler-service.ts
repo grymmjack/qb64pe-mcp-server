@@ -26,6 +26,65 @@ export class QB64PECompilerService {
     this.buildContextService = new ProjectBuildContextService();
   }
 
+  private normalizeCompileFlags(flags: string[]): {
+    flags: string[];
+    removedFlags: string[];
+  } {
+    const normalized: string[] = [];
+    const removedFlags: string[] = [];
+    let skipNext = false;
+
+    for (const flag of flags) {
+      if (skipNext) {
+        removedFlags.push(flag);
+        skipNext = false;
+        continue;
+      }
+
+      if (flag === "-o") {
+        removedFlags.push(flag);
+        skipNext = true;
+        continue;
+      }
+
+      if (flag === "-x") {
+        removedFlags.push(flag);
+        continue;
+      }
+
+      if (!normalized.includes(flag)) {
+        normalized.push(flag);
+      }
+    }
+
+    if (!normalized.includes("-c")) {
+      normalized.unshift("-c");
+    }
+
+    return { flags: normalized, removedFlags };
+  }
+
+  private resolveExecutablePath(
+    sourceFilePath: string,
+    outputName?: string,
+    explicitOutputPath?: string,
+  ): string {
+    const path = require("path");
+
+    if (explicitOutputPath) {
+      return explicitOutputPath;
+    }
+
+    const executableExt = process.platform === "win32" ? ".exe" : "";
+    const baseName =
+      outputName || path.basename(sourceFilePath, path.extname(sourceFilePath));
+    const resolvedName = path.extname(baseName)
+      ? baseName
+      : baseName + executableExt;
+
+    return path.join(path.dirname(sourceFilePath), resolvedName);
+  }
+
   private readonly compilerOptions: CompilerOption[] = [
     {
       flag: "-c",
@@ -589,23 +648,42 @@ INPUT "Press Enter to exit...", dummy$
       cmd = cmd.replace(/\$\{file\}/g, sourceFilePath);
       cmd = cmd.replace(/\$\{workspaceFolder\}/g, workspaceRoot);
 
+      // compile_and_verify_qb64pe must never run the built program.
+      // If the configured task includes -x, skip it and use the direct path.
+      if (/\s-x(\s|$)/.test(cmd)) {
+        console.error(
+          "[VS Code Task] BUILD: Compile task contains -x; skipping task and falling back to direct compile-only execution.",
+        );
+        return null;
+      }
+
+      let taskOutputPath: string | undefined;
+      const outputMatch = cmd.match(/-o\s+["']?([^\s"']+)["']?/);
+      if (outputMatch) {
+        const rawOutputPath = outputMatch[1]
+          .replace(
+            /\$\{fileBasenameNoExtension\}/g,
+            path.basename(sourceFilePath, path.extname(sourceFilePath)),
+          )
+          .replace(/\$\{fileDirname\}/g, path.dirname(sourceFilePath));
+        taskOutputPath = path.isAbsolute(rawOutputPath)
+          ? rawOutputPath
+          : path.resolve(workspaceRoot, rawOutputPath);
+      }
+
       // Execute the command
       try {
         const { stdout, stderr } = await execAsync(cmd, {
           cwd: workspaceRoot,
-          timeout: 30000,
+          timeout: 120000,
         });
         result.output = stdout + stderr;
 
         // Check for successful compilation
-        const outputName = path.basename(
+        const executablePath = this.resolveExecutablePath(
           sourceFilePath,
-          path.extname(sourceFilePath),
-        );
-        const executableExt = process.platform === "win32" ? ".exe" : "";
-        const executablePath = path.join(
-          path.dirname(sourceFilePath),
-          outputName + executableExt,
+          undefined,
+          taskOutputPath,
         );
 
         if (fs.existsSync(executablePath)) {
@@ -679,27 +757,37 @@ INPUT "Press Enter to exit...", dummy$
     let flags: string[];
     if (compilerFlags) {
       // User explicitly provided flags - use them
-      flags = compilerFlags;
+      const normalized = this.normalizeCompileFlags(compilerFlags);
+      flags = normalized.flags;
+      if (normalized.removedFlags.length > 0) {
+        result.suggestions.push(
+          `ℹ️ Ignored run/output flags for compile-only verification: ${JSON.stringify(normalized.removedFlags)}`,
+        );
+      }
     } else if (
       useStoredFlags &&
       previousContext?.lastUsedCommand?.compilerFlags
     ) {
       // No flags provided but build context exists - use stored successful flags.
-      // Strip any -o <value> pairs: this tool always generates its own -o argument
-      // from sourceFilePath, so including a stored -o would double the flag.
+      // Strip any run/output flags: this tool always verifies by compiling only,
+      // and it generates its own -o argument from sourceFilePath.
       const rawStoredFlags = previousContext.lastUsedCommand.compilerFlags;
-      flags = rawStoredFlags.filter(
-        (f, i, arr) => f !== "-o" && (i === 0 || arr[i - 1] !== "-o"),
-      );
+      const normalized = this.normalizeCompileFlags(rawStoredFlags);
+      flags = normalized.flags;
       console.error(
         `[Compiler] Using stored compiler flags from build context: ${JSON.stringify(flags)}`,
       );
       result.suggestions.push(
         `ℹ️ Using previously successful compiler flags: ${JSON.stringify(flags)}`,
       );
+      if (normalized.removedFlags.length > 0) {
+        result.suggestions.push(
+          `ℹ️ Ignored stored run/output flags for compile-only verification: ${JSON.stringify(normalized.removedFlags)}`,
+        );
+      }
     } else {
       // No flags provided and no build context - use defaults
-      flags = ["-c", "-x", "-w"];
+      flags = ["-c", "-w"];
     }
 
     // Auto-determine output path if not specified
@@ -765,7 +853,7 @@ INPUT "Press Enter to exit...", dummy$
     const paramDiff = await this.buildContextService.checkParameterDiff(
       sourceFilePath,
       flags,
-      undefined, // outputName is auto-generated from source
+      outputName, // pass computed outputName so stored vs current can be compared accurately
     );
 
     if (paramDiff.differs) {
@@ -879,7 +967,7 @@ INPUT "Press Enter to exit...", dummy$
 
       // Execute compilation
       try {
-        const { stdout, stderr } = await execAsync(cmd, { timeout: 30000 });
+        const { stdout, stderr } = await execAsync(cmd, { timeout: 120000 });
         result.output = stdout + stderr;
 
         // Parse compilation output for errors and warnings
@@ -890,12 +978,10 @@ INPUT "Press Enter to exit...", dummy$
         );
 
         // Check if executable was created
-        const executableExt = process.platform === "win32" ? ".exe" : "";
-        // If outputName already has extension, don't add another
-        const baseOutput = path.extname(outputName)
-          ? outputName
-          : outputName + executableExt;
-        const executablePath = path.join(outputDir, baseOutput);
+        const executablePath = this.resolveExecutablePath(
+          sourceFilePath,
+          outputName,
+        );
 
         if (fs.existsSync(executablePath)) {
           result.success = true;
@@ -930,11 +1016,9 @@ INPUT "Press Enter to exit...", dummy$
       }
 
       // Save build context regardless of success/failure.
-      // Strip -o <value> pairs from stored flags: the output path is always
-      // re-generated by this tool and must never be duplicated from context.
-      const flagsToStore = flags.filter(
-        (f, i, arr) => f !== "-o" && (i === 0 || arr[i - 1] !== "-o"),
-      );
+      // Persist compile-only normalized flags so future verification runs never
+      // accidentally reuse run-oriented settings like -x.
+      const flagsToStore = this.normalizeCompileFlags(flags).flags;
       await this.buildContextService.saveContext(
         sourceFilePath,
         qb64peExe,

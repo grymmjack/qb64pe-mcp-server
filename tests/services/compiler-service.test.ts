@@ -369,6 +369,29 @@ describe('QB64PECompilerService', () => {
       
       expect(Array.isArray(result.suggestions)).toBe(true);
     });
+
+    it('should normalize flags to compile-only mode', () => {
+      const normalized = (service as any).normalizeCompileFlags([
+        '-w',
+        '-x',
+        '-o',
+        'DRAW.run',
+        '-w'
+      ]);
+
+      expect(normalized.flags).toEqual(['-c', '-w']);
+      expect(normalized.removedFlags).toEqual(['-x', '-o', 'DRAW.run']);
+    });
+
+    it('should resolve explicit .run output paths correctly', () => {
+      const executablePath = (service as any).resolveExecutablePath(
+        '/home/grymmjack/git/DRAW/DRAW.BAS',
+        undefined,
+        '/home/grymmjack/git/DRAW/DRAW.run'
+      );
+
+      expect(executablePath).toBe('/home/grymmjack/git/DRAW/DRAW.run');
+    });
   });
 
   describe('parseCompilationOutput', () => {

@@ -55,7 +55,7 @@ These 4 tools cover the most common workflow. Use them first.
 
 | # | Tool | When to use |
 |---|------|-------------|
-| 1 | \`compile_and_verify_qb64pe\` | ⏳ After ANY .bas edit — always compile immediately, wait up to 60 s |
+| 1 | \`compile_and_verify_qb64pe\` | ⏳ After ANY .bas edit — always compile immediately, wait up to 120 s; run flags like \`-x\` are ignored |
 | 2 | \`search_qb64pe_keywords\` | 🔍 Look up any QB64PE keyword, function, statement, or operator |
 | 3 | \`get_debugging_help\` | 🐛 Understand a QB64PE error, get debug strategies |
 | 4 | \`analyze_qb64pe_graphics_screenshot\` | 📷 View output — program must save with \`_SAVEIMAGE "path.png"\` first |

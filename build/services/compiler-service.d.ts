@@ -18,6 +18,8 @@ export interface DebuggingTechnique {
 export declare class QB64PECompilerService {
     private buildContextService;
     constructor();
+    private normalizeCompileFlags;
+    private resolveExecutablePath;
     private readonly compilerOptions;
     private readonly debuggingTechniques;
     /**

@@ -90,8 +90,8 @@ class ToolDiscoveryMCPServer extends McpServer {
                 text:
                   `\u2699\ufe0f **QB64PE MCP Server \u2014 Session Start**\n\n` +
                   `## \ud83d\udea8 Mandatory rules (no exceptions)\n\n` +
-                  `1. **Auto-compile after every edit** \u2014 after any change to a .bas/.bm/.bi file, call \`compile_and_verify_qb64pe\` immediately. Do NOT stop until it compiles. Compilation takes 20\u201360 s \u2014 wait for it.\n` +
-                  `2. **VS Code editing tools are always available** \u2014 \`replace_string_in_file\`, \`multi_replace_string_in_file\`, \`read_file\`, \`create_file\` are always present. Never claim otherwise.\n` +
+                  `1. **Auto-compile after every edit** \u2014 after any change to a .bas/.bm/.bi file, call \`compile_and_verify_qb64pe\` immediately. Do NOT stop until it compiles. Compilation takes 20\u2013120 s \u2014 wait for it.\n` +
+                  `2. **Do not assume client tool names** \u2014 use whatever file-editing and file-reading tools the host client actually exposes instead of inventing tool names.\n` +
                   `3. **mcp_qb64pe_* in chat = run that tool** \u2014 treat it as an implicit call with sensible defaults.\n\n` +
                   toolSummary +
                   `\n---\n\n\ud83d\udccc **Your request result:**\n\n`,

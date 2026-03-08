@@ -472,6 +472,84 @@ describe("QB64PECompilerService", () => {
         true,
       );
     });
+
+    it("should read qb64pe.compilerPath from workspace VS Code settings", () => {
+      const fs = require("fs");
+      const os = require("os");
+      const path = require("path");
+      const tempRoot = fs.mkdtempSync(
+        path.join(os.tmpdir(), "qb64pe-compiler-settings-"),
+      );
+      const vscodeDir = path.join(tempRoot, ".vscode");
+      const sourceDir = path.join(tempRoot, "src");
+      const configuredCompiler = path.join(tempRoot, "tools", "qb64pe");
+      const sourceFile = path.join(sourceDir, "demo.bas");
+
+      fs.mkdirSync(vscodeDir, { recursive: true });
+      fs.mkdirSync(sourceDir, { recursive: true });
+      fs.mkdirSync(path.dirname(configuredCompiler), { recursive: true });
+      fs.writeFileSync(configuredCompiler, "", "utf-8");
+      fs.writeFileSync(sourceFile, 'PRINT "hi"', "utf-8");
+      fs.writeFileSync(
+        path.join(vscodeDir, "settings.json"),
+        JSON.stringify({ "qb64pe.compilerPath": configuredCompiler }),
+        "utf-8",
+      );
+
+      try {
+        const compilerPath = (service as any).getVSCodeConfiguredCompilerPath(
+          sourceFile,
+        );
+
+        expect(compilerPath).toBe(configuredCompiler);
+      } finally {
+        fs.rmSync(tempRoot, { recursive: true, force: true });
+      }
+    });
+
+    it("should read qb64pe.compilerPath from VS Code user settings", () => {
+      const fs = require("fs");
+      const os = require("os");
+      const path = require("path");
+      const tempHome = fs.mkdtempSync(
+        path.join(os.tmpdir(), "qb64pe-user-settings-"),
+      );
+      const sourceRoot = fs.mkdtempSync(
+        path.join(os.tmpdir(), "qb64pe-source-root-"),
+      );
+      const sourceFile = path.join(sourceRoot, "demo.bas");
+      const configuredCompiler = path.join(tempHome, "qb64pe", "qb64pe");
+      const settingsPath = path.join(
+        tempHome,
+        ".config",
+        "Code",
+        "User",
+        "settings.json",
+      );
+      const homedirSpy = jest.spyOn(os, "homedir").mockReturnValue(tempHome);
+
+      fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
+      fs.mkdirSync(path.dirname(configuredCompiler), { recursive: true });
+      fs.writeFileSync(configuredCompiler, "", "utf-8");
+      fs.writeFileSync(sourceFile, 'PRINT "hi"', "utf-8");
+      fs.writeFileSync(
+        settingsPath,
+        JSON.stringify({ "qb64pe.compilerPath": configuredCompiler }),
+        "utf-8",
+      );
+
+      try {
+        const compilerPath = (service as any).getVSCodeConfiguredCompilerPath(
+          sourceFile,
+        );
+
+        expect(compilerPath).toBe(configuredCompiler);
+      } finally {
+        homedirSpy.mockRestore();
+        fs.rmSync(tempHome, { recursive: true, force: true });
+        fs.rmSync(sourceRoot, { recursive: true, force: true });
+      }
+    });
   });
 
   describe("parseCompilationOutput", () => {

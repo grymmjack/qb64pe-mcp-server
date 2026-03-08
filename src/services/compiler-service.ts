@@ -85,6 +85,63 @@ export class QB64PECompilerService {
     return path.join(path.dirname(sourceFilePath), resolvedName);
   }
 
+  private getVSCodeConfiguredCompilerPath(
+    sourceFilePath: string,
+  ): string | undefined {
+    const fs = require("fs");
+    const os = require("os");
+    const path = require("path");
+
+    const settingsFiles: string[] = [];
+    const workspaceRoot = this.findWorkspaceRoot(sourceFilePath);
+    settingsFiles.push(path.join(workspaceRoot, ".vscode", "settings.json"));
+
+    const homeDir = os.homedir();
+    if (process.platform === "win32") {
+      const appData =
+        process.env.APPDATA || path.join(homeDir, "AppData", "Roaming");
+      settingsFiles.push(path.join(appData, "Code", "User", "settings.json"));
+    } else if (process.platform === "darwin") {
+      settingsFiles.push(
+        path.join(
+          homeDir,
+          "Library",
+          "Application Support",
+          "Code",
+          "User",
+          "settings.json",
+        ),
+      );
+    } else {
+      settingsFiles.push(
+        path.join(homeDir, ".config", "Code", "User", "settings.json"),
+      );
+    }
+
+    for (const settingsFile of settingsFiles) {
+      try {
+        if (!fs.existsSync(settingsFile)) {
+          continue;
+        }
+
+        const settings = JSON.parse(fs.readFileSync(settingsFile, "utf-8"));
+        const compilerPath = settings["qb64pe.compilerPath"];
+
+        if (
+          typeof compilerPath === "string" &&
+          compilerPath.trim().length > 0 &&
+          fs.existsSync(compilerPath)
+        ) {
+          return compilerPath;
+        }
+      } catch {
+        // Ignore malformed or unreadable VS Code settings files.
+      }
+    }
+
+    return undefined;
+  }
+
   private getWorkflowToolSuggestions(sourceCode: string): string[] {
     const suggestions: string[] = [];
     const hasGraphics =
@@ -928,6 +985,18 @@ INPUT "Press Enter to exit...", dummy$
 
       // Determine QB64PE executable path
       let qb64peExe = qb64pePath;
+      if (!qb64peExe) {
+        const configuredCompilerPath =
+          this.getVSCodeConfiguredCompilerPath(sourceFilePath);
+
+        if (configuredCompilerPath) {
+          qb64peExe = configuredCompilerPath;
+          result.suggestions.push(
+            `ℹ️ Using QB64PE compilerPath from VS Code settings: ${configuredCompilerPath}`,
+          );
+        }
+      }
+
       if (!qb64peExe) {
         // Try to find QB64PE in common locations
         const commonPaths = [

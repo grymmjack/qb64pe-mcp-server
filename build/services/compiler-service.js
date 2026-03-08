@@ -58,7 +58,7 @@ class QB64PECompilerService {
                 skipNext = true;
                 continue;
             }
-            if (flag === "-x") {
+            if (flag === "-c") {
                 removedFlags.push(flag);
                 continue;
             }
@@ -66,8 +66,12 @@ class QB64PECompilerService {
                 normalized.push(flag);
             }
         }
-        if (!normalized.includes("-c")) {
-            normalized.unshift("-c");
+        const requiredFlags = ["-q", "-m", "-x"];
+        for (let index = requiredFlags.length - 1; index >= 0; index -= 1) {
+            const requiredFlag = requiredFlags[index];
+            if (!normalized.includes(requiredFlag)) {
+                normalized.unshift(requiredFlag);
+            }
         }
         return { flags: normalized, removedFlags };
     }
@@ -82,6 +86,46 @@ class QB64PECompilerService {
             ? baseName
             : baseName + executableExt;
         return path.join(path.dirname(sourceFilePath), resolvedName);
+    }
+    quoteForShell(value) {
+        return `'${value.replace(/'/g, `'"'"'`)}'`;
+    }
+    formatOpaqueCompileFailure(execError, command, sourceFilePath, resolvedOutputPath) {
+        const details = [
+            execError?.message || "QB64PE compilation failed with no compiler output.",
+            `Command: ${command}`,
+            `Source: ${sourceFilePath}`,
+            `Expected output: ${resolvedOutputPath}`,
+        ];
+        if (execError?.code !== undefined) {
+            details.push(`Exit code: ${String(execError.code)}`);
+        }
+        if (execError?.signal) {
+            details.push(`Signal: ${String(execError.signal)}`);
+        }
+        return details.join("\n");
+    }
+    async tryCaptureCompileFailureWithPty(command, cwd) {
+        if (process.platform === "win32") {
+            return null;
+        }
+        const { exec } = await Promise.resolve().then(() => __importStar(require("child_process")));
+        const { promisify } = await Promise.resolve().then(() => __importStar(require("util")));
+        const execAsync = promisify(exec);
+        const shellCommand = `cd ${this.quoteForShell(cwd)} && ${command}`;
+        const ptyCommand = `script -qefc ${this.quoteForShell(shellCommand)} /dev/null`;
+        try {
+            const { stdout, stderr } = await execAsync(ptyCommand, {
+                cwd,
+                timeout: 120000,
+            });
+            const combinedOutput = `${stdout || ""}${stderr || ""}`.trim();
+            return combinedOutput.length > 0 ? combinedOutput : null;
+        }
+        catch (ptyError) {
+            const combinedOutput = `${ptyError?.stdout || ""}${ptyError?.stderr || ""}`.trim();
+            return combinedOutput.length > 0 ? combinedOutput : null;
+        }
     }
     getVSCodeConfiguredCompilerPath(sourceFilePath) {
         const fs = require("fs");
@@ -147,16 +191,16 @@ class QB64PECompilerService {
     compilerOptions = [
         {
             flag: "-c",
-            description: "Compile to executable without running",
+            description: "Compile source file and show progress in QB64PE's own window",
             platform: ["windows", "macos", "linux"],
             example: "qb64pe -c myprogram.bas",
             category: "compilation",
         },
         {
             flag: "-x",
-            description: "Compile and run immediately",
+            description: "Compile source file and send compiler progress/errors to the console",
             platform: ["windows", "macos", "linux"],
-            example: "qb64pe -x myprogram.bas",
+            example: "qb64pe -q -m -x myprogram.bas",
             category: "compilation",
         },
         {
@@ -656,7 +700,7 @@ INPUT "Press Enter to exit...", dummy$
             const normalized = this.normalizeCompileFlags(compilerFlags);
             flags = normalized.flags;
             if (normalized.removedFlags.length > 0) {
-                result.suggestions.push(`ℹ️ Ignored run/output flags for compile-only verification: ${JSON.stringify(normalized.removedFlags)}`);
+                result.suggestions.push(`ℹ️ Ignored incompatible verification flags: ${JSON.stringify(normalized.removedFlags)}`);
             }
         }
         else if (useStoredFlags &&
@@ -670,12 +714,12 @@ INPUT "Press Enter to exit...", dummy$
             console.error(`[Compiler] Using stored compiler flags from build context: ${JSON.stringify(flags)}`);
             result.suggestions.push(`ℹ️ Using previously successful compiler flags: ${JSON.stringify(flags)}`);
             if (normalized.removedFlags.length > 0) {
-                result.suggestions.push(`ℹ️ Ignored stored run/output flags for compile-only verification: ${JSON.stringify(normalized.removedFlags)}`);
+                result.suggestions.push(`ℹ️ Ignored stored incompatible verification flags: ${JSON.stringify(normalized.removedFlags)}`);
             }
         }
         else {
             // No flags provided and no build context - use defaults
-            flags = ["-c", "-w"];
+            flags = ["-q", "-m", "-x", "-w"];
         }
         // Auto-determine output path if not specified.
         // Priority: 1) Build context, 2) Existing .run file, 3) Default to source directory
@@ -785,7 +829,10 @@ INPUT "Press Enter to exit...", dummy$
             const cmd = `"${qb64peExe}" ${flags.join(" ")} -o "${resolvedOutputPath}" "${sourceFilePath}"`;
             // Execute compilation
             try {
-                const { stdout, stderr } = await execAsync(cmd, { timeout: 120000 });
+                const { stdout, stderr } = await execAsync(cmd, {
+                    cwd: outputDir,
+                    timeout: 120000,
+                });
                 result.output = stdout + stderr;
                 // Parse compilation output for errors and warnings
                 this.parseCompilationOutput(result.output, result.errors, result.suggestions);
@@ -805,19 +852,32 @@ INPUT "Press Enter to exit...", dummy$
                 }
             }
             catch (execError) {
-                result.output =
-                    execError.stdout + execError.stderr || execError.message;
+                const directOutput = `${execError?.stdout || ""}${execError?.stderr || ""}`.trim();
+                if (directOutput.length > 0) {
+                    result.output = directOutput;
+                }
+                else {
+                    const ptyOutput = await this.tryCaptureCompileFailureWithPty(cmd, outputDir);
+                    if (ptyOutput) {
+                        result.output = ptyOutput;
+                        result.suggestions.push("ℹ️ QB64PE produced no normal stdout/stderr; captured compiler output through a pseudo-terminal fallback.");
+                    }
+                    else {
+                        result.output = this.formatOpaqueCompileFailure(execError, cmd, sourceFilePath, resolvedOutputPath);
+                        result.suggestions.push("⚠️ QB64PE returned no compiler output. Included process metadata instead of a generic shell failure message.");
+                    }
+                }
                 this.parseCompilationOutput(result.output, result.errors, result.suggestions);
                 if (result.errors.length === 0) {
                     result.errors.push({
-                        message: execError.message,
+                        message: result.output,
                         severity: "error",
                     });
                 }
             }
             // Save build context regardless of success/failure.
-            // Persist compile-only normalized flags so future verification runs never
-            // accidentally reuse run-oriented settings like -x.
+            // Persist normalized headless verification flags so future runs keep using
+            // console-output compilation instead of the QB64PE progress window.
             const flagsToStore = this.normalizeCompileFlags(flags).flags;
             await this.buildContextService.saveContext(sourceFilePath, qb64peExe, flagsToStore, outputName, result.success, result.executablePath);
             if (sourceCodeForHints) {

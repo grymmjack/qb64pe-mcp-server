@@ -415,6 +415,7 @@ describe("QB64PECompilerService", () => {
 
     it("should normalize flags to compile-only mode", () => {
       const normalized = (service as any).normalizeCompileFlags([
+        "-c",
         "-w",
         "-x",
         "-o",
@@ -422,8 +423,8 @@ describe("QB64PECompilerService", () => {
         "-w",
       ]);
 
-      expect(normalized.flags).toEqual(["-c", "-w"]);
-      expect(normalized.removedFlags).toEqual(["-x", "-o", "DRAW.run"]);
+      expect(normalized.flags).toEqual(["-q", "-m", "-x", "-w"]);
+      expect(normalized.removedFlags).toEqual(["-c", "-o", "DRAW.run"]);
     });
 
     it("should resolve explicit .run output paths correctly", () => {
@@ -434,6 +435,29 @@ describe("QB64PECompilerService", () => {
       );
 
       expect(executablePath).toBe("/home/grymmjack/git/DRAW/DRAW.run");
+    });
+
+    it("should format opaque compile failures with command metadata", () => {
+      const formatted = (service as any).formatOpaqueCompileFailure(
+        { message: "Command failed", code: 1, signal: null },
+        '"/fake/qb64pe" -q -m -x -w -o "/tmp/demo.run" "/tmp/demo.bas"',
+        "/tmp/demo.bas",
+        "/tmp/demo.run",
+      );
+
+      expect(formatted).toContain("Command failed");
+      expect(formatted).toContain(
+        'Command: "/fake/qb64pe" -q -m -x -w -o "/tmp/demo.run" "/tmp/demo.bas"',
+      );
+      expect(formatted).toContain("Source: /tmp/demo.bas");
+      expect(formatted).toContain("Expected output: /tmp/demo.run");
+      expect(formatted).toContain("Exit code: 1");
+    });
+
+    it("should quote shell arguments safely for PTY fallback", () => {
+      const quoted = (service as any).quoteForShell("/tmp/that's it.bas");
+
+      expect(quoted).toBe("'/tmp/that'\"'\"'s it.bas'");
     });
 
     it("should suggest _SAVEIMAGE screenshot workflow for graphics code", () => {

@@ -47,7 +47,7 @@ export class QB64PECompilerService {
         continue;
       }
 
-      if (flag === "-x") {
+      if (flag === "-c") {
         removedFlags.push(flag);
         continue;
       }
@@ -57,8 +57,12 @@ export class QB64PECompilerService {
       }
     }
 
-    if (!normalized.includes("-c")) {
-      normalized.unshift("-c");
+    const requiredFlags = ["-q", "-m", "-x"];
+    for (let index = requiredFlags.length - 1; index >= 0; index -= 1) {
+      const requiredFlag = requiredFlags[index];
+      if (!normalized.includes(requiredFlag)) {
+        normalized.unshift(requiredFlag);
+      }
     }
 
     return { flags: normalized, removedFlags };
@@ -83,6 +87,64 @@ export class QB64PECompilerService {
       : baseName + executableExt;
 
     return path.join(path.dirname(sourceFilePath), resolvedName);
+  }
+
+  private quoteForShell(value: string): string {
+    return `'${value.replace(/'/g, `'"'"'`)}'`;
+  }
+
+  private formatOpaqueCompileFailure(
+    execError: any,
+    command: string,
+    sourceFilePath: string,
+    resolvedOutputPath: string,
+  ): string {
+    const details = [
+      execError?.message ||
+        "QB64PE compilation failed with no compiler output.",
+      `Command: ${command}`,
+      `Source: ${sourceFilePath}`,
+      `Expected output: ${resolvedOutputPath}`,
+    ];
+
+    if (execError?.code !== undefined) {
+      details.push(`Exit code: ${String(execError.code)}`);
+    }
+
+    if (execError?.signal) {
+      details.push(`Signal: ${String(execError.signal)}`);
+    }
+
+    return details.join("\n");
+  }
+
+  private async tryCaptureCompileFailureWithPty(
+    command: string,
+    cwd: string,
+  ): Promise<string | null> {
+    if (process.platform === "win32") {
+      return null;
+    }
+
+    const { exec } = await import("child_process");
+    const { promisify } = await import("util");
+    const execAsync = promisify(exec);
+
+    const shellCommand = `cd ${this.quoteForShell(cwd)} && ${command}`;
+    const ptyCommand = `script -qefc ${this.quoteForShell(shellCommand)} /dev/null`;
+
+    try {
+      const { stdout, stderr } = await execAsync(ptyCommand, {
+        cwd,
+        timeout: 120000,
+      });
+      const combinedOutput = `${stdout || ""}${stderr || ""}`.trim();
+      return combinedOutput.length > 0 ? combinedOutput : null;
+    } catch (ptyError: any) {
+      const combinedOutput =
+        `${ptyError?.stdout || ""}${ptyError?.stderr || ""}`.trim();
+      return combinedOutput.length > 0 ? combinedOutput : null;
+    }
   }
 
   private getVSCodeConfiguredCompilerPath(
@@ -195,16 +257,18 @@ export class QB64PECompilerService {
   private readonly compilerOptions: CompilerOption[] = [
     {
       flag: "-c",
-      description: "Compile to executable without running",
+      description:
+        "Compile source file and show progress in QB64PE's own window",
       platform: ["windows", "macos", "linux"],
       example: "qb64pe -c myprogram.bas",
       category: "compilation",
     },
     {
       flag: "-x",
-      description: "Compile and run immediately",
+      description:
+        "Compile source file and send compiler progress/errors to the console",
       platform: ["windows", "macos", "linux"],
-      example: "qb64pe -x myprogram.bas",
+      example: "qb64pe -q -m -x myprogram.bas",
       category: "compilation",
     },
     {
@@ -874,7 +938,7 @@ INPUT "Press Enter to exit...", dummy$
       flags = normalized.flags;
       if (normalized.removedFlags.length > 0) {
         result.suggestions.push(
-          `ℹ️ Ignored run/output flags for compile-only verification: ${JSON.stringify(normalized.removedFlags)}`,
+          `ℹ️ Ignored incompatible verification flags: ${JSON.stringify(normalized.removedFlags)}`,
         );
       }
     } else if (
@@ -895,12 +959,12 @@ INPUT "Press Enter to exit...", dummy$
       );
       if (normalized.removedFlags.length > 0) {
         result.suggestions.push(
-          `ℹ️ Ignored stored run/output flags for compile-only verification: ${JSON.stringify(normalized.removedFlags)}`,
+          `ℹ️ Ignored stored incompatible verification flags: ${JSON.stringify(normalized.removedFlags)}`,
         );
       }
     } else {
       // No flags provided and no build context - use defaults
-      flags = ["-c", "-w"];
+      flags = ["-q", "-m", "-x", "-w"];
     }
 
     // Auto-determine output path if not specified.
@@ -1058,7 +1122,10 @@ INPUT "Press Enter to exit...", dummy$
 
       // Execute compilation
       try {
-        const { stdout, stderr } = await execAsync(cmd, { timeout: 120000 });
+        const { stdout, stderr } = await execAsync(cmd, {
+          cwd: outputDir,
+          timeout: 120000,
+        });
         result.output = stdout + stderr;
 
         // Parse compilation output for errors and warnings
@@ -1091,8 +1158,35 @@ INPUT "Press Enter to exit...", dummy$
           );
         }
       } catch (execError: any) {
-        result.output =
-          execError.stdout + execError.stderr || execError.message;
+        const directOutput =
+          `${execError?.stdout || ""}${execError?.stderr || ""}`.trim();
+
+        if (directOutput.length > 0) {
+          result.output = directOutput;
+        } else {
+          const ptyOutput = await this.tryCaptureCompileFailureWithPty(
+            cmd,
+            outputDir,
+          );
+
+          if (ptyOutput) {
+            result.output = ptyOutput;
+            result.suggestions.push(
+              "ℹ️ QB64PE produced no normal stdout/stderr; captured compiler output through a pseudo-terminal fallback.",
+            );
+          } else {
+            result.output = this.formatOpaqueCompileFailure(
+              execError,
+              cmd,
+              sourceFilePath,
+              resolvedOutputPath,
+            );
+            result.suggestions.push(
+              "⚠️ QB64PE returned no compiler output. Included process metadata instead of a generic shell failure message.",
+            );
+          }
+        }
+
         this.parseCompilationOutput(
           result.output,
           result.errors,
@@ -1101,15 +1195,15 @@ INPUT "Press Enter to exit...", dummy$
 
         if (result.errors.length === 0) {
           result.errors.push({
-            message: execError.message,
+            message: result.output,
             severity: "error",
           });
         }
       }
 
       // Save build context regardless of success/failure.
-      // Persist compile-only normalized flags so future verification runs never
-      // accidentally reuse run-oriented settings like -x.
+      // Persist normalized headless verification flags so future runs keep using
+      // console-output compilation instead of the QB64PE progress window.
       const flagsToStore = this.normalizeCompileFlags(flags).flags;
       await this.buildContextService.saveContext(
         sourceFilePath,

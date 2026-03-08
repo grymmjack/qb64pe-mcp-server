@@ -1345,7 +1345,7 @@ When creating ${summaryType} summaries, you MUST preserve critical build and wor
 ### 1. Compilation Commands
 Mark with [BUILD-CRITICAL] in summaries:
 - **Exact QB64PE compilation command**: Full command with all flags
-- **Compiler flags used**: e.g., \`-c -w -x\`, \`-o outputname\`
+- **Compiler flags used**: e.g., \`-q -m -x -w\`, \`-o outputname\`
 - **Output executable name**: If specified with \`-o\` flag
 - **QB64PE installation path**: If non-standard location
 - **Source file path**: Project location
@@ -1353,7 +1353,7 @@ Mark with [BUILD-CRITICAL] in summaries:
 Example preservation:
 \`\`\`
 [BUILD-CRITICAL] Compilation Command:
-/Users/grymmjack/git/QB64pe/qb64pe -c -w -x DRAW.BAS -o DRAW.run
+/Users/grymmjack/git/QB64pe/qb64pe -q -m -x -w DRAW.BAS -o DRAW.run
 \`\`\`
 
 ### 2. Procedural Knowledge (Not Just Declarative)
@@ -1388,13 +1388,13 @@ Use these tools to ensure build context is never lost:
 ## Anti-Patterns to Avoid
 
 ❌ **BAD**: "Last command: ./DRAW.run" (execution only)
-✅ **GOOD**: "Build: /path/qb64pe -c -w -x DRAW.BAS -o DRAW.run | Run: ./DRAW.run"
+✅ **GOOD**: "Build: /path/qb64pe -q -m -x -w DRAW.BAS -o DRAW.run | Run: ./DRAW.run"
 
 ❌ **BAD**: Using MCP tool defaults without checking history
 ✅ **GOOD**: Check \`get_project_build_context\` first, use previous flags
 
 ❌ **BAD**: "The code was fixed" (declarative only)
-✅ **GOOD**: "Build process: 1) Fix syntax 2) Compile with -c -w -x 3) Run executable" (procedural)
+✅ **GOOD**: "Build process: 1) Fix syntax 2) Compile with -q -m -x -w 3) Run executable" (procedural)
 
 ## Summary Template
 

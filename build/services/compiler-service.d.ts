@@ -20,6 +20,9 @@ export declare class QB64PECompilerService {
     constructor();
     private normalizeCompileFlags;
     private resolveExecutablePath;
+    private quoteForShell;
+    private formatOpaqueCompileFailure;
+    private tryCaptureCompileFailureWithPty;
     private getVSCodeConfiguredCompilerPath;
     private getWorkflowToolSuggestions;
     private readonly compilerOptions;

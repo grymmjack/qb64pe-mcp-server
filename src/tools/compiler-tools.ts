@@ -111,7 +111,7 @@ export function registerCompilerTools(
       description:
         "⚙️ Compile a .bas file and return structured errors. " +
         "⏳ Takes 20–120 s — wait for it. Call after EVERY .bas edit; loop until result.success=true. " +
-        "Always compiles in compile-only mode; run flags like -x are ignored. Auto-reuses stored compile flags from the last successful build (set useStoredFlags=false to skip).",
+        "Always compiles in headless console mode using QB64PE's -q -m -x path. Auto-reuses stored compile flags from the last successful build after normalizing them for verify mode (set useStoredFlags=false to skip).",
       inputSchema: {
         sourceFilePath: z
           .string()
@@ -124,7 +124,7 @@ export function registerCompilerTools(
           .array(z.string())
           .optional()
           .describe(
-            "Compiler flags (default: stored flags or ['-c','-w']; run flags like -x are ignored)",
+            "Compiler flags (default: stored flags or ['-q','-m','-x','-w']; -o is ignored and -c is replaced with headless console compile mode)",
           ),
         useStoredFlags: z
           .boolean()

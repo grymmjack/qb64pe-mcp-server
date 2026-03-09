@@ -28,9 +28,19 @@ export declare class QB64PECompilerService {
     private readonly compilerOptions;
     private readonly debuggingTechniques;
     /**
-     * Get compiler options based on platform and type
+     * Get compiler options based on platform and type.
+     * Returns a structured result with a prominent headless workflow section.
      */
-    getCompilerOptions(platform?: string, optionType?: string): Promise<CompilerOption[]>;
+    getCompilerOptions(platform?: string, optionType?: string): Promise<{
+        headlessWorkflow: {
+            summary: string;
+            minimalCommand: string;
+            recommendedCommand: string;
+            flags: Record<string, string>;
+            warning: string;
+        };
+        options: CompilerOption[];
+    }>;
     /**
      * Get debugging help based on the issue and platform
      */

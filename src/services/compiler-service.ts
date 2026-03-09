@@ -256,47 +256,78 @@ export class QB64PECompilerService {
 
   private readonly compilerOptions: CompilerOption[] = [
     {
+      flag: "-x",
+      description:
+        "REQUIRED for headless/CLI use. Compile-only mode — does NOT launch the QB64PE IDE GUI. " +
+        "Without this flag, invoking qb64pe opens the IDE window and hangs in any terminal/automated environment.",
+      platform: ["windows", "macos", "linux"],
+      example: "qb64pe -w -x myprogram.bas -o myprogram.run",
+      category: "compilation",
+    },
+    {
+      flag: "-w",
+      description:
+        "REQUIRED for headless/CLI use. Suppresses interactive warning dialogs that would otherwise block " +
+        "compilation waiting for user input. Essential for non-interactive/automated workflows.",
+      platform: ["windows", "macos", "linux"],
+      example: "qb64pe -w -x myprogram.bas -o myprogram.run",
+      category: "compilation",
+    },
+    {
+      flag: "-o",
+      description: "Specify output executable path",
+      platform: ["windows", "macos", "linux"],
+      example: "qb64pe -w -x myprogram.bas -o myprogram.run",
+      category: "compilation",
+    },
+    {
       flag: "-c",
       description:
-        "Compile source file and show progress in QB64PE's own window",
+        "Compile source file and show progress in QB64PE's own window. DO NOT use in headless/terminal environments — use -x instead.",
       platform: ["windows", "macos", "linux"],
       example: "qb64pe -c myprogram.bas",
       category: "compilation",
     },
     {
-      flag: "-x",
+      flag: "-q",
       description:
-        "Compile source file and send compiler progress/errors to the console",
+        "Quiet mode — suppress compiler banner output. Often combined with -m and -x for clean headless output.",
       platform: ["windows", "macos", "linux"],
       example: "qb64pe -q -m -x myprogram.bas",
       category: "compilation",
     },
     {
-      flag: "-o",
-      description: "Specify output executable name",
+      flag: "-m",
+      description:
+        "Message mode — send compiler progress and error messages to stdout/stderr. " +
+        "Use with -q and -x for fully headless compilation with captured output.",
       platform: ["windows", "macos", "linux"],
-      example: "qb64pe -c -o myapp myprogram.bas",
+      example: "qb64pe -q -m -x myprogram.bas",
       category: "compilation",
+    },
+    {
+      flag: "-f:MaxCompilerProcesses=N",
+      description:
+        "Set the maximum number of parallel C++ compilation processes. Speeds up compilation significantly on multi-core systems. " +
+        "Recommended: set N to the number of CPU cores (e.g. 12 for a 12-core machine). " +
+        "The transpiled QB64PE source is compiled from C++, so more processes = faster builds.",
+      platform: ["windows", "macos", "linux"],
+      example:
+        "qb64pe -w -x -f:MaxCompilerProcesses=12 myprogram.bas -o myprogram.run",
+      category: "optimization",
     },
     {
       flag: "-z",
       description: "Enable all compiler optimizations",
       platform: ["windows", "macos", "linux"],
-      example: "qb64pe -c -z myprogram.bas",
+      example: "qb64pe -w -x -z myprogram.bas -o myprogram.run",
       category: "optimization",
     },
     {
       flag: "-g",
       description: "Generate debug information",
       platform: ["windows", "macos", "linux"],
-      example: "qb64pe -c -g myprogram.bas",
-      category: "debugging",
-    },
-    {
-      flag: "-w",
-      description: "Show compilation warnings",
-      platform: ["windows", "macos", "linux"],
-      example: "qb64pe -c -w myprogram.bas",
+      example: "qb64pe -w -x -g myprogram.bas -o myprogram.run",
       category: "debugging",
     },
   ];
@@ -436,12 +467,22 @@ PRINT "Final count: "; count`,
   ];
 
   /**
-   * Get compiler options based on platform and type
+   * Get compiler options based on platform and type.
+   * Returns a structured result with a prominent headless workflow section.
    */
   async getCompilerOptions(
     platform: string = "all",
     optionType: string = "all",
-  ): Promise<CompilerOption[]> {
+  ): Promise<{
+    headlessWorkflow: {
+      summary: string;
+      minimalCommand: string;
+      recommendedCommand: string;
+      flags: Record<string, string>;
+      warning: string;
+    };
+    options: CompilerOption[];
+  }> {
     let options = this.compilerOptions;
 
     // Filter by platform
@@ -457,7 +498,29 @@ PRINT "Final count: "; count`,
       options = options.filter((option) => option.category === optionType);
     }
 
-    return options;
+    return {
+      headlessWorkflow: {
+        summary:
+          "QB64PE HEADLESS / CLI COMPILATION — Always use these flags when compiling from a terminal or LLM agent workflow. " +
+          "Without -x the compiler opens its IDE GUI which will hang or fail in any non-interactive environment.",
+        minimalCommand: "qb64pe -w -x SOURCE.BAS -o OUTPUT.run",
+        recommendedCommand:
+          "qb64pe -w -x -f:MaxCompilerProcesses=<N> SOURCE.BAS -o OUTPUT.run",
+        flags: {
+          "-x": "Compile-only — suppresses the IDE GUI launch. REQUIRED for headless use.",
+          "-w": "Suppress interactive warning dialogs. REQUIRED for non-interactive use.",
+          "-o PATH":
+            "Output binary path. Omit the extension on Linux/macOS (or use .exe on Windows).",
+          "-f:MaxCompilerProcesses=N":
+            "Parallel C++ compilation threads (set N = CPU core count for fastest builds, e.g. 12).",
+          "-q": "Quiet mode — suppresses compiler banner. Combine with -m and -x for clean captured output.",
+          "-m": "Message mode — routes compiler output to stdout/stderr so it can be captured by scripts.",
+        },
+        warning:
+          "Running `qb64pe SOURCE.BAS` without -x WILL attempt to open the IDE GUI window and hang in any headless/terminal environment.",
+      },
+      options,
+    };
   }
 
   /**
@@ -497,10 +560,9 @@ PRINT "Final count: "; count`,
     let reference = "# QB64PE Compiler Reference\n\n";
 
     reference += "## Compilation Options\n\n";
-    const compilationOptions = await this.getCompilerOptions(
-      "all",
-      "compilation",
-    );
+    const compilationOptions = (
+      await this.getCompilerOptions("all", "compilation")
+    ).options;
     compilationOptions.forEach((option) => {
       reference += `### ${option.flag}\n`;
       reference += `**Description:** ${option.description}\n\n`;
@@ -509,7 +571,8 @@ PRINT "Final count: "; count`,
     });
 
     reference += "## Debugging Options\n\n";
-    const debuggingOptions = await this.getCompilerOptions("all", "debugging");
+    const debuggingOptions = (await this.getCompilerOptions("all", "debugging"))
+      .options;
     debuggingOptions.forEach((option) => {
       reference += `### ${option.flag}\n`;
       reference += `**Description:** ${option.description}\n\n`;
@@ -518,10 +581,9 @@ PRINT "Final count: "; count`,
     });
 
     reference += "## Optimization Options\n\n";
-    const optimizationOptions = await this.getCompilerOptions(
-      "all",
-      "optimization",
-    );
+    const optimizationOptions = (
+      await this.getCompilerOptions("all", "optimization")
+    ).options;
     optimizationOptions.forEach((option) => {
       reference += `### ${option.flag}\n`;
       reference += `**Description:** ${option.description}\n\n`;

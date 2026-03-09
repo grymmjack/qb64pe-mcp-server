@@ -9,33 +9,32 @@ describe("QB64PECompilerService", () => {
 
   describe("getCompilerOptions", () => {
     it("should return all compiler options", async () => {
-      const options = await service.getCompilerOptions();
-      expect(options).toBeDefined();
-      expect(Array.isArray(options)).toBe(true);
-      expect(options.length).toBeGreaterThan(0);
+      const result = await service.getCompilerOptions();
+      expect(result).toBeDefined();
+      expect(result).toHaveProperty("headlessWorkflow");
+      expect(result).toHaveProperty("options");
+      expect(Array.isArray(result.options)).toBe(true);
+      expect(result.options.length).toBeGreaterThan(0);
     });
 
     it("should filter by platform", async () => {
-      const linuxOptions = await service.getCompilerOptions("linux");
-      expect(linuxOptions.every((opt) => opt.platform.includes("linux"))).toBe(
-        true,
-      );
+      const result = await service.getCompilerOptions("linux");
+      expect(
+        result.options.every((opt) => opt.platform.includes("linux")),
+      ).toBe(true);
     });
 
     it("should filter by option type", async () => {
-      const debugOptions = await service.getCompilerOptions("all", "debugging");
-      expect(debugOptions.every((opt) => opt.category === "debugging")).toBe(
+      const result = await service.getCompilerOptions("all", "debugging");
+      expect(result.options.every((opt) => opt.category === "debugging")).toBe(
         true,
       );
     });
 
     it("should combine filters", async () => {
-      const options = await service.getCompilerOptions(
-        "windows",
-        "compilation",
-      );
+      const result = await service.getCompilerOptions("windows", "compilation");
       expect(
-        options.every(
+        result.options.every(
           (opt) =>
             opt.platform.includes("windows") && opt.category === "compilation",
         ),
@@ -148,50 +147,54 @@ describe("QB64PECompilerService", () => {
 
   describe("platform-specific options", () => {
     it("should return Windows-specific options", async () => {
-      const options = await service.getCompilerOptions("windows");
-      expect(Array.isArray(options)).toBe(true);
+      const result = await service.getCompilerOptions("windows");
+      expect(Array.isArray(result.options)).toBe(true);
     });
 
     it("should return macOS-specific options", async () => {
-      const options = await service.getCompilerOptions("macos");
-      expect(Array.isArray(options)).toBe(true);
+      const result = await service.getCompilerOptions("macos");
+      expect(Array.isArray(result.options)).toBe(true);
     });
 
     it("should return Linux-specific options", async () => {
-      const options = await service.getCompilerOptions("linux");
-      expect(Array.isArray(options)).toBe(true);
+      const result = await service.getCompilerOptions("linux");
+      expect(Array.isArray(result.options)).toBe(true);
     });
 
     it("should handle all platforms", async () => {
-      const options = await service.getCompilerOptions("all");
-      expect(options.length).toBeGreaterThan(0);
+      const result = await service.getCompilerOptions("all");
+      expect(result.options.length).toBeGreaterThan(0);
     });
   });
 
   describe("option categories", () => {
     it("should return compilation category options", async () => {
-      const options = await service.getCompilerOptions("all", "compilation");
-      expect(options.every((opt) => opt.category === "compilation")).toBe(true);
+      const result = await service.getCompilerOptions("all", "compilation");
+      expect(
+        result.options.every((opt) => opt.category === "compilation"),
+      ).toBe(true);
     });
 
     it("should return debugging category options", async () => {
-      const options = await service.getCompilerOptions("all", "debugging");
-      expect(options.every((opt) => opt.category === "debugging")).toBe(true);
-    });
-
-    it("should return optimization category options", async () => {
-      const options = await service.getCompilerOptions("all", "optimization");
-      expect(options.every((opt) => opt.category === "optimization")).toBe(
+      const result = await service.getCompilerOptions("all", "debugging");
+      expect(result.options.every((opt) => opt.category === "debugging")).toBe(
         true,
       );
     });
 
+    it("should return optimization category options", async () => {
+      const result = await service.getCompilerOptions("all", "optimization");
+      expect(
+        result.options.every((opt) => opt.category === "optimization"),
+      ).toBe(true);
+    });
+
     it("should handle unknown category", async () => {
-      const options = await service.getCompilerOptions(
+      const result = await service.getCompilerOptions(
         "all",
         "unknown_category",
       );
-      expect(Array.isArray(options)).toBe(true);
+      expect(Array.isArray(result.options)).toBe(true);
     });
   });
 
@@ -245,9 +248,14 @@ describe("QB64PECompilerService", () => {
 
   describe("compiler options structure", () => {
     it("should return options with correct structure", async () => {
-      const options = await service.getCompilerOptions();
-      if (options.length > 0) {
-        const option = options[0];
+      const result = await service.getCompilerOptions();
+      expect(result).toHaveProperty("headlessWorkflow");
+      expect(result).toHaveProperty("options");
+      expect(result.headlessWorkflow).toHaveProperty("minimalCommand");
+      expect(result.headlessWorkflow).toHaveProperty("recommendedCommand");
+      expect(result.headlessWorkflow).toHaveProperty("flags");
+      if (result.options.length > 0) {
+        const option = result.options[0];
         expect(option).toHaveProperty("flag");
         expect(option).toHaveProperty("description");
         expect(option).toHaveProperty("category");
@@ -256,17 +264,17 @@ describe("QB64PECompilerService", () => {
     });
 
     it("should have valid platform values", async () => {
-      const options = await service.getCompilerOptions();
-      options.forEach((opt) => {
+      const result = await service.getCompilerOptions();
+      result.options.forEach((opt) => {
         expect(Array.isArray(opt.platform)).toBe(true);
         expect(opt.platform.length).toBeGreaterThan(0);
       });
     });
 
     it("should have valid category values", async () => {
-      const options = await service.getCompilerOptions();
+      const result = await service.getCompilerOptions();
       const validCategories = ["compilation", "debugging", "optimization"];
-      options.forEach((opt) => {
+      result.options.forEach((opt) => {
         expect(validCategories).toContain(opt.category);
       });
     });
@@ -274,13 +282,13 @@ describe("QB64PECompilerService", () => {
 
   describe("edge cases", () => {
     it("should handle undefined platform gracefully", async () => {
-      const options = await service.getCompilerOptions(undefined as any);
-      expect(Array.isArray(options)).toBe(true);
+      const result = await service.getCompilerOptions(undefined as any);
+      expect(Array.isArray(result.options)).toBe(true);
     });
 
     it("should handle undefined option type gracefully", async () => {
-      const options = await service.getCompilerOptions("all", undefined as any);
-      expect(Array.isArray(options)).toBe(true);
+      const result = await service.getCompilerOptions("all", undefined as any);
+      expect(Array.isArray(result.options)).toBe(true);
     });
 
     it("should handle empty string issue in debugging help", async () => {
@@ -321,9 +329,9 @@ describe("QB64PECompilerService", () => {
       const opts2 = await service.getCompilerOptions("linux");
       const opts3 = await service.getCompilerOptions("all", "debugging");
 
-      expect(Array.isArray(opts1)).toBe(true);
-      expect(Array.isArray(opts2)).toBe(true);
-      expect(Array.isArray(opts3)).toBe(true);
+      expect(Array.isArray(opts1.options)).toBe(true);
+      expect(Array.isArray(opts2.options)).toBe(true);
+      expect(Array.isArray(opts3.options)).toBe(true);
     });
 
     it("should handle multiple getDebuggingHelp calls", async () => {
@@ -341,7 +349,7 @@ describe("QB64PECompilerService", () => {
       const help = await service.getDebuggingHelp("error");
       const reference = await service.getCompilerReference();
 
-      expect(Array.isArray(options)).toBe(true);
+      expect(Array.isArray(options.options)).toBe(true);
       expect(typeof help).toBe("string");
       expect(typeof reference).toBe("string");
     });
@@ -423,7 +431,7 @@ describe("QB64PECompilerService", () => {
         "-w",
       ]);
 
-      expect(normalized.flags).toEqual(["-q", "-m", "-x", "-w"]);
+      expect(normalized.flags).toEqual(["-q", "-m", "-w", "-x"]);
       expect(normalized.removedFlags).toEqual(["-c", "-o", "DRAW.run"]);
     });
 

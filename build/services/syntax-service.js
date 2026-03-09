@@ -398,6 +398,100 @@ class QB64PESyntaxService {
                 }
             });
         });
+        // Check _LOADIMAGE calls for potential empty-path crashes
+        this.checkLoadImageCalls(lines, compatibilityIssues);
+    }
+    /**
+     * Check _LOADIMAGE calls for patterns that can cause std::bad_alloc crashes.
+     *
+     * Root cause: Passing an empty string or a bare directory path (no filename) to
+     * _LOADIMAGE causes a std::bad_alloc / exit-code 134 crash with no QB64 line info.
+     * This commonly happens when the path argument comes from a THEME/CONFIG struct
+     * that was read before the include file that populates it has executed (include-order
+     * timing bug), or when a string variable is never assigned.
+     */
+    checkLoadImageCalls(lines, compatibilityIssues) {
+        // Detect _LOADIMAGE with a variable/expression argument (not a plain string literal)
+        // Pattern: _LOADIMAGE( optionalSpaces then NOT a double-quote
+        const loadImageVarPattern = /\b_LOADIMAGE\s*\(\s*(?!"[^"]*")/gi;
+        // Detect _LOADIMAGE argument that is a concatenation ending in "/" or "\"
+        // e.g. _LOADIMAGE(dir$ + file$)  or  _LOADIMAGE(THEME.PATH$ + THEME.ICON$)
+        const loadImageConcatPattern = /\b_LOADIMAGE\s*\(\s*([^,)]+(?:\+[^,)]+)+)\s*[,)]/gi;
+        // Detect _LOADIMAGE argument that ends with "/" or "\" (bare directory path literal)
+        const loadImageDirPattern = /\b_LOADIMAGE\s*\(\s*"[^"]*[/\\]"\s*[,)]/gi;
+        lines.forEach((line, index) => {
+            const lineNum = index + 1;
+            const trimmedLine = line.trim();
+            // Skip comment lines
+            if (trimmedLine.startsWith("'") || trimmedLine.startsWith("REM ")) {
+                return;
+            }
+            // Case 1: _LOADIMAGE argument is a bare directory literal (ends with / or \)
+            loadImageDirPattern.lastIndex = 0;
+            if (loadImageDirPattern.test(line)) {
+                compatibilityIssues.push({
+                    line: lineNum,
+                    column: line.toUpperCase().indexOf("_LOADIMAGE") + 1,
+                    pattern: "_LOADIMAGE",
+                    message: "_LOADIMAGE path ends with a directory separator — no filename is included. This causes a std::bad_alloc crash (exit code 134) with no QB64 line info.",
+                    severity: "error",
+                    category: "loadimage_empty_path",
+                    suggestion: "Ensure the path argument includes a filename, not just a directory. Example: _LOADIMAGE(dir$ + filename$) where filename$ is a non-empty string.",
+                    examples: {
+                        incorrect: '_LOADIMAGE("ASSETS/THEMES/DEFAULT/IMAGES/EDITBAR/")',
+                        correct: '_LOADIMAGE("ASSETS/THEMES/DEFAULT/IMAGES/EDITBAR/undo.png")',
+                    },
+                });
+                return;
+            }
+            // Case 2: _LOADIMAGE with a concatenated expression — could produce empty filename
+            loadImageConcatPattern.lastIndex = 0;
+            const concatMatch = loadImageConcatPattern.exec(line);
+            if (concatMatch) {
+                const expr = concatMatch[1].trim();
+                // Warn if any part of the concatenation looks like a struct/theme field dereference
+                // (e.g. THEME.ICON_UNDO$, CFG.ASSET_PATH$) which may be empty before include runs
+                const hasStructField = /\b[A-Z_][A-Z0-9_]*\.[A-Z_][A-Z0-9_]*\$?/i.test(expr);
+                compatibilityIssues.push({
+                    line: lineNum,
+                    column: line.toUpperCase().indexOf("_LOADIMAGE") + 1,
+                    pattern: "_LOADIMAGE",
+                    message: "_LOADIMAGE path is a concatenated expression" +
+                        (hasStructField
+                            ? " referencing a struct/TYPE field — if this code runs before the include file that populates the struct has executed, the field will be empty (NUL-filled), producing a bare-directory path and a std::bad_alloc crash"
+                            : " — if any part of the expression is an empty string, _LOADIMAGE will receive an invalid path and crash with std::bad_alloc (exit code 134)"),
+                    severity: "warning",
+                    category: "loadimage_empty_path",
+                    suggestion: hasStructField
+                        ? "Use lazy initialization: defer _LOADIMAGE calls to first render (guard with an iconsLoaded% flag) rather than calling them in *_init. At render time all include files have executed and struct fields contain their values."
+                        : "Validate that the path expression is non-empty before calling _LOADIMAGE. Use LEN(_TRIM$(path$)) > 0 as a guard.",
+                    examples: {
+                        incorrect: "' In *_init — THEME.* not yet populated:\nhandle% = _LOADIMAGE(THEME.ICON_PATH$ + THEME.ICON_UNDO$)",
+                        correct: "' Lazy-load at first render:\nIF NOT iconsLoaded% THEN\n    handle% = _LOADIMAGE(THEME.ICON_PATH$ + THEME.ICON_UNDO$)\n    iconsLoaded% = TRUE\nEND IF",
+                    },
+                });
+                return;
+            }
+            // Case 3: _LOADIMAGE with any non-literal argument (variable, function call, etc.)
+            loadImageVarPattern.lastIndex = 0;
+            if (loadImageVarPattern.test(line)) {
+                compatibilityIssues.push({
+                    line: lineNum,
+                    column: line.toUpperCase().indexOf("_LOADIMAGE") + 1,
+                    pattern: "_LOADIMAGE",
+                    message: "_LOADIMAGE is called with a variable or expression argument that could be an empty string. " +
+                        "Passing an empty string or a directory-only path to _LOADIMAGE causes std::bad_alloc (exit code 134) with no QB64 line number in the error.",
+                    severity: "warning",
+                    category: "loadimage_empty_path",
+                    suggestion: "Validate the path before calling _LOADIMAGE: IF LEN(_TRIM$(path$)) > 0 THEN handle% = _LOADIMAGE(path$). " +
+                        "If the path comes from a THEME/CONFIG struct, ensure the include file that sets those fields has already run (use lazy loading in render, not in *_init).",
+                    examples: {
+                        incorrect: "handle% = _LOADIMAGE(imagePath$)  ' imagePath$ may be empty",
+                        correct: "IF LEN(_TRIM$(imagePath$)) > 0 THEN\n    handle% = _LOADIMAGE(imagePath$)\nEND IF",
+                    },
+                });
+            }
+        });
     }
     /**
      * Check for variable naming mismatch between DIM AS and sigil usage (critical bug)

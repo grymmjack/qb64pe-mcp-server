@@ -75,6 +75,16 @@ export declare class QB64PESyntaxService {
      */
     private checkCompatibilityIssues;
     /**
+     * Check _LOADIMAGE calls for patterns that can cause std::bad_alloc crashes.
+     *
+     * Root cause: Passing an empty string or a bare directory path (no filename) to
+     * _LOADIMAGE causes a std::bad_alloc / exit-code 134 crash with no QB64 line info.
+     * This commonly happens when the path argument comes from a THEME/CONFIG struct
+     * that was read before the include file that populates it has executed (include-order
+     * timing bug), or when a string variable is never assigned.
+     */
+    private checkLoadImageCalls;
+    /**
      * Check for variable naming mismatch between DIM AS and sigil usage (critical bug)
      * Example: DIM x AS INTEGER creates 'x', but code using 'x%' creates a different variable
      */

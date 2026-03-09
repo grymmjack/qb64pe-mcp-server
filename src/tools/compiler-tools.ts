@@ -24,7 +24,15 @@ export function registerCompilerTools(
     {
       title: "Get QB64PE Compiler Options",
       description:
-        "Get information about QB64PE compiler command-line options and flags",
+        "Get QB64PE compiler command-line flags and the headless compilation workflow.\n\n" +
+        "⚡ HEADLESS / CLI COMPILATION (LLM agents MUST use this):\n" +
+        "  qb64pe -w -x [-f:MaxCompilerProcesses=N] SOURCE.BAS -o OUTPUT.run\n\n" +
+        "Critical flags for terminal/agent use:\n" +
+        "  -x  Compile-only, NO IDE GUI launch (REQUIRED — without it the compiler opens its window and hangs)\n" +
+        "  -w  Suppress interactive warning dialogs (REQUIRED for non-interactive)\n" +
+        "  -o  Output binary path\n" +
+        "  -f:MaxCompilerProcesses=N  Parallel C++ compile threads (set N = CPU cores for speed)\n\n" +
+        "This tool returns a headlessWorkflow summary plus the full list of compiler flags.",
       inputSchema: {
         platform: z
           .enum(["windows", "macos", "linux", "all"])

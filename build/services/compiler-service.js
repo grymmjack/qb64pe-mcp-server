@@ -453,7 +453,8 @@ PRINT "Final count: "; count`,
             reference += `**Example:** \`${option.example}\`\n\n`;
         });
         reference += "## Debugging Options\n\n";
-        const debuggingOptions = (await this.getCompilerOptions("all", "debugging")).options;
+        const debuggingOptions = (await this.getCompilerOptions("all", "debugging"))
+            .options;
         debuggingOptions.forEach((option) => {
             reference += `### ${option.flag}\n`;
             reference += `**Description:** ${option.description}\n\n`;

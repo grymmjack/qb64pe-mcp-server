@@ -853,6 +853,161 @@ _LOGTRACE "Function called with: " + STR$(value)
             : platformInfo[platform] ||
                 platformInfo.windows;
     }
+    /**
+     * Validate QB64-PE code for dangerous function self-references.
+     *
+     * In QB64-PE, reading a FUNCTION's own name inside the function body is a
+     * recursive call, NOT a variable read. Only assignment (FuncName = value)
+     * sets the return value. Any other read context (IF, expression, argument)
+     * triggers infinite recursion leading to SIGSEGV / stack overflow.
+     */
+    async validateFunctionSelfReferences(code) {
+        const issues = [];
+        const lines = code.split("\n");
+        // Type sigils that can follow a function name
+        const sigils = ["%", "&", "!", "#", "~", "`", "%%", "&&", "##", "$$", "$"];
+        const sigilPattern = sigils.map((s) => s.replace(/([\$\#\&\%\!\~\`])/g, "\\$1")).join("|");
+        const funcBlocks = [];
+        const funcStartRe = /^\s*FUNCTION\s+(\w+)((?:%|&|!|#|~|`|%%|&&|##|\$\$|\$)?)\s*\(/i;
+        const funcEndRe = /^\s*END\s+FUNCTION\b/i;
+        let currentFunc = null;
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            // Skip comment-only lines
+            if (/^\s*('|REM\b)/i.test(line))
+                continue;
+            if (!currentFunc) {
+                const m = funcStartRe.exec(line);
+                if (m) {
+                    currentFunc = {
+                        name: m[1],
+                        nameWithSigil: m[1] + (m[2] || ""),
+                        startLine: i,
+                    };
+                }
+            }
+            else {
+                if (funcEndRe.test(line)) {
+                    funcBlocks.push({ ...currentFunc, endLine: i });
+                    currentFunc = null;
+                }
+            }
+        }
+        // Phase 2 — inside each block, find reads of the function name
+        for (const block of funcBlocks) {
+            // Build a regex that matches the function name with its sigil.
+            // We use a word boundary at the start and a lookahead at the end
+            // because sigils like % are non-word chars and \b won't fire after them.
+            const escapedName = block.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            const escapedSigil = block.nameWithSigil.length > block.name.length
+                ? block.nameWithSigil.substring(block.name.length).replace(/([\$\#\&\%\!\~\`])/g, "\\$1")
+                : "";
+            // Match the exact name+sigil combo, not an optional sigil
+            const namePattern = escapedSigil
+                ? new RegExp(`\\b${escapedName}${escapedSigil}(?=[^a-zA-Z0-9_]|$)`, "gi")
+                : new RegExp(`\\b${escapedName}\\b`, "gi");
+            for (let i = block.startLine + 1; i < block.endLine; i++) {
+                const rawLine = lines[i];
+                // Strip trailing comment — but skip ' inside string literals
+                let line = rawLine;
+                let inString = false;
+                for (let c = 0; c < rawLine.length; c++) {
+                    if (rawLine[c] === '"') {
+                        inString = !inString;
+                    }
+                    else if (rawLine[c] === "'" && !inString) {
+                        line = rawLine.substring(0, c);
+                        break;
+                    }
+                }
+                // Skip blank / comment-only / REM lines
+                if (/^\s*$/.test(line))
+                    continue;
+                if (/^\s*REM\b/i.test(line))
+                    continue;
+                // Find all occurrences of the function name on this line
+                namePattern.lastIndex = 0;
+                let match;
+                while ((match = namePattern.exec(line)) !== null) {
+                    const col = match.index;
+                    const before = line.substring(0, col).trimEnd();
+                    // ── Is this an ASSIGNMENT to the return value? ──
+                    // The pattern is: FuncName[sigil] = <expr>
+                    // "before" should be empty or only whitespace (start-of-statement)
+                    // Also valid: THEN FuncName = ... (single-line IF assignment)
+                    // Also valid: LET FuncName = ...
+                    const after = line.substring(col + match[0].length).trimStart();
+                    const isLetPrefix = /\bLET\s*$/i.test(before);
+                    const isThenPrefix = /\bTHEN\s*$/i.test(before);
+                    if ((before === "" || /^\s*$/.test(before) || isLetPrefix || isThenPrefix) &&
+                        after.startsWith("=") &&
+                        !after.startsWith("==") // not a comparison
+                    ) {
+                        // This is a valid return-value assignment — skip
+                        continue;
+                    }
+                    // ── If we reach here, it's a READ of the function name ──
+                    // Classify the context
+                    let context = "other";
+                    if (/\bIF\b/i.test(before) || /\bELSEIF\b/i.test(before)) {
+                        context = "if_condition";
+                    }
+                    else if (after.startsWith("=") ||
+                        after.startsWith("<") ||
+                        after.startsWith(">") ||
+                        /^\s*<>/.test(after) ||
+                        /^\s*<=/.test(after) ||
+                        /^\s*>=/.test(after)) {
+                        context = "comparison";
+                    }
+                    else if (/=\s*$/.test(before)) {
+                        context = "assignment_rhs";
+                    }
+                    else if (/[,(]\s*$/.test(before) || /^\s*[,)]/.test(after)) {
+                        context = "argument";
+                    }
+                    else {
+                        context = "expression";
+                    }
+                    issues.push({
+                        line: i + 1,
+                        column: col + 1,
+                        functionName: block.nameWithSigil,
+                        context,
+                        lineContent: rawLine.trimEnd(),
+                        message: `Reading "${block.nameWithSigil}" inside its own FUNCTION body ` +
+                            `is a recursive call in QB64-PE, not a variable read. ` +
+                            `This will cause infinite recursion and a SIGSEGV (exit 139) stack overflow crash.`,
+                        suggestion: `Use a local variable instead: DIM result AS <type> / result = <value> / ` +
+                            `IF result ... / ${block.nameWithSigil} = result`,
+                        severity: "error",
+                    });
+                }
+            }
+        }
+        const affectedFunctions = [...new Set(issues.map((i) => i.functionName))];
+        return {
+            hasIssues: issues.length > 0,
+            issues,
+            functionsScanned: funcBlocks.length,
+            summary: {
+                totalIssues: issues.length,
+                errors: issues.filter((i) => i.severity === "error").length,
+                warnings: issues.filter((i) => i.severity === "warning").length,
+                affectedFunctions,
+            },
+            explanation: "In QB64-PE, a FUNCTION's own name is NOT a variable inside the function body. " +
+                "Reading FuncName% in an IF/expression/parameter is a RECURSIVE CALL. " +
+                "Only assignment (FuncName% = value) sets the return value. " +
+                "Any other read triggers infinite recursion → stack overflow → SIGSEGV (exit code 139).",
+            prevention: [
+                "NEVER read the function name in any expression inside the function body.",
+                "Use a local variable (DIM result AS <type>) for intermediate checks.",
+                "Only assign to the function name as the very last step to set the return value.",
+                "Example: DIM result AS INTEGER / result = computation / IF result < 0 THEN result = 0 / MyFunc% = result",
+            ],
+        };
+    }
 }
 exports.QB64PECompatibilityService = QB64PECompatibilityService;
 //# sourceMappingURL=compatibility-service.js.map

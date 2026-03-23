@@ -1,26 +1,27 @@
-import { QB64PECompatibilityService } from '../../src/services/compatibility-service';
+import { QB64PECompatibilityService } from "../../src/services/compatibility-service";
 
-describe('QB64PECompatibilityService', () => {
+describe("QB64PECompatibilityService", () => {
   let service: QB64PECompatibilityService;
 
   beforeEach(() => {
     service = new QB64PECompatibilityService();
   });
 
-  describe('validateCompatibility', () => {
-    it('should detect function return type issues', async () => {
-      const code = 'FUNCTION Test(x AS INTEGER) AS INTEGER\nTest = x * 2\nEND FUNCTION';
+  describe("validateCompatibility", () => {
+    it("should detect function return type issues", async () => {
+      const code =
+        "FUNCTION Test(x AS INTEGER) AS INTEGER\nTest = x * 2\nEND FUNCTION";
       const issues = await service.validateCompatibility(code);
       expect(Array.isArray(issues)).toBe(true);
     });
 
-    it('should handle valid code', async () => {
-      const code = 'FUNCTION Test%(x AS INTEGER)\nTest% = x * 2\nEND FUNCTION';
+    it("should handle valid code", async () => {
+      const code = "FUNCTION Test%(x AS INTEGER)\nTest% = x * 2\nEND FUNCTION";
       const issues = await service.validateCompatibility(code);
       expect(Array.isArray(issues)).toBe(true);
     });
 
-    it('should detect multiple issues', async () => {
+    it("should detect multiple issues", async () => {
       const code = `
         FUNCTION Test(x AS INTEGER) AS INTEGER
         SUB OldSub()
@@ -30,98 +31,99 @@ describe('QB64PECompatibilityService', () => {
       expect(Array.isArray(issues)).toBe(true);
     });
 
-    it('should handle empty code', async () => {
-      const issues = await service.validateCompatibility('');
+    it("should handle empty code", async () => {
+      const issues = await service.validateCompatibility("");
       expect(Array.isArray(issues)).toBe(true);
       expect(issues.length).toBe(0);
     });
 
-    it('should provide suggestions for issues', async () => {
-      const code = 'FUNCTION Bad(x AS INTEGER) AS STRING\nBad = "test"\nEND FUNCTION';
+    it("should provide suggestions for issues", async () => {
+      const code =
+        'FUNCTION Bad(x AS INTEGER) AS STRING\nBad = "test"\nEND FUNCTION';
       const issues = await service.validateCompatibility(code);
       if (issues.length > 0) {
-        expect(issues[0]).toHaveProperty('suggestion');
+        expect(issues[0]).toHaveProperty("suggestion");
       }
     });
   });
 
-  describe('getPlatformCompatibility', () => {
-    it('should return Windows compatibility info', async () => {
-      const info = await service.getPlatformCompatibility('windows');
+  describe("getPlatformCompatibility", () => {
+    it("should return Windows compatibility info", async () => {
+      const info = await service.getPlatformCompatibility("windows");
       expect(info).toBeDefined();
-      expect(info).toHaveProperty('supported');
-      expect(info).toHaveProperty('unsupported');
+      expect(info).toHaveProperty("supported");
+      expect(info).toHaveProperty("unsupported");
     });
 
-    it('should return macOS compatibility info', async () => {
-      const info = await service.getPlatformCompatibility('macos');
+    it("should return macOS compatibility info", async () => {
+      const info = await service.getPlatformCompatibility("macos");
       expect(info).toBeDefined();
-      expect(info).toHaveProperty('supported');
-      expect(info).toHaveProperty('unsupported');
+      expect(info).toHaveProperty("supported");
+      expect(info).toHaveProperty("unsupported");
     });
 
-    it('should return Linux compatibility info', async () => {
-      const info = await service.getPlatformCompatibility('linux');
+    it("should return Linux compatibility info", async () => {
+      const info = await service.getPlatformCompatibility("linux");
       expect(info).toBeDefined();
-      expect(info).toHaveProperty('supported');
-      expect(info).toHaveProperty('unsupported');
+      expect(info).toHaveProperty("supported");
+      expect(info).toHaveProperty("unsupported");
     });
 
-    it('should return all platforms info', async () => {
-      const info = await service.getPlatformCompatibility('all');
+    it("should return all platforms info", async () => {
+      const info = await service.getPlatformCompatibility("all");
       expect(info).toBeDefined();
-      expect(info).toHaveProperty('windows');
-      expect(info).toHaveProperty('linux');
-      expect(info).toHaveProperty('macos');
+      expect(info).toHaveProperty("windows");
+      expect(info).toHaveProperty("linux");
+      expect(info).toHaveProperty("macos");
     });
   });
 
-  describe('searchCompatibility', () => {
-    it('should search for function issues', async () => {
-      const results = await service.searchCompatibility('function return');
+  describe("searchCompatibility", () => {
+    it("should search for function issues", async () => {
+      const results = await service.searchCompatibility("function return");
       expect(Array.isArray(results)).toBe(true);
     });
 
-    it('should search for type issues', async () => {
-      const results = await service.searchCompatibility('type');
+    it("should search for type issues", async () => {
+      const results = await service.searchCompatibility("type");
       expect(Array.isArray(results)).toBe(true);
     });
 
-    it('should handle empty search', async () => {
-      const results = await service.searchCompatibility('');
+    it("should handle empty search", async () => {
+      const results = await service.searchCompatibility("");
       expect(Array.isArray(results)).toBe(true);
     });
 
-    it('should search for graphics issues', async () => {
-      const results = await service.searchCompatibility('screen graphics');
+    it("should search for graphics issues", async () => {
+      const results = await service.searchCompatibility("screen graphics");
       expect(Array.isArray(results)).toBe(true);
     });
 
-    it('should search for file handling', async () => {
-      const results = await service.searchCompatibility('file open');
+    it("should search for file handling", async () => {
+      const results = await service.searchCompatibility("file open");
       expect(Array.isArray(results)).toBe(true);
     });
   });
 
-  describe('issue categorization', () => {
-    it('should categorize function issues', async () => {
-      const code = 'FUNCTION Test(x) AS INTEGER\\nTest = x\\nEND FUNCTION';
+  describe("issue categorization", () => {
+    it("should categorize function issues", async () => {
+      const code = "FUNCTION Test(x) AS INTEGER\\nTest = x\\nEND FUNCTION";
       const issues = await service.validateCompatibility(code);
       if (issues.length > 0) {
-        expect(issues[0]).toHaveProperty('category');
-        expect(issues[0]).toHaveProperty('severity');
+        expect(issues[0]).toHaveProperty("category");
+        expect(issues[0]).toHaveProperty("severity");
       }
     });
 
-    it('should detect errors vs warnings', async () => {
-      const code = 'DIM x AS INTEGER\\nx = 10';
+    it("should detect errors vs warnings", async () => {
+      const code = "DIM x AS INTEGER\\nx = 10";
       const issues = await service.validateCompatibility(code);
       expect(Array.isArray(issues)).toBe(true);
     });
   });
 
-  describe('code validation edge cases', () => {
-    it('should handle multiline code', async () => {
+  describe("code validation edge cases", () => {
+    it("should handle multiline code", async () => {
       const code = `
         FUNCTION Calculate%(a AS INTEGER, b AS INTEGER)
           DIM result AS INTEGER
@@ -133,211 +135,226 @@ describe('QB64PECompatibilityService', () => {
       expect(Array.isArray(issues)).toBe(true);
     });
 
-    it('should handle comments', async () => {
+    it("should handle comments", async () => {
       const code = `' This is a comment\nPRINT "test"`;
       const issues = await service.validateCompatibility(code);
       expect(Array.isArray(issues)).toBe(true);
     });
 
-    it('should handle string literals', async () => {
+    it("should handle string literals", async () => {
       const code = 'PRINT "Function test AS INTEGER"';
       const issues = await service.validateCompatibility(code);
       expect(Array.isArray(issues)).toBe(true);
     });
   });
 
-  describe('getBestPractices', () => {
-    it('should return best practices array', async () => {
+  describe("getBestPractices", () => {
+    it("should return best practices array", async () => {
       const practices = await service.getBestPractices();
       expect(Array.isArray(practices)).toBe(true);
     });
 
-    it('should provide meaningful practices', async () => {
+    it("should provide meaningful practices", async () => {
       const practices = await service.getBestPractices();
       expect(practices).toBeDefined();
     });
   });
 
-  describe('getDebuggingGuidance', () => {
-    it('should provide general debugging guidance', async () => {
+  describe("getDebuggingGuidance", () => {
+    it("should provide general debugging guidance", async () => {
       const guidance = await service.getDebuggingGuidance();
       expect(guidance).toBeDefined();
-      expect(typeof guidance).toBe('string');
+      expect(typeof guidance).toBe("string");
       expect(guidance.length).toBeGreaterThan(0);
-      expect(guidance).toContain('Debugging Guide');
+      expect(guidance).toContain("Debugging Guide");
     });
 
-    it('should provide function-specific guidance', async () => {
-      const guidance = await service.getDebuggingGuidance('function return error');
-      expect(guidance).toContain('function');
-      expect(guidance).toContain('Specific Guidance');
+    it("should provide function-specific guidance", async () => {
+      const guidance = await service.getDebuggingGuidance(
+        "function return error",
+      );
+      expect(guidance).toContain("function");
+      expect(guidance).toContain("Specific Guidance");
     });
 
-    it('should provide array-specific guidance', async () => {
-      const guidance = await service.getDebuggingGuidance('array subscript out of range');
-      expect(guidance).toContain('array');
-      expect(guidance).toContain('bounds');
+    it("should provide array-specific guidance", async () => {
+      const guidance = await service.getDebuggingGuidance(
+        "array subscript out of range",
+      );
+      expect(guidance).toContain("array");
+      expect(guidance).toContain("bounds");
     });
 
-    it('should provide file-specific guidance', async () => {
-      const guidance = await service.getDebuggingGuidance('file open error');
-      expect(guidance).toContain('file');
-      expect(guidance).toContain('FREEFILE');
+    it("should provide file-specific guidance", async () => {
+      const guidance = await service.getDebuggingGuidance("file open error");
+      expect(guidance).toContain("file");
+      expect(guidance).toContain("FREEFILE");
     });
 
-    it('should provide syntax-specific guidance', async () => {
-      const guidance = await service.getDebuggingGuidance('syntax error expected');
-      expect(guidance.toLowerCase()).toContain('quotes');
+    it("should provide syntax-specific guidance", async () => {
+      const guidance = await service.getDebuggingGuidance(
+        "syntax error expected",
+      );
+      expect(guidance.toLowerCase()).toContain("quotes");
     });
 
-    it('should provide scope-specific guidance', async () => {
-      const guidance = await service.getDebuggingGuidance('variable scope problem');
-      expect(guidance).toContain('SHARED');
+    it("should provide scope-specific guidance", async () => {
+      const guidance = await service.getDebuggingGuidance(
+        "variable scope problem",
+      );
+      expect(guidance).toContain("SHARED");
     });
 
-    it('should provide dynamic array guidance', async () => {
-      const guidance = await service.getDebuggingGuidance('dynamic array issue');
+    it("should provide dynamic array guidance", async () => {
+      const guidance = await service.getDebuggingGuidance(
+        "dynamic array issue",
+      );
       // Contains 'array' so gets array guidance
-      expect(guidance.toLowerCase()).toContain('bound');
+      expect(guidance.toLowerCase()).toContain("bound");
     });
 
-    it('should provide general guidance for unknown issues', async () => {
-      const guidance = await service.getDebuggingGuidance('unknown weird error');
+    it("should provide general guidance for unknown issues", async () => {
+      const guidance = await service.getDebuggingGuidance(
+        "unknown weird error",
+      );
       expect(guidance).toBeDefined();
-      expect(guidance).toContain('debug');
+      expect(guidance).toContain("debug");
     });
 
-    it('should handle empty issue string', async () => {
-      const guidance = await service.getDebuggingGuidance('');
+    it("should handle empty issue string", async () => {
+      const guidance = await service.getDebuggingGuidance("");
       expect(guidance).toBeDefined();
-      expect(typeof guidance).toBe('string');
+      expect(typeof guidance).toBe("string");
     });
   });
 
-  describe('debugging guidance details', () => {
-    it('should include traditional error handling', async () => {
+  describe("debugging guidance details", () => {
+    it("should include traditional error handling", async () => {
       const guidance = await service.getDebuggingGuidance();
-      expect(guidance).toContain('ON ERROR');
+      expect(guidance).toContain("ON ERROR");
     });
 
-    it('should include modern assertions', async () => {
+    it("should include modern assertions", async () => {
       const guidance = await service.getDebuggingGuidance();
-      expect(guidance).toContain('_ASSERT');
+      expect(guidance).toContain("_ASSERT");
     });
 
-    it('should include console debugging', async () => {
+    it("should include console debugging", async () => {
       const guidance = await service.getDebuggingGuidance();
-      expect(guidance).toContain('$CONSOLE');
+      expect(guidance).toContain("$CONSOLE");
     });
 
-    it('should include modern logging', async () => {
+    it("should include modern logging", async () => {
       const guidance = await service.getDebuggingGuidance();
-      expect(guidance).toContain('_LOGERROR');
+      expect(guidance).toContain("_LOGERROR");
     });
   });
 
-  describe('specific guidance patterns', () => {
-    it('should mention type sigils for function errors', async () => {
-      const guidance = await service.getDebuggingGuidance('function type problem');
-      expect(guidance).toContain('sigil');
+  describe("specific guidance patterns", () => {
+    it("should mention type sigils for function errors", async () => {
+      const guidance = await service.getDebuggingGuidance(
+        "function type problem",
+      );
+      expect(guidance).toContain("sigil");
     });
 
-    it('should mention bounds checking for array errors', async () => {
-      const guidance = await service.getDebuggingGuidance('array bounds error');
-      expect(guidance).toContain('BOUND');
+    it("should mention bounds checking for array errors", async () => {
+      const guidance = await service.getDebuggingGuidance("array bounds error");
+      expect(guidance).toContain("BOUND");
     });
 
-    it('should mention file closing for file errors', async () => {
-      const guidance = await service.getDebuggingGuidance('file handle error');
-      expect(guidance).toContain('close');
+    it("should mention file closing for file errors", async () => {
+      const guidance = await service.getDebuggingGuidance("file handle error");
+      expect(guidance).toContain("close");
     });
 
-    it('should mention quotes for syntax errors', async () => {
-      const guidance = await service.getDebuggingGuidance('syntax parse error');
-      expect(guidance).toContain('quotes');
+    it("should mention quotes for syntax errors", async () => {
+      const guidance = await service.getDebuggingGuidance("syntax parse error");
+      expect(guidance).toContain("quotes");
     });
 
-    it('should mention DIM SHARED for scope errors', async () => {
-      const guidance = await service.getDebuggingGuidance('scope issue shared');
-      expect(guidance).toContain('DIM SHARED');
+    it("should mention DIM SHARED for scope errors", async () => {
+      const guidance = await service.getDebuggingGuidance("scope issue shared");
+      expect(guidance).toContain("DIM SHARED");
     });
 
-    it('should mention REDIM for dynamic arrays', async () => {
-      const guidance = await service.getDebuggingGuidance('dynamic issue');
+    it("should mention REDIM for dynamic arrays", async () => {
+      const guidance = await service.getDebuggingGuidance("dynamic issue");
       // 'dynamic' alone triggers dynamic array guidance
-      expect(guidance.toLowerCase()).toContain('redim');
+      expect(guidance.toLowerCase()).toContain("redim");
     });
   });
 
-  describe('knowledge base integration', () => {
-    it('should load knowledge base on initialization', async () => {
+  describe("knowledge base integration", () => {
+    it("should load knowledge base on initialization", async () => {
       const newService = new QB64PECompatibilityService();
       const practices = await newService.getBestPractices();
       expect(Array.isArray(practices)).toBe(true);
     });
 
-    it('should provide consistent results', async () => {
-      const guidance1 = await service.getDebuggingGuidance('test');
-      const guidance2 = await service.getDebuggingGuidance('test');
+    it("should provide consistent results", async () => {
+      const guidance1 = await service.getDebuggingGuidance("test");
+      const guidance2 = await service.getDebuggingGuidance("test");
       expect(guidance1).toBe(guidance2);
     });
   });
 
-  describe('platform-specific compatibility', () => {
-    it('should differentiate Windows-specific features', async () => {
-      const windowsInfo = await service.getPlatformCompatibility('windows');
+  describe("platform-specific compatibility", () => {
+    it("should differentiate Windows-specific features", async () => {
+      const windowsInfo = await service.getPlatformCompatibility("windows");
       expect(windowsInfo).toBeDefined();
     });
 
-    it('should differentiate macOS-specific features', async () => {
-      const macInfo = await service.getPlatformCompatibility('macos');
+    it("should differentiate macOS-specific features", async () => {
+      const macInfo = await service.getPlatformCompatibility("macos");
       expect(macInfo).toBeDefined();
     });
 
-    it('should differentiate Linux-specific features', async () => {
-      const linuxInfo = await service.getPlatformCompatibility('linux');
+    it("should differentiate Linux-specific features", async () => {
+      const linuxInfo = await service.getPlatformCompatibility("linux");
       expect(linuxInfo).toBeDefined();
     });
 
-    it('should aggregate all platform info', async () => {
-      const allInfo = await service.getPlatformCompatibility('all');
-      expect(allInfo).toHaveProperty('windows');
-      expect(allInfo).toHaveProperty('macos');
-      expect(allInfo).toHaveProperty('linux');
+    it("should aggregate all platform info", async () => {
+      const allInfo = await service.getPlatformCompatibility("all");
+      expect(allInfo).toHaveProperty("windows");
+      expect(allInfo).toHaveProperty("macos");
+      expect(allInfo).toHaveProperty("linux");
     });
   });
 
-  describe('error severity classification', () => {
-    it('should classify errors appropriately', async () => {
-      const code = 'FUNCTION Bad(x AS INTEGER) AS STRING\nBad = x\nEND FUNCTION';
+  describe("error severity classification", () => {
+    it("should classify errors appropriately", async () => {
+      const code =
+        "FUNCTION Bad(x AS INTEGER) AS STRING\nBad = x\nEND FUNCTION";
       const issues = await service.validateCompatibility(code);
       if (issues.length > 0) {
-        expect(['error', 'warning', 'info']).toContain(issues[0].severity);
+        expect(["error", "warning", "info"]).toContain(issues[0].severity);
       }
     });
   });
 
-  describe('search functionality', () => {
-    it('should find relevant compatibility issues', async () => {
-      const results = await service.searchCompatibility('function');
+  describe("search functionality", () => {
+    it("should find relevant compatibility issues", async () => {
+      const results = await service.searchCompatibility("function");
       expect(Array.isArray(results)).toBe(true);
     });
 
-    it('should handle case-insensitive search', async () => {
-      const results1 = await service.searchCompatibility('FUNCTION');
-      const results2 = await service.searchCompatibility('function');
+    it("should handle case-insensitive search", async () => {
+      const results1 = await service.searchCompatibility("FUNCTION");
+      const results2 = await service.searchCompatibility("function");
       expect(Array.isArray(results1)).toBe(true);
       expect(Array.isArray(results2)).toBe(true);
     });
 
-    it('should return empty array for no matches', async () => {
-      const results = await service.searchCompatibility('xyzabc123impossible');
+    it("should return empty array for no matches", async () => {
+      const results = await service.searchCompatibility("xyzabc123impossible");
       expect(Array.isArray(results)).toBe(true);
     });
   });
 
-  describe('multiple issue detection', () => {
-    it('should detect multiple different issues', async () => {
+  describe("multiple issue detection", () => {
+    it("should detect multiple different issues", async () => {
       const code = `
         FUNCTION Test(x AS INTEGER) AS INTEGER
         FUNCTION Another(y AS STRING) AS STRING
@@ -347,91 +364,104 @@ describe('QB64PECompatibilityService', () => {
     });
   });
 
-  describe('guidance formatting', () => {
-    it('should provide well-formatted guidance', async () => {
+  describe("guidance formatting", () => {
+    it("should provide well-formatted guidance", async () => {
       const guidance = await service.getDebuggingGuidance();
-      expect(guidance).toContain('#');
-      expect(guidance).toContain('```');
+      expect(guidance).toContain("#");
+      expect(guidance).toContain("```");
     });
 
-    it('should include code examples in guidance', async () => {
+    it("should include code examples in guidance", async () => {
       const guidance = await service.getDebuggingGuidance();
-      expect(guidance).toContain('basic');
+      expect(guidance).toContain("basic");
     });
   });
 
-  describe('boolean constants validation', () => {
-    it('should detect usage of user-defined TRUE constant', async () => {
-      const code = 'MARQUEE_draw TRUE';
+  describe("boolean constants validation", () => {
+    it("should detect usage of user-defined TRUE constant", async () => {
+      const code = "MARQUEE_draw TRUE";
       const issues = await service.validateCompatibility(code);
-      const trueIssue = issues.find(issue => issue.category === 'boolean_constants');
+      const trueIssue = issues.find(
+        (issue) => issue.category === "boolean_constants",
+      );
       expect(trueIssue).toBeDefined();
-      expect(trueIssue?.message).toContain('not built-in');
+      expect(trueIssue?.message).toContain("not built-in");
     });
 
-    it('should detect usage of user-defined FALSE constant', async () => {
-      const code = 'result = FALSE';
+    it("should detect usage of user-defined FALSE constant", async () => {
+      const code = "result = FALSE";
       const issues = await service.validateCompatibility(code);
-      const falseIssue = issues.find(issue => issue.category === 'boolean_constants');
+      const falseIssue = issues.find(
+        (issue) => issue.category === "boolean_constants",
+      );
       expect(falseIssue).toBeDefined();
-      expect(falseIssue?.message).toContain('not built-in');
+      expect(falseIssue?.message).toContain("not built-in");
     });
 
-    it('should not flag TRUE when it is being defined', async () => {
-      const code = 'CONST TRUE = -1';
+    it("should not flag TRUE when it is being defined", async () => {
+      const code = "CONST TRUE = -1";
       const issues = await service.validateCompatibility(code);
-      const trueIssue = issues.find(issue => 
-        issue.category === 'boolean_constants' && issue.pattern === 'TRUE'
+      const trueIssue = issues.find(
+        (issue) =>
+          issue.category === "boolean_constants" && issue.pattern === "TRUE",
       );
       // Should not find it as an error when followed by =
       expect(trueIssue).toBeUndefined();
     });
 
-    it('should suggest using _TRUE and _FALSE', async () => {
-      const code = 'IF flag = TRUE THEN';
+    it("should suggest using _TRUE and _FALSE", async () => {
+      const code = "IF flag = TRUE THEN";
       const issues = await service.validateCompatibility(code);
-      const trueIssue = issues.find(issue => issue.category === 'boolean_constants');
-      expect(trueIssue?.suggestion).toContain('_TRUE');
-      expect(trueIssue?.suggestion).toContain('_FALSE');
+      const trueIssue = issues.find(
+        (issue) => issue.category === "boolean_constants",
+      );
+      expect(trueIssue?.suggestion).toContain("_TRUE");
+      expect(trueIssue?.suggestion).toContain("_FALSE");
     });
   });
 
-  describe('unnecessary DECLARE SUB validation', () => {
-    it('should detect unnecessary DECLARE SUB statement', async () => {
-      const code = 'DECLARE SUB MyProcedure';
+  describe("unnecessary DECLARE SUB validation", () => {
+    it("should detect unnecessary DECLARE SUB statement", async () => {
+      const code = "DECLARE SUB MyProcedure";
       const issues = await service.validateCompatibility(code);
-      const declareIssue = issues.find(issue => issue.category === 'unnecessary_declarations');
+      const declareIssue = issues.find(
+        (issue) => issue.category === "unnecessary_declarations",
+      );
       expect(declareIssue).toBeDefined();
-      expect(declareIssue?.message).toContain('unnecessary');
+      expect(declareIssue?.message).toContain("unnecessary");
     });
 
-    it('should also detect unnecessary DECLARE FUNCTION', async () => {
-      const code = 'DECLARE FUNCTION Calculate% (x AS INTEGER)';
+    it("should also detect unnecessary DECLARE FUNCTION", async () => {
+      const code = "DECLARE FUNCTION Calculate% (x AS INTEGER)";
       const issues = await service.validateCompatibility(code);
-      const declareIssue = issues.find(issue => 
-        issue.category === 'unnecessary_declarations'
+      const declareIssue = issues.find(
+        (issue) => issue.category === "unnecessary_declarations",
       );
       // Both SUB and FUNCTION DECLARE are unnecessary in QB64PE
       expect(declareIssue).toBeDefined();
     });
 
-    it('should suggest removing DECLARE statements', async () => {
-      const code = 'DECLARE SUB Draw_Menu';
+    it("should suggest removing DECLARE statements", async () => {
+      const code = "DECLARE SUB Draw_Menu";
       const issues = await service.validateCompatibility(code);
-      const declareIssue = issues.find(issue => issue.category === 'unnecessary_declarations');
-      expect(declareIssue?.suggestion).toContain('Remove DECLARE');
+      const declareIssue = issues.find(
+        (issue) => issue.category === "unnecessary_declarations",
+      );
+      expect(declareIssue?.suggestion).toContain("Remove DECLARE");
     });
 
-    it('should mention DECLARE is only for C library imports', async () => {
-      const code = 'DECLARE SUB HandleClick';
+    it("should mention DECLARE is only for C library imports", async () => {
+      const code = "DECLARE SUB HandleClick";
       const issues = await service.validateCompatibility(code);
-      const declareIssue = issues.find(issue => issue.category === 'unnecessary_declarations');
-      expect(declareIssue?.suggestion).toContain('DECLARE LIBRARY');
+      const declareIssue = issues.find(
+        (issue) => issue.category === "unnecessary_declarations",
+      );
+      expect(declareIssue?.suggestion).toContain("DECLARE LIBRARY");
     });
   });
 
-  describe('validateKeyboardBufferSafety', () => {
-    it('should detect _KEYDOWN(27) without buffer drain', async () => {
+  describe("validateKeyboardBufferSafety", () => {
+    it("should detect _KEYDOWN(27) without buffer drain", async () => {
       const code = `
 SUB HandleKeys
   IF _KEYDOWN(27) THEN
@@ -441,11 +471,13 @@ END SUB`;
       const result = await service.validateKeyboardBufferSafety(code);
       expect(result.hasIssues).toBe(true);
       expect(result.issues.length).toBeGreaterThan(0);
-      const escIssue = result.issues.find(i => i.pattern.includes('_KEYDOWN(27)'));
+      const escIssue = result.issues.find((i) =>
+        i.pattern.includes("_KEYDOWN(27)"),
+      );
       expect(escIssue).toBeDefined();
     });
 
-    it('should not flag code with proper buffer drain', async () => {
+    it("should not flag code with proper buffer drain", async () => {
       const code = `
 SUB HandleKeys
   IF _KEYDOWN(27) THEN
@@ -454,11 +486,13 @@ SUB HandleKeys
   END IF
 END SUB`;
       const result = await service.validateKeyboardBufferSafety(code);
-      const escIssues = result.issues.filter(i => i.pattern.includes('_KEYDOWN(27)'));
+      const escIssues = result.issues.filter((i) =>
+        i.pattern.includes("_KEYDOWN(27)"),
+      );
       expect(escIssues.length).toBe(0);
     });
 
-    it('should detect CTRL modifier check without buffer drain', async () => {
+    it("should detect CTRL modifier check without buffer drain", async () => {
       const code = `
 SUB HandleKeys
   IF _KEYDOWN(100305) THEN
@@ -470,7 +504,7 @@ END SUB`;
       expect(result.summary.ctrlModifierChecks).toBeGreaterThan(0);
     });
 
-    it('should detect INKEY$ after CTRL check without drain', async () => {
+    it("should detect INKEY$ after CTRL check without drain", async () => {
       const code = `
 SUB HandleKeys
   IF _KEYDOWN(100305) THEN
@@ -482,7 +516,7 @@ END SUB`;
       expect(result.summary.inkeyUsages).toBeGreaterThan(0);
     });
 
-    it('should return summary statistics', async () => {
+    it("should return summary statistics", async () => {
       const code = `
 DO
   IF _KEYDOWN(27) THEN EXIT DO
@@ -495,20 +529,20 @@ LOOP`;
       expect(result.summary.bufferDrains).toBeDefined();
     });
 
-    it('should provide best practices', async () => {
-      const code = 'k$ = INKEY$';
+    it("should provide best practices", async () => {
+      const code = "k$ = INKEY$";
       const result = await service.validateKeyboardBufferSafety(code);
       expect(result.bestPractices).toBeDefined();
       expect(result.bestPractices.length).toBeGreaterThan(0);
     });
 
-    it('should handle empty code', async () => {
-      const result = await service.validateKeyboardBufferSafety('');
+    it("should handle empty code", async () => {
+      const result = await service.validateKeyboardBufferSafety("");
       expect(result.hasIssues).toBe(false);
       expect(result.issues.length).toBe(0);
     });
 
-    it('should skip comments', async () => {
+    it("should skip comments", async () => {
       const code = `
 ' IF _KEYDOWN(27) THEN EXIT SUB
 REM Another comment with _KEYDOWN(27)`;
@@ -516,7 +550,7 @@ REM Another comment with _KEYDOWN(27)`;
       expect(result.summary.keydownUsages).toBe(0);
     });
 
-    it('should detect EXIT SUB after _KEYDOWN without buffer drain', async () => {
+    it("should detect EXIT SUB after _KEYDOWN without buffer drain", async () => {
       const code = `
 SUB HandleInput
   IF _KEYDOWN(65) THEN
@@ -525,25 +559,155 @@ SUB HandleInput
   END IF
 END SUB`;
       const result = await service.validateKeyboardBufferSafety(code);
-      const exitIssue = result.issues.find(i => i.pattern.includes('EXIT'));
+      const exitIssue = result.issues.find((i) => i.pattern.includes("EXIT"));
       expect(exitIssue).toBeDefined();
     });
 
-    it('should suggest buffer drain pattern', async () => {
+    it("should suggest buffer drain pattern", async () => {
       const code = `IF _KEYDOWN(27) THEN END`;
       const result = await service.validateKeyboardBufferSafety(code);
       if (result.issues.length > 0) {
-        expect(result.issues[0].suggestion).toContain('KEYHIT');
+        expect(result.issues[0].suggestion).toContain("KEYHIT");
       }
     });
 
-    it('should provide control character reference in best practices', async () => {
+    it("should provide control character reference in best practices", async () => {
       const code = `
 IF _KEYDOWN(100305) THEN
   k$ = INKEY$
 END IF`;
       const result = await service.validateKeyboardBufferSafety(code);
-      expect(result.bestPractices.some(p => p.includes('CTRL') || p.includes('buffer'))).toBe(true);
+      expect(
+        result.bestPractices.some(
+          (p) => p.includes("CTRL") || p.includes("buffer"),
+        ),
+      ).toBe(true);
+    });
+  });
+
+  describe("validateFunctionSelfReferences", () => {
+    it("should detect self-reference in IF condition", async () => {
+      const code = `FUNCTION MyFunc% (x AS INTEGER)
+  MyFunc% = x * 2
+  IF MyFunc% < 0 THEN MyFunc% = 0
+END FUNCTION`;
+      const result = await service.validateFunctionSelfReferences(code);
+      expect(result.hasIssues).toBe(true);
+      expect(result.issues.length).toBeGreaterThanOrEqual(1);
+      expect(result.issues[0].functionName).toBe("MyFunc%");
+      expect(result.issues[0].context).toBe("if_condition");
+      expect(result.issues[0].severity).toBe("error");
+    });
+
+    it("should allow assignment-only usage (no false positives)", async () => {
+      const code = `FUNCTION CalcValue% (x AS INTEGER)
+  DIM result AS INTEGER
+  result = x * 2
+  IF result < 0 THEN result = 0
+  CalcValue% = result
+END FUNCTION`;
+      const result = await service.validateFunctionSelfReferences(code);
+      expect(result.hasIssues).toBe(false);
+      expect(result.issues.length).toBe(0);
+    });
+
+    it("should detect self-reference used as argument", async () => {
+      const code = `FUNCTION GetVal% (n AS INTEGER)
+  GetVal% = n + 1
+  PRINT GetVal%
+END FUNCTION`;
+      const result = await service.validateFunctionSelfReferences(code);
+      expect(result.hasIssues).toBe(true);
+      expect(result.issues.some((i) => i.functionName === "GetVal%")).toBe(
+        true,
+      );
+    });
+
+    it("should detect self-reference in comparison", async () => {
+      const code = `FUNCTION CursorCol% (pos AS INTEGER)
+  CursorCol% = pos - 10
+  IF CursorCol% > 80 THEN CursorCol% = 80
+END FUNCTION`;
+      const result = await service.validateFunctionSelfReferences(code);
+      expect(result.hasIssues).toBe(true);
+      const issue = result.issues.find((i) => i.functionName === "CursorCol%");
+      expect(issue).toBeDefined();
+    });
+
+    it("should handle code with no functions", async () => {
+      const code = `DIM x AS INTEGER
+x = 42
+PRINT x`;
+      const result = await service.validateFunctionSelfReferences(code);
+      expect(result.hasIssues).toBe(false);
+      expect(result.functionsScanned).toBe(0);
+    });
+
+    it("should handle multiple functions and only flag the bad ones", async () => {
+      const code = `FUNCTION SafeFunc% (x AS INTEGER)
+  DIM result AS INTEGER
+  result = x + 1
+  SafeFunc% = result
+END FUNCTION
+
+FUNCTION BadFunc% (x AS INTEGER)
+  BadFunc% = x + 1
+  IF BadFunc% < 0 THEN BadFunc% = 0
+END FUNCTION`;
+      const result = await service.validateFunctionSelfReferences(code);
+      expect(result.hasIssues).toBe(true);
+      expect(result.functionsScanned).toBe(2);
+      expect(result.summary.affectedFunctions).toContain("BadFunc%");
+      expect(result.summary.affectedFunctions).not.toContain("SafeFunc%");
+    });
+
+    it("should ignore function name in comments", async () => {
+      const code = `FUNCTION MyFunc% (x AS INTEGER)
+  ' MyFunc% is the cursor column
+  MyFunc% = x
+END FUNCTION`;
+      const result = await service.validateFunctionSelfReferences(code);
+      expect(result.hasIssues).toBe(false);
+    });
+
+    it("should handle functions without type sigils", async () => {
+      const code = `FUNCTION Calculate (x AS SINGLE)
+  Calculate = x * 2.5
+  IF Calculate < 0 THEN Calculate = 0
+END FUNCTION`;
+      const result = await service.validateFunctionSelfReferences(code);
+      expect(result.hasIssues).toBe(true);
+      expect(result.issues[0].functionName).toBe("Calculate");
+    });
+
+    it("should provide explanation and prevention tips", async () => {
+      const code = `FUNCTION Test% (x AS INTEGER)
+  Test% = x
+END FUNCTION`;
+      const result = await service.validateFunctionSelfReferences(code);
+      expect(result.explanation).toContain("RECURSIVE CALL");
+      expect(result.prevention.length).toBeGreaterThan(0);
+      expect(result.prevention.some((p) => p.includes("local variable"))).toBe(
+        true,
+      );
+    });
+
+    it("should reproduce the exact session problem pattern", async () => {
+      // This is the exact pattern from session-2026-03-23-tdgqyv.json
+      const code = `FUNCTION TEXT_char_mode_cursor_col% (textIdx AS INTEGER)
+  DIM lineStart AS INTEGER
+  DIM cPos AS INTEGER
+  lineStart = 0
+  cPos = 10
+  TEXT_char_mode_cursor_col% = cPos - lineStart
+  IF TEXT_char_mode_cursor_col% < 0 THEN TEXT_char_mode_cursor_col% = 0
+END FUNCTION`;
+      const result = await service.validateFunctionSelfReferences(code);
+      expect(result.hasIssues).toBe(true);
+      expect(result.issues.length).toBeGreaterThanOrEqual(1);
+      expect(result.issues[0].functionName).toBe("TEXT_char_mode_cursor_col%");
+      expect(result.issues[0].message).toContain("infinite recursion");
+      expect(result.issues[0].message).toContain("SIGSEGV");
     });
   });
 });

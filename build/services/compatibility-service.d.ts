@@ -37,6 +37,29 @@ export interface KeyboardBufferSafetyResult {
         shiftModifierChecks: number;
     };
 }
+export interface FunctionSelfReferenceIssue {
+    line: number;
+    column: number;
+    functionName: string;
+    context: "if_condition" | "expression" | "argument" | "comparison" | "assignment_rhs" | "other";
+    lineContent: string;
+    message: string;
+    suggestion: string;
+    severity: "error" | "warning";
+}
+export interface FunctionSelfReferenceResult {
+    hasIssues: boolean;
+    issues: FunctionSelfReferenceIssue[];
+    functionsScanned: number;
+    summary: {
+        totalIssues: number;
+        errors: number;
+        warnings: number;
+        affectedFunctions: string[];
+    };
+    explanation: string;
+    prevention: string[];
+}
 export interface CompatibilityRule {
     pattern: RegExp;
     severity: "error" | "warning" | "info";
@@ -119,5 +142,14 @@ export declare class QB64PECompatibilityService {
      * Get platform compatibility information
      */
     getPlatformCompatibility(platform?: string): Promise<any>;
+    /**
+     * Validate QB64-PE code for dangerous function self-references.
+     *
+     * In QB64-PE, reading a FUNCTION's own name inside the function body is a
+     * recursive call, NOT a variable read. Only assignment (FuncName = value)
+     * sets the return value. Any other read context (IF, expression, argument)
+     * triggers infinite recursion leading to SIGSEGV / stack overflow.
+     */
+    validateFunctionSelfReferences(code: string): Promise<FunctionSelfReferenceResult>;
 }
 //# sourceMappingURL=compatibility-service.d.ts.map

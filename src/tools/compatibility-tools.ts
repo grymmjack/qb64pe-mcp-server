@@ -10,7 +10,10 @@ import {
   createMCPTextResponse,
 } from "../utils/mcp-helpers.js";
 import { ServiceContainer } from "../utils/tool-types.js";
-import { KeyboardBufferSafetyIssue } from "../services/compatibility-service.js";
+import {
+  KeyboardBufferSafetyIssue,
+  FunctionSelfReferenceResult,
+} from "../services/compatibility-service.js";
 import { readSourceFileForTool } from "../utils/source-file-utils.js";
 
 /**
@@ -320,6 +323,76 @@ export function registerCompatibilityTools(
         return createMCPError(
           error,
           "reviewing keyboard buffer safety from file",
+        );
+      }
+    },
+  );
+
+  // Function self-reference validation tool (code string)
+  server.registerTool(
+    "validate_function_self_reference",
+    {
+      title: "Detect Dangerous Function Self-References in QB64PE Code",
+      description:
+        "⚡ CRITICAL BUG DETECTOR: In QB64-PE, reading a FUNCTION's own name inside its body " +
+        "is a RECURSIVE CALL, not a variable read. Only assignment (FuncName% = value) is safe. " +
+        "Any other read (IF FuncName% < 0, passing as argument, using in an expression) triggers " +
+        "infinite recursion → stack overflow → SIGSEGV (exit 139).\n\n" +
+        "This tool statically scans code for FUNCTION definitions where the function name appears " +
+        "in a read context inside the function body, catching this class of bug at edit time.\n\n" +
+        "💡 FIX PATTERN: Use a local variable — DIM result AS INTEGER / result = value / " +
+        "IF result < 0 THEN result = 0 / FuncName% = result",
+      inputSchema: {
+        code: z
+          .string()
+          .describe("QB64PE code to scan for function self-reference bugs"),
+      },
+    },
+    async ({ code }) => {
+      try {
+        const result =
+          await services.compatibilityService.validateFunctionSelfReferences(
+            code,
+          );
+        return createMCPResponse(result);
+      } catch (error) {
+        return createMCPError(error, "validating function self-references");
+      }
+    },
+  );
+
+  // Function self-reference validation tool (file path)
+  server.registerTool(
+    "validate_function_self_reference_file",
+    {
+      title: "Detect Dangerous Function Self-References in a QB64PE File",
+      description:
+        "⚡ CRITICAL BUG DETECTOR: Read a .bas/.bm/.bi file from disk and scan for FUNCTION " +
+        "definitions where the function name is read (not assigned) inside the function body. " +
+        "In QB64-PE this causes infinite recursion → SIGSEGV.\n\n" +
+        "Use after editing any file that contains FUNCTIONs, or when debugging exit code 139 crashes.",
+      inputSchema: {
+        sourceFilePath: z
+          .string()
+          .describe("Absolute path to the .bas/.bm/.bi file to scan"),
+      },
+    },
+    async ({ sourceFilePath }) => {
+      try {
+        const { sourceCode } = await readSourceFileForTool(sourceFilePath);
+        const result =
+          await services.compatibilityService.validateFunctionSelfReferences(
+            sourceCode,
+          );
+
+        return createMCPResponse({
+          sourceFilePath,
+          ...result,
+        });
+      } catch (error) {
+        return createMCPError(
+          error,
+          "scanning file for function self-references",
         );
       }
     },

@@ -58,6 +58,7 @@ Pick the tool that matches the job. Do not default to compile plus keyword looku
 | Edit → verify | \`compile_and_verify_qb64pe\`, \`validate_qb64pe_syntax\` | After changing .bas/.bm/.bi files |
 | Language/docs | \`lookup_qb64pe_keyword\`, \`search_qb64pe_keywords\`, \`search_qb64pe_wiki\` | Find syntax, statements, functions, and wiki guidance |
 | Pre-compile review | \`validate_qb64pe_compatibility\`, \`search_qb64pe_compatibility\`, \`get_qb64pe_best_practices\` | Catch compatibility and platform issues before compiling |
+| Function safety | \`validate_function_self_reference\`, \`validate_function_self_reference_file\` | Detect FUNCTION self-reads that cause infinite recursion (SIGSEGV) |
 | Legacy BASIC porting | \`analyze_qbasic_compatibility\`, \`port_qbasic_to_qb64pe\`, \`get_porting_dialect_info\` | QBasic/QuickBASIC/VB-DOS migration work |
 | Runtime behavior | \`analyze_qb64pe_execution_mode\`, \`get_execution_monitoring_guidance\`, \`get_process_monitoring_commands\`, \`parse_console_output\` | Decide how to monitor or inspect a running program |
 | Graphics output | \`analyze_qb64pe_graphics_screenshot\`, \`generate_qb64pe_screenshot_analysis_template\` | Understand what a graphics program actually drew |
